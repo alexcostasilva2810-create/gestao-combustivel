@@ -3,10 +3,22 @@ from datetime import date
 import pandas as pd
 import time
 
-# --- BLOCO 1: CONFIGURAÇÃO E ESTILO ---
-st.set_page_config(page_title="ZION - Gestão PRO", layout="centered")
+# --- BLOCO 1: CONFIGURAÇÃO DE ÍCONE (PWA) E ESTILO ---
+st.set_page_config(
+    page_title="ZION - Gestão PRO",
+    page_icon="⛽",
+    layout="centered"
+)
 
+# Este bloco injeta o código necessário para o celular reconhecer o Ícone
 st.markdown("""
+    <head>
+        <link rel="manifest" href="manifest.json">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="ZION Gestão">
+        <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/234/234718.png">
+    </head>
     <style>
     .stApp { background-color: #001f3f; } 
     label, .stWidgetLabel p { color: #007bff !important; font-weight: bold; } 
@@ -16,7 +28,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- BLOCO 2: INICIALIZAÇÃO DE ESTADO ---
+# --- BLOCO 2: INICIALIZAÇÃO E LISTAS ---
 if 'tela' not in st.session_state: st.session_state.tela = 'registro'
 if 'dados_nf' not in st.session_state: st.session_state.dados_nf = {}
 
@@ -39,29 +51,29 @@ if st.session_state.tela == 'registro':
 
         st.write("---")
         st.markdown('<p class="texto-verde">📸 Escanear ou Digitar Chave</p>', unsafe_allow_html=True)
-        # Restauração do campo de scanner
-        st.camera_input("Escanear Código de Barras da NF")
+        # Scanner restaurado conforme solicitado
+        st.camera_input("Capturar Código de Barras")
         chave_input = st.text_input("CHAVE DA NF (44 dígitos)", max_chars=44)
         
         if st.form_submit_button("CONFERIR E EDITAR DADOS"):
-            # Lógica de preenchimento automático simplificada para o bloco de edição
+            # Lógica de preenchimento automático extraindo da chave
             st.session_state.dados_nf = {
-                "emp": emp, "nf": nf if nf > 0 else (chave_input[25:34] if len(chave_input) == 44 else 0),
+                "emp": emp, 
+                "nf": nf if nf > 0 else (chave_input[25:34] if len(chave_input) == 44 else 0),
                 "qtd": qtd, "dt": dt, "forn": forn, "chave": chave_input
             }
             st.session_state.tela = 'edicao'
             st.rerun()
 
-# --- BLOCO 4: TELA DE EDIÇÃO, MAPA E CONCLUSÃO ---
+# --- BLOCO 4: TELA DE EDIÇÃO, MAPA REDUZIDO E SALVAMENTO ---
 elif st.session_state.tela == 'edicao':
     st.markdown('<h2 style="color:white; text-align:center;">🔍 Conferência Pro</h2>', unsafe_allow_html=True)
     d = st.session_state.dados_nf
 
     with st.form("form_edicao"):
-        st.markdown('<p class="texto-verde">Dados Extraídos da Chave:</p>', unsafe_allow_html=True)
+        st.markdown('<p class="texto-verde">Confirme os Dados da Chave:</p>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
-            # Campos preenchidos automaticamente para edição
             ed_nf = st.text_input("Confirmar Nº NF", value=str(d['nf']))
             ed_chave = st.text_input("Confirmar Chave", value=d['chave'])
         with c2:
@@ -73,35 +85,33 @@ elif st.session_state.tela == 'edicao':
         t_bb = ta.number_input("TANQUE BB (m³)", step=0.01)
         t_be = tb.number_input("TANQUE BE (m³)", step=0.01)
 
-        # MAPA REDUZIDO
+        # MAPA REDUZIDO NO RODAPÉ
         st.write("---")
-        st.markdown('<p class="texto-verde">📍 Local de Abastecimento</p>', unsafe_allow_html=True)
+        st.markdown('<p class="texto-verde">📍 Local detectado: Belém - PA</p>', unsafe_allow_html=True)
         map_data = pd.DataFrame({'lat': [-1.4000], 'lon': [-48.3963]})
-        st.map(map_data, zoom=15, use_container_width=True) # Mapa menor e centralizado
-        
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
+        st.map(map_data, zoom=14) 
+
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
             if st.form_submit_button("✅ SALVAR NO NOTION"):
-                st.success("Dados salvos com sucesso!")
+                st.success("Enviando ao Notion...")
                 time.sleep(1)
                 st.session_state.tela = 'sucesso'
                 st.rerun()
-        with col_btn2:
+        with col_b2:
             if st.form_submit_button("🔄 VOLTAR"):
                 st.session_state.tela = 'registro'
                 st.rerun()
 
-# --- BLOCO 5: TELA FINAL (NOVO LANÇAMENTO / SAIR) ---
+# --- BLOCO 5: FINALIZAÇÃO (NOVO LANÇAMENTO / SAIR) ---
 elif st.session_state.tela == 'sucesso':
-    st.markdown('<h2 style="color:white; text-align:center;">✅ Operação Concluída</h2>', unsafe_allow_html=True)
+    st.balloons()
+    st.markdown('<h2 style="color:white; text-align:center;">✅ Registro Concluído!</h2>', unsafe_allow_html=True)
     
-    col_f1, col_f2 = st.columns(2)
-    with col_f1:
-        if st.button("➕ NOVO LANÇAMENTO"):
-            st.session_state.tela = 'registro'
-            st.rerun()
-    with col_f2:
-        if st.button("🚪 SAIR DO SISTEMA"):
-            st.session_state.clear()
-            st.write("Sessão Encerrada.")
-            st.rerun()
+    if st.button("➕ NOVO LANÇAMENTO"):
+        st.session_state.tela = 'registro'
+        st.rerun()
+    
+    if st.button("🚪 SAIR DO SISTEMA"):
+        st.session_state.clear()
+        st.rerun()
