@@ -44,29 +44,61 @@ if not st.session_state.autenticado:
                 st.error("Credenciais Inválidas")
     st.stop()
 
-# --- BLOCO 3: TELA DE REGISTRO INICIAL ---
-# Captura os dados principais e a chave da NF. Formato de data ajustado.
+# --- BLOCO 3: TELA DE REGISTRO E SCANNER INTELIGENTE ---
 if st.session_state.tela == 'registro':
-    st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro e Captura Inteligente</h2>', unsafe_allow_html=True)
     
-    with st.form("form_registro"):
+    # Botão de Voltar à Tela Inicial (Login) fora do formulário para evitar travamentos
+    if st.button("⬅️ VOLTAR AO LOGIN"):
+        st.session_state.clear()
+        st.rerun()
+
+    with st.form("form_registro_avancado"):
+        st.markdown('<p class="texto-verde">📸 Scanner de Nota Fiscal</p>', unsafe_allow_html=True)
+        # Campo para scanner de chave
+        st.camera_input("Escanear Código de Barras da NF")
+        chave_input = st.text_input("CHAVE DA NF (44 dígitos)", max_chars=44)
+        
+        st.write("---")
+        st.markdown('<p class="texto-verde">📋 Dados da Operação</p>', unsafe_allow_html=True)
+        
+        # Colunas extras solicitadas: Fornecedor, CNPJ, Valor, Localidade
         col1, col2 = st.columns(2)
         with col1:
             emp = st.selectbox("EMPURRADOR", options=["JACARANDA", "CUMARU", "SAMAUMA", "JATOBA", "TIMBORANA", "ANGELO", "QUARUBA", "BRENO", "CANJERANA", "IPE", "LUIZ FELLIPE", "AROEIRA", "ANGICO"])
-            pedido = st.text_input("Nº PEDIDO")
-            nf = st.number_input("Nº NF", step=1, format="%d")
+            forn = st.text_input("FORNECEDOR", help="Extraído da chave")
+            cnpj_forn = st.text_input("CNPJ FORNECEDOR")
+            localidade = st.text_input("CIDADE / ESTADO (NF)")
         with col2:
-            qtd = st.number_input("QUANTIDADE (LTS)", step=1)
-            dt = st.date_input("DATA", value=date.today(), format="DD/MM/YYYY") # Ajuste de data
-            forn = st.text_input("FORNECEDOR")
+            dt = st.date_input("DATA", value=date.today(), format="DD/MM/YYYY")
+            valor_nf = st.number_input("VALOR TOTAL NF (R$)", step=0.01)
+            nf_num = st.text_input("Nº DA NOTA", help="Dígitos 26 a 34 da chave")
+            pedido = st.text_input("Nº PEDIDO")
 
         st.write("---")
-        chave_input = st.text_input("CHAVE DA NF (44 dígitos)", max_chars=44)
+        st.markdown('<p class="texto-verde">⛽ Controle de Abastecimento e Tanques</p>', unsafe_allow_html=True)
         
-        if st.form_submit_button("CONFERIR E EDITAR DADOS"):
+        # Colunas de Tanques e Realizado
+        c_real, c_bb, c_be = st.columns(3)
+        qtd_realizada = c_real.number_input("REALIZADO (LTS)", step=1)
+        t_bb = c_bb.number_input("TANQUE BB (m³)", step=0.01)
+        t_be = c_be.number_input("TANQUE BE (m³)", step=0.01)
+
+        st.write("---")
+        st.markdown('<p class="texto-verde">📷 Registro Fotográfico (Bomba)</p>', unsafe_allow_html=True)
+        # Campos para foto do relógio antes e depois
+        foto_antes = st.file_uploader("FOTO RELÓGIO (ANTES)", type=['png', 'jpg', 'jpeg'])
+        foto_depois = st.file_uploader("FOTO RELÓGIO (DEPOIS)", type=['png', 'jpg', 'jpeg'])
+
+        # Botão de submissão para evitar erro de Missing Submit Button
+        if st.form_submit_button("PROSSEGUIR PARA CONFERÊNCIA"):
+            # Lógica simples de extração da chave se o usuário não preencher manualmente
+            num_nota_auto = chave_input[25:34] if len(chave_input) == 44 else nf_num
+            
             st.session_state.dados_nf = {
-                "emp": emp, "pedido": pedido, "nf": nf, 
-                "qtd": qtd, "dt": dt, "forn": forn, "chave": chave_input
+                "emp": emp, "pedido": pedido, "nf": num_nota_auto, "qtd": qtd_realizada,
+                "dt": dt, "forn": forn, "cnpj": cnpj_forn, "valor": valor_nf,
+                "local": localidade, "chave": chave_input, "t_bb": t_bb, "t_be": t_be
             }
             st.session_state.tela = 'edicao'
             st.rerun()
