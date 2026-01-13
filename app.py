@@ -28,23 +28,31 @@ st.markdown(f"""
     <style>
     .stApp {{ {fundo_estilo} }}
     
-    /* CORREÇÃO SOLICITADA: Letras acima dos campos em AZUL */
+    /* Rótulos dos campos em AZUL */
     label, .stWidgetLabel p {{
         color: #007bff !important;
         font-weight: bold !important;
         font-size: 16px !important;
     }}
 
+    /* CORREÇÃO SOLICITADA: Texto circulado em VERDE FORTE */
+    .texto-verde {{
+        color: #00FF00 !important; /* Verde Limão/Forte */
+        font-size: 20px !important;
+        font-weight: bold !important;
+        text-shadow: 1px 1px 2px #000;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }}
+
     .container-central {{ display: flex; flex-direction: column; align-items: center; text-align: center; }}
     .titulo-zion {{ color: white !important; font-size: 38px !important; font-weight: bold; text-shadow: 2px 2px 4px #000; }}
     
-    /* Estilo dos botões */
     .stButton>button {{
         width: 100%; max-width: 300px; height: 3.5em; background-color: #007bff; 
         color: white; font-weight: bold; border-radius: 12px; border: none;
     }}
     
-    /* Deixar o fundo dos inputs branco para destacar o azul das letras */
     input {{ background-color: white !important; color: black !important; }}
     </style>
     """, unsafe_allow_html=True)
@@ -87,7 +95,7 @@ if not st.session_state.autenticado:
 elif st.session_state.tela == 'inicio':
     st.markdown('<div class="container-central">', unsafe_allow_html=True)
     st.markdown('<p class="titulo-zion">Bem vindo ao Zion !!</p>', unsafe_allow_html=True)
-    st.write(f"Conectado como: **{st.session_state.user}**")
+    st.write(f"Operador atual: **{st.session_state.user}**")
     if st.button("ABRIR REGISTRO"):
         st.session_state.tela = 'form'
         st.rerun()
@@ -96,7 +104,7 @@ elif st.session_state.tela == 'inicio':
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-# TELA COM O FORMULÁRIO E LETRAS AZUIS
+# TELA DO FORMULÁRIO COM DESTAQUE VERDE
 elif st.session_state.tela == 'form':
     st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
     
@@ -111,8 +119,9 @@ elif st.session_state.tela == 'form':
             st.date_input("DATA", date.today())
             st.text_input("FORNECEDOR")
         
-        st.markdown("---")
-        st.write("📊 **Níveis de Tanque**")
+        # APLICAÇÃO DA COR VERDE FORTE
+        st.markdown('<p class="texto-verde">📊 Níveis de Tanque</p>', unsafe_allow_html=True)
+        
         col_a, col_b = st.columns(2)
         with col_a:
             st.number_input("TANQUE BB (m³)", step=0.01)
@@ -120,7 +129,7 @@ elif st.session_state.tela == 'form':
             st.number_input("TANQUE BE (m³)", step=0.01)
 
         if st.form_submit_button("CONCLUIR E ENVIAR AO NOTION"):
-            st.success("✅ Enviado!")
+            st.success("✅ Enviado com sucesso!")
             time.sleep(1)
             st.session_state.tela = 'inicio'
             st.rerun()
