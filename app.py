@@ -1,58 +1,78 @@
 import streamlit as st
 from datetime import date
-import pandas as pd
-from fpdf import FPDF # Biblioteca para gerar o PDF
 import base64
+import os
+import time
 
-# --- FUNÇÃO PARA GERAR O PDF DOS DADOS EXTRAÍDOS ---
-def gerar_pdf_conferencia(dados):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt="ZION TECNOLOGIA - Relatório de Captação NF", ln=True, align='C')
-    pdf.ln(10)
+# Tenta importar a biblioteca de PDF, se não existir, o sistema avisa sem travar
+try:
+    from fpdf import FPDF
+    PDF_DISPONIVEL = True
+except ImportError:
+    PDF_DISPONIVEL = False
+
+# --- 1. CONFIGURAÇÃO E ESTILO ---
+st.set_page_config(page_title="ZION - Gestão", page_icon="⛽", layout="centered")
+
+st.markdown(f"""
+    <style>
+    /* Rótulos em AZUL */
+    label, .stWidgetLabel p {{
+        color: #007bff !important;
+        font-weight: bold !important;
+    }}
+    /* Título em VERDE FORTE */
+    .texto-verde {{
+        color: #00FF00 !important;
+        font-size: 20px !important;
+        font-weight: bold !important;
+    }}
+    input {{ background-color: white !important; color: black !important; }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 2. LISTA DE EMPURRADORES ---
+EMPURRADORES = ["JACARANDA", "CUMARU", "SAMAUMA", "JATOBA", "TIMBORANA", "ANGELO", "QUARUBA", "BRENO", "CANJERANA", "IPE", "LUIZ FELLIPE", "AROEIRA", "ANGICO"]
+
+# --- 3. TELA DO FORMULÁRIO ---
+if 'tela' not in st.session_state: st.session_state.tela = 'form'
+
+if st.session_state.tela == 'form':
+    st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
     
-    pdf.set_font("Arial", size=12)
-    for chave, valor in dados.items():
-        pdf.cell(200, 10, txt=f"{chave}: {valor}", ln=True)
-    
-    return pdf.output(dest='S').encode('latin-1')
+    with st.form("form_registro"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.selectbox("EMPURRADOR", options=EMPURRADORES)
+            st.text_input("Nº PEDIDO")
+            st.number_input("Nº NF", step=1, format="%d")
+            
+            # BLOCO DE CAPTURA DA CHAVE
+            st.write("📸 **Captura da Chave**")
+            chave_input = st.text_input("CHAVE DA NF (Extraída ou Digitada)", max_chars=44)
+            
+            # Botão para o site que você usa
+            if len(chave_input) == 44:
+                st.link_button("📄 VER PDF NO CONSULTA DANFE", f"https://www.consultadanfe.com/?chave={chave_input}")
 
-# --- NOVO BLOCO: CAPTURA E PROCESSAMENTO DA CHAVE ---
-st.markdown("---")
-st.markdown('<p class="texto-verde">🔍 Validador de Chave e Extração Automática</p>', unsafe_allow_html=True)
+        with col2:
+            st.number_input("QUANTIDADE (LTS)", step=1, format="%d")
+            st.date_input("DATA", value=date.today(), format="DD/MM/YYYY")
+            st.text_input("FORNECEDOR")
+            st.camera_input("Escanear Código de Barras")
 
-# Campo que recebe a chave (vinda da câmera ou digitação)
-chave_detectada = st.text_input("Cole ou Escaneie a Chave aqui para extração", max_chars=44, key="chave_extracao")
+        st.markdown('<p class="texto-verde">📊 Níveis de Tanque</p>', unsafe_allow_html=True)
+        c_a, c_b = st.columns(2)
+        with c_a: st.number_input("TANQUE BB (m³)", step=0.01)
+        with c_b: st.number_input("TANQUE BE (m³)", step=0.01)
 
-if len(chave_detectada) == 44:
-    st.success("✅ Chave Identificada! Extraindo dados...")
-    
-    # CAMPOS QUE PODEM SER PREENCHIDOS PELA CHAVE
-    # Simulando a extração que a API faria
-    dados_extraidos = {
-        "Chave de Acesso": chave_detectada,
-        "Número da NF": chave_detectada[25:34], # Posição padrão em chaves NFe
-        "Série": chave_detectada[22:25],
-        "CNPJ Emitente": f"{chave_detectada[6:20]}",
-        "Data de Emissão": date.today().strftime("%d/%m/%Y"), #
-        "Status": "Autorizada (Simulação via Portal)"
-    }
-    
-    # Exibição dos campos preenchidos automaticamente em azul
-    col1, col2 = st.columns(2)
-    with col1:
-        st.info(f"**Nº NF:** {dados_extraidos['Número da NF']}")
-        st.info(f"**Série:** {dados_extraidos['Série']}")
-    with col2:
-        st.info(f"**Emitente:** {dados_extraidos['CNPJ Emitente']}")
-        st.info(f"**Data:** {dados_extraidos['Data de Emissão']}")
-
-    # BOTÃO PARA EXPORTAR ESSES DADOS EM PDF
-    pdf_bytes = gerar_pdf_conferencia(dados_extraidos)
-    st.download_button(
-        label="📥 EXPORTAR DADOS DA CHAVE PARA PDF",
-        data=pdf_bytes,
-        file_name=f"conferencia_NF_{dados_extraidos['Número da NF']}.pdf",
-        mime="application/pdf"
-    )
+        # BOTÃO DE ENVIO
+        enviar = st.form_submit_button("CONCLUIR E ENVIAR AO NOTION")
+        
+        if enviar:
+            if len(chave_input) < 44:
+                st.warning("⚠️ Chave de NF incompleta.")
+            else:
+                st.success("✅ Dados e Chave salvos para o Notion!")
+                # O PDF será guardado na coluna 'Arquivos' do Notion através do link ou upload
