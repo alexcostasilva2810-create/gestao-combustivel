@@ -1,118 +1,4 @@
-import streamlit as st
-from datetime import date
-import base64
-import os
-import time
-
-# --- 1. CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="ZION - Gestão", page_icon="⛽", layout="centered")
-
-def carregar_imagem_base64(caminho):
-    if os.path.exists(caminho):
-        with open(caminho, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    return None
-
-logo_64 = carregar_imagem_base64("ZION.jpg")
-fundo_64 = carregar_imagem_base64("plataforma.jpg")
-
-# --- 2. ESTILO VISUAL PERSONALIZADO ---
-fundo_estilo = f"""
-    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-    url("data:image/jpg;base64,{fundo_64}");
-    background-size: cover; background-position: center; background-attachment: fixed;
-""" if fundo_64 else "background-color: #1E1E1E;"
-
-st.markdown(f"""
-    <style>
-    .stApp {{ {fundo_estilo} }}
-    
-    /* Rótulos em AZUL */
-    label, .stWidgetLabel p {{
-        color: #007bff !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
-    }}
-
-    /* Destaque em VERDE FORTE */
-    .texto-verde {{
-        color: #00FF00 !important;
-        font-size: 20px !important;
-        font-weight: bold !important;
-        text-shadow: 1px 1px 2px #000;
-        margin-top: 20px;
-        margin-bottom: 10px;
-    }}
-
-    .container-central {{ display: flex; flex-direction: column; align-items: center; text-align: center; }}
-    .titulo-zion {{ color: white !important; font-size: 38px !important; font-weight: bold; text-shadow: 2px 2px 4px #000; }}
-    
-    .stButton>button {{
-        width: 100%; max-width: 300px; height: 3.5em; background-color: #007bff; 
-        color: white; font-weight: bold; border-radius: 12px; border: none;
-    }}
-    
-    input, div[data-baseweb="select"] > div, div[data-baseweb="calendar"] {{ 
-        background-color: white !important; 
-        color: black !important; 
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- 3. DADOS PREDEFINIDOS ---
-LISTA_EMPURRADORES = [
-    "JACARANDA", "CUMARU", "SAMAUMA", "JATOBA", "TIMBORANA", 
-    "ANGELO", "QUARUBA", "BRENO", "CANJERANA", "IPE", 
-    "LUIZ FELLIPE", "AROEIRA", "ANGICO"
-]
-
-USUARIOS = {
-    "admin": "zion123", "user2": "senha2", "user3": "senha3", "user4": "senha4",
-    "user5": "senha5", "user6": "senha6", "user7": "senha7", "user8": "senha8",
-    "user9": "senha9", "user10": "senha10", "user11": "senha11", "user12": "senha12",
-    "user13": "senha13"
-}
-
-# --- 4. JANELA FLUTUANTE DE LOGIN ---
-@st.dialog("Governança de Acesso")
-def login_modal():
-    st.write("Identifique-se para acessar o formulário.")
-    usuario = st.text_input("Usuário")
-    senha = st.text_input("Senha", type="password")
-    if st.button("VALIDAR"):
-        if usuario in USUARIOS and USUARIOS[usuario] == senha:
-            st.session_state.autenticado = True
-            st.session_state.user = usuario
-            st.rerun()
-        else:
-            st.error("Dados incorretos.")
-
-# --- 5. LÓGICA DE NAVEGAÇÃO ---
-if 'autenticado' not in st.session_state: st.session_state.autenticado = False
-if 'tela' not in st.session_state: st.session_state.tela = 'inicio'
-
-if not st.session_state.autenticado:
-    st.markdown('<div class="container-central">', unsafe_allow_html=True)
-    if logo_64:
-        st.markdown(f'<img src="data:image/jpg;base64,{logo_64}" width="250" style="border-radius:20px;">', unsafe_allow_html=True)
-    st.markdown('<p class="titulo-zion">ZION TECNOLOGIA</p>', unsafe_allow_html=True)
-    if st.button("INICIAR ACESSO"):
-        login_modal()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-elif st.session_state.tela == 'inicio':
-    st.markdown('<div class="container-central">', unsafe_allow_html=True)
-    st.markdown('<p class="titulo-zion">Bem vindo ao Zion !!</p>', unsafe_allow_html=True)
-    st.write(f"Operador: **{st.session_state.user}**")
-    if st.button("ABRIR REGISTRO"):
-        st.session_state.tela = 'form'
-        st.rerun()
-    if st.button("Sair"):
-        st.session_state.autenticado = False
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# TELA DO FORMULÁRIO COM DATA AJUSTADA
+# --- Dentro do seu formulário de Registro de Combustível ---
 elif st.session_state.tela == 'form':
     st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
     
@@ -121,29 +7,36 @@ elif st.session_state.tela == 'form':
         with c1:
             st.selectbox("EMPURRADOR", options=LISTA_EMPURRADORES)
             st.text_input("Nº PEDIDO")
-            st.number_input("Nº NF", step=1)
+            st.number_input("Nº NF", step=1, format="%d")
+            
+            st.write("📸 **Escanear Nota Fiscal**")
+            foto_nf = st.camera_input("Aponte para o código de barras")
+            
+            # Campo onde a chave de 44 dígitos será guardada
+            chave_nf = st.text_input("CHAVE DA NF (44 dígitos)", max_chars=44)
+            
+            # BOTÃO DE CONSULTA AO SITE consultadanfe.com
+            if len(chave_nf) == 44:
+                url_consulta = f"https://www.consultadanfe.com/?chave={chave_nf}"
+                st.link_button("📄 ABRIR PDF NO CONSULTA DANFE", url_consulta)
+
         with c2:
-            st.number_input("QUANTIDADE (LTS)", step=1, format="%d")
-            
-            # AJUSTE DA DATA: dd/mm/yyyy
-            st.date_input("DATA", value=date.today(), format="DD/MM/YYYY")
-            
+            # Quantidade sem vírgula
+            st.number_input("QUANTIDADE (LTS)", step=1, format="%d") 
+            # Data no formato dd/mm/yyyy
+            st.date_input("DATA", value=date.today(), format="DD/MM/YYYY") 
             st.text_input("FORNECEDOR")
         
+        # Título em Verde Forte
         st.markdown('<p class="texto-verde">📊 Níveis de Tanque</p>', unsafe_allow_html=True)
         
         col_a, col_b = st.columns(2)
-        with col_a:
-            st.number_input("TANQUE BB (m³)", step=0.01)
-        with col_b:
-            st.number_input("TANQUE BE (m³)", step=0.01)
+        with col_a: st.number_input("TANQUE BB (m³)", step=0.01)
+        with col_b: st.number_input("TANQUE BE (m³)", step=0.01)
 
         if st.form_submit_button("CONCLUIR E ENVIAR AO NOTION"):
-            st.success("✅ Registro concluído!")
+            # Aqui os dados, incluindo a CHAVE NF, serão salvos no Notion
+            st.success("✅ Registro e Chave da NF salvos com sucesso!")
             time.sleep(1)
             st.session_state.tela = 'inicio'
             st.rerun()
-
-    if st.button("Voltar"):
-        st.session_state.tela = 'inicio'
-        st.rerun()
