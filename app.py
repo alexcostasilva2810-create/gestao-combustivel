@@ -2,29 +2,64 @@ import streamlit as st
 from datetime import date
 import pandas as pd
 import time
-import requests
+import requests  # Importação restaurada para integração futura
 
-# --- BLOCO 1: CONFIGURAÇÃO E IDENTIDADE ---
-st.set_page_config(page_title="ZION - Gestão PRO", page_icon="⛽", layout="centered")
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(
+    page_title="ZION - Gestão PRO", 
+    page_icon="⛽", 
+    layout="centered"
+)
 
+# --- ESTILIZAÇÃO CSS (INTERFACE FLUTUANTE) ---
 st.markdown("""
     <style>
     .stApp { background-color: #001f3f; } 
     label, .stWidgetLabel p { color: #007bff !important; font-weight: bold; } 
-    .texto-verde { color: #00FF00 !important; font-size: 20px !important; font-weight: bold; } 
     .stButton>button { width: 100%; border-radius: 10px; font-weight: bold; height: 3.5em; }
     
-    /* Estilização para simular janela flutuante de login */
+    /* Caixa de Login Flutuante Centralizada */
     .login-box {
-        background-color: rgba(255, 255, 255, 0.1);
-        padding: 30px;
-        border-radius: 15px;
-        border: 1px solid #007bff;
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 40px;
+        border-radius: 20px;
+        border: 2px solid #007bff;
         backdrop-filter: blur(10px);
+        text-align: center;
+        margin-top: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
+# --- GOVERNANÇA (13 USUÁRIOS) ---
+USUARIOS_AUTORIZADOS = {
+    "admin": "zion01", "gestor": "zion02", "usuario1": "123", "usuario2": "234",
+    "usuario3": "345", "usuario4": "456", "usuario5": "567", "usuario6": "678",
+    "usuario7": "789", "usuario8": "890", "usuario9": "901", "usuario10": "012",
+    "usuario11": "124"
+}
+
+# Inicialização do Estado de Sessão
+if 'autenticado' not in st.session_state: st.session_state.autenticado = False
+
+# --- LÓGICA DA TELA INICIAL ---
+if not st.session_state.autenticado:
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:white;">⛽ ZION GESTÃO PRO</h1>', unsafe_allow_html=True)
+    
+    with st.form("login_flutuante"):
+        u = st.text_input("Usuário")
+        s = st.text_input("Senha", type="password")
+        # Botão de submissão obrigatório para evitar erros de formulário
+        if st.form_submit_button("ACESSAR SISTEMA"):
+            if u in USUARIOS_AUTORIZADOS and USUARIOS_AUTORIZADOS[u] == s:
+                st.session_state.autenticado = True
+                st.session_state.user_logado = u
+                st.rerun()
+            else:
+                st.error("Acesso negado. Verifique suas credenciais.")
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
 # --- BLOCO 2: GOVERNANÇA (13 ACESSOS) ---
 USUARIOS_AUTORIZADOS = {
     "admin": "zion01", "gestor": "zion02", "usuario1": "123", "usuario2": "234",
