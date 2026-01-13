@@ -4,10 +4,10 @@ import pandas as pd
 import time
 import requests #
 
-# --- 1. CONFIGURAÇÃO DA PÁGINA E ESTILO ---
+# --- 1. CONFIGURAÇÃO E ESTILO (RESTAURANDO FUNDO PETROLÍFERO) ---
 st.set_page_config(page_title="ZION - Gestão PRO", page_icon="⛽", layout="centered")
 
-# CSS para usar plataforma.jpg como fundo
+# CSS para carregar plataforma.jpg e estilizar o retângulo
 st.markdown("""
     <style>
     .stApp {
@@ -23,11 +23,20 @@ st.markdown("""
         background-color: rgba(0, 31, 63, 0.85);
         z-index: -1;
     }
+    /* Ajuste do Retângulo de Título */
+    .titulo-container {
+        border: 2px solid #007bff;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+        background-color: rgba(255, 255, 255, 0.05);
+    }
     .login-box {
         background-color: rgba(255, 255, 255, 0.1);
-        padding: 40px;
+        padding: 30px;
         border-radius: 20px;
-        border: 2px solid #007bff;
+        border: 1px solid #007bff;
         backdrop-filter: blur(15px);
         text-align: center;
     }
@@ -36,87 +45,85 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. INICIALIZAÇÃO DE ESTADOS (PREVINE KEYERROR) ---
-#
+# --- 2. INICIALIZAÇÃO SEGURA (EVITA KEYERROR) ---
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'tela' not in st.session_state: st.session_state.tela = 'registro'
 if 'dados_nf' not in st.session_state: st.session_state.dados_nf = {}
 
-# Governança
+# Governança (13 Usuários)
 USUARIOS = {"admin": "zion01", "gestor": "zion02", "usuario1": "123"}
 
-# --- 3. TELA DE LOGIN (ZION.jpg) ---
+# --- 3. TELA DE ACESSO COM LOGO E TÍTULO NO RETÂNGULO ---
 if not st.session_state.autenticado:
+    # Retângulo de Título Ajustado
+    st.markdown('<div class="titulo-container"><h1 style="color:white; margin:0;">ZION TECNOLOGIA</h1></div>', unsafe_allow_html=True)
+    
     st.markdown('<div class="login-box">', unsafe_allow_html=True)
     try:
-        st.image("ZION.jpg", width=200) #
+        st.image("ZION.jpg", width=250) # Logo do repositório
     except:
-        st.write("### ZION GESTÃO PRO")
+        st.write("### ZION")
     
     with st.form("login_form"):
         u = st.text_input("Usuário")
         s = st.text_input("Senha", type="password")
-        if st.form_submit_button("ACESSAR SISTEMA"): #
+        # Submit button obrigatório
+        if st.form_submit_button("ACESSAR SISTEMA"):
             if u in USUARIOS and USUARIOS[u] == s:
                 st.session_state.autenticado = True
                 st.session_state.user_logado = u
                 st.rerun()
             else:
-                st.error("Dados incorretos")
+                st.error("Credenciais Inválidas")
     st.markdown('</div>', unsafe_allow_html=True)
     st.stop()
 
-# --- 4. TELA DE REGISTRO ---
+# --- 4. TELA DE REGISTRO (DATA BRASILEIRA) ---
 if st.session_state.tela == 'registro':
     st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
     
-    with st.form("form_cadastro"):
+    with st.form("form_reg"):
         col1, col2 = st.columns(2)
         with col1:
             emp = st.selectbox("EMPURRADOR", options=["JACARANDA", "CUMARU", "SAMAUMA"])
-            nf_num = st.text_input("Nº NF")
-            forn = st.text_input("FORNECEDOR")
+            nf = st.text_input("Nº NF")
         with col2:
-            # Correção do formato da data
-            dt = st.date_input("DATA", value=date.today(), format="DD/MM/YYYY") 
+            # Forçando formato brasileiro
+            dt = st.date_input("DATA", value=date.today(), format="DD/MM/YYYY")
             qtd = st.number_input("QUANTIDADE (LTS)", step=1)
-            valor = st.number_input("VALOR NF", step=0.01)
 
-        st.write("---")
+        # Campos de Tanques adicionados
         t_bb = st.number_input("TANQUE BB (m³)", step=0.01)
         t_be = st.number_input("TANQUE BE (m³)", step=0.01)
-        chave = st.text_input("CHAVE DA NF (44 dígitos)", max_chars=44)
 
-        if st.form_submit_button("CONFERIR DADOS"): #
+        if st.form_submit_button("CONFERIR"):
             st.session_state.dados_nf = {
-                "emp": emp, "nf": nf_num, "dt": dt, "qtd": qtd, 
-                "forn": forn, "valor": valor, "t_bb": t_bb, "t_be": t_be, "chave": chave
+                "emp": emp, "nf": nf, "dt": dt, 
+                "qtd": qtd, "t_bb": t_bb, "t_be": t_be
             }
             st.session_state.tela = 'edicao'
             st.rerun()
 
-# --- 5. TELA DE CONFERÊNCIA (SOLUÇÃO KEYERROR) ---
+# --- 5. TELA DE CONFERÊNCIA (ESTABILIZADA) ---
 elif st.session_state.tela == 'edicao':
-    st.markdown('<h2 style="color:white; text-align:center;">🔍 Conferência Pro</h2>', unsafe_allow_html=True)
-    
-    # Se os dados sumirem por erro de reload, volta para o início com segurança
+    # Proteção contra KeyError: volta ao registro se os dados sumirem
     if not st.session_state.dados_nf:
         st.session_state.tela = 'registro'
         st.rerun()
 
     d = st.session_state.dados_nf
-    with st.form("form_confirm"):
-        # Exibição segura dos dados
+    st.markdown('<h2 style="color:white; text-align:center;">🔍 Conferência Pro</h2>', unsafe_allow_html=True)
+    
+    with st.form("conf_form"):
         st.write(f"**Empurrador:** {d['emp']} | **Nota:** {d['nf']}")
-        st.write(f"**Realizado:** {d['qtd']} LTS | **Data:** {d['dt'].strftime('%d/%m/%Y')}") #
+        st.write(f"**Quantidade:** {d['qtd']} LTS | **Data:** {d['dt'].strftime('%d/%m/%Y')}") #
         
-        if st.form_submit_button("🚀 SALVAR NO NOTION"): #
-            # Aqui entra a sua função enviar_ao_notion(d)
-            st.success("Dados enviados!")
+        if st.form_submit_button("✅ SALVAR NO NOTION"):
+            st.success("Dados prontos para envio!")
             time.sleep(1)
             st.session_state.tela = 'registro'
             st.rerun()
-
+    
     if st.button("🔄 CORRIGIR"):
         st.session_state.tela = 'registro'
         st.rerun()
