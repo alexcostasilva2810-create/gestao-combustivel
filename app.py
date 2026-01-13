@@ -7,19 +7,17 @@ import os
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="ZION", page_icon="⛽", layout="centered")
 
-# Função para converter imagem da biblioteca para formato visível
 def carregar_imagem_base64(caminho):
     if os.path.exists(caminho):
         with open(caminho, "rb") as f:
             return base64.b64encode(f.read()).decode()
     return None
 
-# Carregando os arquivos exatamente como estão no seu GitHub
+# Carregando arquivos do GitHub
 logo_base64 = carregar_imagem_base64("ZION.jpg")
 fundo_base64 = carregar_imagem_base64("plataforma.jpg")
 
-# --- 2. ESTILO VISUAL (CORREÇÃO DO NAMEERROR) ---
-# Aqui corrigimos o erro da imagem 'image_030ba7.png' usando fundo_base64 corretamente
+# --- 2. ESTILO VISUAL E CENTRALIZAÇÃO ---
 fundo_estilo = f"""
     background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
     url("data:image/jpg;base64,{fundo_base64}");
@@ -33,26 +31,43 @@ st.markdown(f"""
     .stApp {{
         {fundo_estilo}
     }}
-    /* Estilo para limpar o erro circulado em vermelho */
+    /* Centraliza os títulos e a logo */
+    .container-central {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }}
     .titulo-zion {{
         color: white !important;
         font-size: 38px !important;
         font-weight: bold;
-        text-align: center;
         text-shadow: 2px 2px 4px #000000;
+        margin-top: 10px;
         margin-bottom: 0px;
     }}
     .subtitulo-zion {{
         color: #f0f0f0 !important;
         font-size: 18px !important;
-        text-align: center;
         text-shadow: 1px 1px 3px #000000;
         margin-bottom: 30px;
     }}
+    /* CORREÇÃO DO BOTÃO: Centraliza no quadrado marcado */
+    .stButton {{
+        display: flex;
+        justify-content: center;
+    }}
     .stButton>button {{
-        width: 100%; max-width: 300px; height: 3.5em; background-color: #007bff; 
-        color: white; font-weight: bold; border-radius: 12px; border: none;
-        display: block; margin: 0 auto;
+        width: 100%;
+        max-width: 300px;
+        height: 3.5em;
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+        border-radius: 12px;
+        border: none;
+        font-size: 16px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -61,22 +76,28 @@ st.markdown(f"""
 if 'tela' not in st.session_state: st.session_state.tela = 'inicio'
 
 if st.session_state.tela == 'inicio':
+    # Container para garantir que tudo fique centralizado
+    st.markdown('<div class="container-central">', unsafe_allow_html=True)
+    
     # Exibe a logo ZION.jpg
     if logo_base64:
-        st.markdown(f'<div style="text-align:center"><img src="data:image/jpg;base64,{logo_base64}" width="250" style="border-radius:20px;"></div>', unsafe_allow_html=True)
+        st.markdown(f'<img src="data:image/jpg;base64,{logo_base64}" width="250" style="border-radius:20px;">', unsafe_allow_html=True)
     
-    # --- CORREÇÃO DO ERRO CIRCULADO EM VERMELHO ---
-    # Usamos classes CSS em vez de tags brutas para o texto ficar limpo
+    # Títulos limpos (sem tags HTML brutas)
     st.markdown('<p class="titulo-zion">ZION TECNOLOGIA</p>', unsafe_allow_html=True)
     st.markdown('<p class="subtitulo-zion">Sistema de Recebimento de Combustível</p>', unsafe_allow_html=True)
     
+    # Botão centralizado no local solicitado
     if st.button("INICIAR REGISTRO"):
         st.session_state.tela = 'form'
         st.rerun()
+        
+    st.markdown('</div>', unsafe_allow_html=True)
 
 elif st.session_state.tela == 'form':
     st.markdown('<h2 style="color:white; text-align:center;">📝 Novo Registro</h2>', unsafe_allow_html=True)
     
+    # O formulário aparecerá aqui ao clicar no botão centralizado
     with st.form("registro_combustivel"):
         emp = st.text_input("EMPURRADOR")
         ped = st.text_input("Nº PEDIDO")
