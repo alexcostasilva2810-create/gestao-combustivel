@@ -4,26 +4,25 @@ from datetime import date
 import base64
 import os
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
+# --- BLOCO 1: CONFIGURAÇÕES E CARREGAMENTO DE IMAGENS ---
 st.set_page_config(page_title="ZION Combustível", page_icon="⛽", layout="centered")
 
-# --- FUNÇÃO PARA CARREGAR IMAGENS LOCAIS ---
-def carregar_imagem_local(caminho_arquivo):
-    if os.path.exists(caminho_arquivo):
-        with open(caminho_arquivo, "rb") as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
+# Função para converter imagem do GitHub para formato que o navegador entende
+def get_image_base64(path):
+    if os.path.exists(path):
+        with open(path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
     return None
 
-# Carregando as imagens do seu repositório
-fundo_base64 = carregar_imagem_local("plataforma.jpg")
-logo_base64 = carregar_imagem_local("ZION.JPG")
+# Carrega os arquivos que você subiu no repositório
+fundo_64 = get_image_base64("plataforma.jpg")
+logo_64 = get_image_base64("ZION.JPG")
 
-# --- APLICANDO O DESIGN APROVADO ---
+# --- BLOCO 2: ESTILO VISUAL (DESIGN APROVADO) ---
 estilo_fundo = ""
-if fundo_base64:
+if fundo_64:
     estilo_fundo = f"""
-    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("data:image/jpg;base64,{fundo_base64}");
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("data:image/jpg;base64,{fundo_64}");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -33,7 +32,6 @@ st.markdown(f"""
     <style>
     .stApp {{
         {estilo_fundo}
-        color: white;
     }}
     h1, h2, h3, p, label {{
         color: white !important;
@@ -50,35 +48,34 @@ st.markdown(f"""
         font-weight: bold;
         border-radius: 15px;
         border: none;
-        margin: auto;
         display: block;
+        margin: 20px auto;
     }}
     .logo-img {{
         display: block;
         margin: auto;
-        width: 250px;
+        width: 200px;
         border-radius: 10px;
-        margin-bottom: 20px;
+        filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
     }}
-    /* Inputs visíveis */
+    /* Estilo para inputs ficarem legíveis */
     .stTextInput>div>div>input, .stNumberInput>div>div>input {{
         background-color: rgba(255, 255, 255, 0.9) !important;
-        color: black !important;
     }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- INTEGRAÇÃO NOTION ---
-NOTION_TOKEN = st.secrets["NOTION_TOKEN"]
-DATABASE_ID = st.secrets["DATABASE_ID"]
+# --- BLOCO 3: INTEGRAÇÃO NOTION ---
+try:
+    NOTION_TOKEN = st.secrets["NOTION_TOKEN"]
+    DATABASE_ID = st.secrets["DATABASE_ID"]
+except:
+    st.error("Erro nos Secrets do Streamlit! Verifique se NOTION_TOKEN e DATABASE_ID estão preenchidos.")
+    st.stop()
 
-def enviar_notion(dados):
+def salvar_no_notion(dados):
     url = "https://api.notion.com/v1/pages"
-    headers = {
-        "Authorization": f"Bearer {NOTION_TOKEN}",
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28"
-    }
+    headers = {"Authorization": f"Bearer {NOTION_TOKEN}", "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
     payload = {
         "parent": {"database_id": DATABASE_ID},
         "properties": {
@@ -98,23 +95,24 @@ def enviar_notion(dados):
     }
     return requests.post(url, headers=headers, json=payload)
 
-# --- NAVEGAÇÃO ---
-if 'pg' not in st.session_state: st.session_state.pg = 'inicial'
+# --- BLOCO 4: NAVEGAÇÃO DAS TELAS ---
+if 'pg' not in st.session_state: st.session_state.pg = 'inicio'
 
-if st.session_state.pg == 'inicial':
-    if logo_base64:
-        st.markdown(f'<img src="data:image/jpg;base64,{logo_base64}" class="logo-img">', unsafe_allow_html=True)
+if st.session_state.pg == 'inicio':
+    # Exibe a logo se o arquivo ZION.JPG existir
+    if logo_64:
+        st.markdown(f'<img src="data:image/jpg;base64,{logo_64}" class="logo-img">', unsafe_allow_html=True)
     
     st.markdown("<h1>ZION Combustível</h1>")
-    st.markdown("<h3>Sistema de Registro</h3>")
+    st.markdown("<h3>Sistema de Registro de Abastecimento</h3>")
     
-    if st.button("INICIAR"):
+    if st.button("INICIAR REGISTRO"):
         st.session_state.pg = 'form'
         st.rerun()
 
 elif st.session_state.pg == 'form':
-    st.title("⛽ Registro")
-    with st.form("form_zion"):
+    st.markdown("<h2>📝 Dados do Abastecimento</h2>")
+    with st.form("zion_form"):
         emp = st.text_input("EMPURRADOR")
         c1, c2 = st.columns(2)
         with c1:
@@ -130,11 +128,13 @@ elif st.session_state.pg == 'form':
         t_bb = st.number_input("TANQUE BB", step=0.01)
         t_be = st.number_input("TANQUE BE", step=0.01)
 
-        if st.form_submit_button("SALVAR"):
-            dados = {"emp": emp, "ped": ped, "nf": nf, "lts": lts, "chave": chave, "data": str(dt), "forn": forn, "cnpj": cnpj, "t_bb": t_bb, "t_be": t_be, "antes": 0, "depois": 0}
-            res = enviar_notion(dados)
+        if st.form_submit_button("CONCLUIR E SALVAR"):
+            info = {"emp": emp, "ped": ped, "nf": nf, "lts": lts, "chave": chave, "data": str(dt), "forn": forn, "cnpj": cnpj, "t_bb": t_bb, "t_be": t_be, "antes": 0, "depois": 0}
+            res = salvar_no_notion(info)
             if res.status_code == 200:
                 st.balloons()
-                st.success("Enviado!")
-                st.session_state.pg = 'inicial'
+                st.success("✅ Enviado com sucesso!")
+                st.session_state.pg = 'inicio'
                 st.rerun()
+            else:
+                st.error("Erro ao enviar. Verifique a conexão com o Notion.")
