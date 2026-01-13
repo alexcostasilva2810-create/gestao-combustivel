@@ -2,7 +2,7 @@ import streamlit as st
 from datetime import date
 import pandas as pd
 import time
-import requests  # Importação restaurada para integração futura
+import requests # Importação essencial para o Notion
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
@@ -11,23 +11,31 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- ESTILIZAÇÃO CSS (INTERFACE FLUTUANTE) ---
+# --- ESTILIZAÇÃO CSS (FUNDO PETROLÍFERO E LOGO) ---
 st.markdown("""
     <style>
-    .stApp { background-color: #001f3f; } 
-    label, .stWidgetLabel p { color: #007bff !important; font-weight: bold; } 
-    .stButton>button { width: 100%; border-radius: 10px; font-weight: bold; height: 3.5em; }
-    
-    /* Caixa de Login Flutuante Centralizada */
+    .stApp {
+        background-image: url("https://images.unsplash.com/photo-1518623489648-a173ef7824f3?q=80&w=2000");
+        background-size: cover;
+        background-position: center;
+    }
+    .stApp::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 31, 63, 0.85); /* Sobreposição Azul Marinho */
+        z-index: -1;
+    }
     .login-box {
         background-color: rgba(255, 255, 255, 0.05);
         padding: 40px;
         border-radius: 20px;
         border: 2px solid #007bff;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(15px);
         text-align: center;
-        margin-top: 20px;
+        color: white;
     }
+    label, .stWidgetLabel p { color: #007bff !important; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -39,28 +47,29 @@ USUARIOS_AUTORIZADOS = {
     "usuario11": "124"
 }
 
-# Inicialização do Estado de Sessão
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 
-# --- LÓGICA DA TELA INICIAL ---
+# --- TELA INICIAL (LOGIN E LOGO) ---
 if not st.session_state.autenticado:
     st.markdown('<div class="login-box">', unsafe_allow_html=True)
-    st.markdown('<h1 style="color:white;">⛽ ZION GESTÃO PRO</h1>', unsafe_allow_html=True)
+    # Exibição da Logo e Título
+    st.markdown('<h1>⛽ ZION GESTÃO PRO</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#007bff;">Logística & Combustível</p>', unsafe_allow_html=True)
     
-    with st.form("login_flutuante"):
+    with st.form("login_inicial"):
         u = st.text_input("Usuário")
         s = st.text_input("Senha", type="password")
-        # Botão de submissão obrigatório para evitar erros de formulário
-        if st.form_submit_button("ACESSAR SISTEMA"):
+        
+        # Botão de submissão para evitar erros de formulário
+        if st.form_submit_button("ENTRAR NO SISTEMA"):
             if u in USUARIOS_AUTORIZADOS and USUARIOS_AUTORIZADOS[u] == s:
                 st.session_state.autenticado = True
                 st.session_state.user_logado = u
                 st.rerun()
             else:
-                st.error("Acesso negado. Verifique suas credenciais.")
+                st.error("Acesso negado: Credenciais incorretas.")
     st.markdown('</div>', unsafe_allow_html=True)
-    st.stop()
-# --- BLOCO 2: GOVERNANÇA (13 ACESSOS) ---
+    st.stop()# --- BLOCO 2: GOVERNANÇA (13 ACESSOS) ---
 USUARIOS_AUTORIZADOS = {
     "admin": "zion01", "gestor": "zion02", "usuario1": "123", "usuario2": "234",
     "usuario3": "345", "usuario4": "456", "usuario5": "567", "usuario6": "678",
