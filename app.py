@@ -1,78 +1,81 @@
 import streamlit as st
 from datetime import date
-import base64
-import os
 import time
 
-# Tenta importar a biblioteca de PDF, se não existir, o sistema avisa sem travar
-try:
-    from fpdf import FPDF
-    PDF_DISPONIVEL = True
-except ImportError:
-    PDF_DISPONIVEL = False
-
 # --- 1. CONFIGURAÇÃO E ESTILO ---
-st.set_page_config(page_title="ZION - Gestão", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="ZION - Gestão", layout="centered")
 
-st.markdown(f"""
+st.markdown("""
     <style>
-    /* Rótulos em AZUL */
-    label, .stWidgetLabel p {{
-        color: #007bff !important;
-        font-weight: bold !important;
-    }}
-    /* Título em VERDE FORTE */
-    .texto-verde {{
-        color: #00FF00 !important;
-        font-size: 20px !important;
-        font-weight: bold !important;
-    }}
-    input {{ background-color: white !important; color: black !important; }}
+    label, .stWidgetLabel p { color: #007bff !important; font-weight: bold; }
+    .texto-verde { color: #00FF00 !important; font-size: 20px !important; font-weight: bold; }
+    .stButton>button { width: 100%; background-color: #007bff; color: white; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. LISTA DE EMPURRADORES ---
+# --- 2. DADOS E ESTADO ---
 EMPURRADORES = ["JACARANDA", "CUMARU", "SAMAUMA", "JATOBA", "TIMBORANA", "ANGELO", "QUARUBA", "BRENO", "CANJERANA", "IPE", "LUIZ FELLIPE", "AROEIRA", "ANGICO"]
 
-# --- 3. TELA DO FORMULÁRIO ---
-if 'tela' not in st.session_state: st.session_state.tela = 'form'
+if 'dados_temp' not in st.session_state:
+    st.session_state.dados_temp = None
 
-if st.session_state.tela == 'form':
-    st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
+# --- 3. TELA 1: FORMULÁRIO DE CAPTURA ---
+st.markdown('<h2 style="text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
+
+with st.container():
+    col1, col2 = st.columns(2)
+    with col1:
+        empurrador = st.selectbox("EMPURRADOR", options=EMPURRADORES)
+        pedido = st.text_input("Nº PEDIDO")
+        nf_num = st.number_input("Nº NF", step=1, format="%d")
+    with col2:
+        qtd = st.number_input("QUANTIDADE (LTS)", step=1, format="%d")
+        data_sel = st.date_input("DATA", value=date.today(), format="DD/MM/YYYY")
+        fornecedor = st.text_input("FORNECEDOR")
+
+    st.write("---")
+    st.write("📸 **Captura da Chave da Nota**")
+    foto = st.camera_input("Escanear Código de Barras")
+    chave_manual = st.text_input("CHAVE DA NF (44 dígitos)", max_chars=44)
+
+    # BOTÃO PARA EDITAR/CONFERIR
+    if st.button("PROSSEGUIR PARA CONFERÊNCIA"):
+        # Aqui simulamos a extração automática da chave para edição
+        st.session_state.dados_temp = {
+            "empurrador": empurrador,
+            "nf": nf_num,
+            "chave": chave_manual if chave_manual else "CHAVE_EXTRAIDA_PELA_FOTO",
+            "qtd": qtd,
+            "fornecedor": fornecedor,
+            "data": data_sel
+        }
+
+# --- 4. TELA 2: BLOCO DE EDIÇÃO E VALIDAÇÃO (A "Outra Tela") ---
+if st.session_state.dados_temp:
+    st.write("---")
+    st.markdown('<p class="texto-verde">🔍 CONFERIR E EDITAR DADOS DA NOTA</p>', unsafe_allow_html=True)
     
-    with st.form("form_registro"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.selectbox("EMPURRADOR", options=EMPURRADORES)
-            st.text_input("Nº PEDIDO")
-            st.number_input("Nº NF", step=1, format="%d")
-            
-            # BLOCO DE CAPTURA DA CHAVE
-            st.write("📸 **Captura da Chave**")
-            chave_input = st.text_input("CHAVE DA NF (Extraída ou Digitada)", max_chars=44)
-            
-            # Botão para o site que você usa
-            if len(chave_input) == 44:
-                st.link_button("📄 VER PDF NO CONSULTA DANFE", f"https://www.consultadanfe.com/?chave={chave_input}")
+    with st.expander("Clique para Editar Dados Extraídos da Chave", expanded=True):
+        col_ed1, col_ed2 = st.columns(2)
+        with col_ed1:
+            # Campos preenchidos automaticamente, mas que permitem edição
+            nova_nf = st.text_input("Confirmar Nº NF", value=str(st.session_state.dados_temp['nf']))
+            nova_chave = st.text_input("Confirmar Chave", value=st.session_state.dados_temp['chave'])
+        with col_ed2:
+            novo_fornecedor = st.text_input("Confirmar Fornecedor", value=st.session_state.dados_temp['fornecedor'])
+            nova_qtd = st.text_input("Confirmar Quantidade", value=str(st.session_state.dados_temp['qtd']))
 
-        with col2:
-            st.number_input("QUANTIDADE (LTS)", step=1, format="%d")
-            st.date_input("DATA", value=date.today(), format="DD/MM/YYYY")
-            st.text_input("FORNECEDOR")
-            st.camera_input("Escanear Código de Barras")
+    # BLOCO DE TANQUES (Sempre visível antes do envio final)
+    st.markdown('<p class="texto-verde">📊 Níveis de Tanque</p>', unsafe_allow_html=True)
+    c_a, c_b = st.columns(2)
+    t_bb = c_a.number_input("TANQUE BB (m³)", step=0.01)
+    t_be = c_b.number_input("TANQUE BE (m³)", step=0.01)
 
-        st.markdown('<p class="texto-verde">📊 Níveis de Tanque</p>', unsafe_allow_html=True)
-        c_a, c_b = st.columns(2)
-        with c_a: st.number_input("TANQUE BB (m³)", step=0.01)
-        with c_b: st.number_input("TANQUE BE (m³)", step=0.01)
-
-        # BOTÃO DE ENVIO
-        enviar = st.form_submit_button("CONCLUIR E ENVIAR AO NOTION")
-        
-        if enviar:
-            if len(chave_input) < 44:
-                st.warning("⚠️ Chave de NF incompleta.")
-            else:
-                st.success("✅ Dados e Chave salvos para o Notion!")
-                # O PDF será guardado na coluna 'Arquivos' do Notion através do link ou upload
+    # BOTÃO FINAL DE SALVAMENTO NO NOTION
+    if st.button("✅ TUDO CERTO! SALVAR NO NOTION"):
+        with st.spinner("Enviando dados..."):
+            time.sleep(1) # Simulação de envio
+            st.success("Registro concluído com sucesso!")
+            st.session_state.dados_temp = None # Limpa para o próximo registro
+            time.sleep(1)
+            st.rerun()
