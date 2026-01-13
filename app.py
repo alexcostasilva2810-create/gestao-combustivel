@@ -15,7 +15,7 @@ def get_base64(path):
 
 # Carregamento seguro das imagens
 fundo_64 = get_base64("plataforma.jpg")
-logo_64 = get_base64("ZION.JPG")
+logo_64 = get_base64("ZION.jpg")
 
 # Aplicação do CSS
 estilo_fundo = f'background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("data:image/jpg;base64,{fundo_64}");' if fundo_64 else "background-color: #262730;"
