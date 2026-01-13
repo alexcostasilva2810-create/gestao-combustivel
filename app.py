@@ -28,16 +28,14 @@ st.markdown(f"""
     <style>
     .stApp {{ {fundo_estilo} }}
     
-    /* Rótulos dos campos em AZUL */
     label, .stWidgetLabel p {{
         color: #007bff !important;
         font-weight: bold !important;
         font-size: 16px !important;
     }}
 
-    /* CORREÇÃO SOLICITADA: Texto circulado em VERDE FORTE */
     .texto-verde {{
-        color: #00FF00 !important; /* Verde Limão/Forte */
+        color: #00FF00 !important;
         font-size: 20px !important;
         font-weight: bold !important;
         text-shadow: 1px 1px 2px #000;
@@ -53,11 +51,19 @@ st.markdown(f"""
         color: white; font-weight: bold; border-radius: 12px; border: none;
     }}
     
-    input {{ background-color: white !important; color: black !important; }}
+    /* Estilo para inputs e selectbox */
+    input, div[data-baseweb="select"] > div {{ background-color: white !important; color: black !important; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. GOVERNANÇA (13 VAGAS) ---
+# --- 3. LISTA PREDEFINIDA DE EMPURRADORES ---
+LISTA_EMPURRADORES = [
+    "JACARANDA", "CUMARU", "SAMAUMA", "JATOBA", "TIMBORANA", 
+    "ANGELO", "QUARUBA", "BRENO", "CANJERANA", "IPE", 
+    "LUIZ FELLIPE", "AROEIRA", "ANGICO"
+]
+
+# --- 4. GOVERNANÇA (13 VAGAS) ---
 USUARIOS = {
     "admin": "zion123", "user2": "senha2", "user3": "senha3", "user4": "senha4",
     "user5": "senha5", "user6": "senha6", "user7": "senha7", "user8": "senha8",
@@ -65,7 +71,7 @@ USUARIOS = {
     "user13": "senha13"
 }
 
-# --- 4. JANELA FLUTUANTE DE LOGIN ---
+# --- 5. JANELA FLUTUANTE DE LOGIN ---
 @st.dialog("Governança de Acesso")
 def login_modal():
     st.write("Identifique-se para acessar o formulário.")
@@ -79,7 +85,7 @@ def login_modal():
         else:
             st.error("Dados incorretos.")
 
-# --- 5. NAVEGAÇÃO ---
+# --- 6. NAVEGAÇÃO ---
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'tela' not in st.session_state: st.session_state.tela = 'inicio'
 
@@ -95,7 +101,7 @@ if not st.session_state.autenticado:
 elif st.session_state.tela == 'inicio':
     st.markdown('<div class="container-central">', unsafe_allow_html=True)
     st.markdown('<p class="titulo-zion">Bem vindo ao Zion !!</p>', unsafe_allow_html=True)
-    st.write(f"Operador atual: **{st.session_state.user}**")
+    st.write(f"Operador: **{st.session_state.user}**")
     if st.button("ABRIR REGISTRO"):
         st.session_state.tela = 'form'
         st.rerun()
@@ -104,22 +110,23 @@ elif st.session_state.tela == 'inicio':
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-# TELA DO FORMULÁRIO COM DESTAQUE VERDE
+# TELA DO FORMULÁRIO ATUALIZADA
 elif st.session_state.tela == 'form':
     st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
     
     with st.form("form_registro"):
         c1, c2 = st.columns(2)
         with c1:
-            st.text_input("EMPURRADOR")
+            # Lista Suspensa predefinida
+            st.selectbox("EMPURRADOR", options=LISTA_EMPURRADORES)
             st.text_input("Nº PEDIDO")
             st.number_input("Nº NF", step=1)
         with c2:
-            st.number_input("QUANTIDADE (LTS)", step=0.1)
+            # Quantidade sem vírgula (apenas números inteiros)
+            st.number_input("QUANTIDADE (LTS)", step=1, format="%d")
             st.date_input("DATA", date.today())
             st.text_input("FORNECEDOR")
         
-        # APLICAÇÃO DA COR VERDE FORTE
         st.markdown('<p class="texto-verde">📊 Níveis de Tanque</p>', unsafe_allow_html=True)
         
         col_a, col_b = st.columns(2)
