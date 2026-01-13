@@ -2,35 +2,35 @@ import streamlit as st
 from datetime import date
 import pandas as pd
 
-# --- 1. CONFIGURAÇÃO E ESTILO ---
+# --- 1. CONFIGURAÇÃO E ESTILO (Fundo Azul Marinho e Letras Azuis) ---
 st.set_page_config(page_title="ZION - Gestão", layout="centered")
 
 st.markdown("""
     <style>
+    /* Fundo Azul Marinho */
+    .stApp {
+        background-color: #001f3f; 
+    }
+    /* Rótulos em AZUL */
     label, .stWidgetLabel p { color: #007bff !important; font-weight: bold; }
+    /* Título Tanques em VERDE FORTE */
     .texto-verde { color: #00FF00 !important; font-size: 20px !important; font-weight: bold; }
-    .stButton>button { width: 100%; border-radius: 10px; font-weight: bold; }
+    /* Estilo dos Botões */
+    .stButton>button { width: 100%; border-radius: 10px; font-weight: bold; background-color: #007bff; color: white; }
     </style>
     """, unsafe_allow_html=True)
 
 if 'banco_dados' not in st.session_state:
     st.session_state.banco_dados = []
 
-# --- 2. ABAS (Garante que a tela não fique em branco) ---
-aba1, aba2 = st.tabs(["📝 REGISTRO E MAPA", "📋 LANÇAMENTOS"])
+# --- 2. ABAS DE NAVEGAÇÃO ---
+aba1, aba2 = st.tabs(["📝 REGISTRO", "📋 LANÇAMENTOS"])
 
 with aba1:
-    st.markdown('## ⛽ Registro com Geolocalização')
+    st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
     
-    # --- NOVO: BLOCO DE MAPA ---
-    st.markdown('<p class="texto-verde">📍 Localização do Abastecimento</p>', unsafe_allow_html=True)
-    # Simulação de coordenadas para o mapa (Em um app real, o Streamlit captura via browser)
-    # Aqui ele exibirá o local atual baseado no GPS do dispositivo
-    map_data = pd.DataFrame({'lat': [-1.4000], 'lon': [-48.3963]}) 
-    st.map(map_data) 
-    st.caption("Localização detectada: R. Manaus, Belém - PA")
-
-    with st.form("form_completo"):
+    # --- FORMULÁRIO DE PREENCHIMENTO ---
+    with st.form("form_registro"):
         col1, col2 = st.columns(2)
         with col1:
             emp = st.selectbox("EMPURRADOR", options=["JACARANDA", "CUMARU", "SAMAUMA", "JATOBA", "TIMBORANA", "ANGELO", "QUARUBA", "BRENO", "CANJERANA", "IPE", "LUIZ FELLIPE", "AROEIRA", "ANGICO"])
@@ -48,22 +48,24 @@ with aba1:
         t_bb = ca.number_input("TANQUE BB (m³)", step=0.01)
         t_be = cb.number_input("TANQUE BE (m³)", step=0.01)
 
-        if st.form_submit_button("✅ SALVAR COM LOCALIZAÇÃO"):
-            novo = {
-                "Data": dt.strftime("%d/%m/%Y"),
-                "Empurrador": emp,
-                "NF": nf,
-                "Local": "R. Manaus, Belém - PA", # Dado vindo do mapa
-                "Qtd": qtd,
-                "Tanque BB": t_bb,
-                "Tanque BE": t_be
-            }
-            st.session_state.banco_dados.append(novo)
-            st.success("Salvo com sucesso!")
+        salvar = st.form_submit_button("✅ SALVAR REGISTRO")
+
+        if salvar:
+            st.session_state.banco_dados.append({"Data": dt, "Emp": emp, "NF": nf, "Qtd": qtd})
+            st.success("Dados salvos com sucesso!")
+
+    # --- MAPA COLORIDO E PEQUENO (Abaixo do formulário) ---
+    st.write("---")
+    st.markdown('<p class="texto-verde">📍 Localização Atual</p>', unsafe_allow_html=True)
+    
+    # Criando o mapa colorido e pequeno (Belém, PA)
+    df_mapa = pd.DataFrame({'lat': [-1.4000], 'lon': [-48.3963]})
+    st.map(df_mapa, zoom=14, use_container_width=True) 
+    st.caption("Ponto de abastecimento detectado via GPS.")
 
 with aba2:
-    st.markdown('## 📋 Histórico de Lançamentos')
+    st.markdown('<h2 style="color:white; text-align:center;">📋 Histórico</h2>', unsafe_allow_html=True)
     if st.session_state.banco_dados:
         st.table(pd.DataFrame(st.session_state.banco_dados))
     else:
-        st.info("Aguardando lançamentos.")
+        st.info("Nenhum lançamento registrado.")
