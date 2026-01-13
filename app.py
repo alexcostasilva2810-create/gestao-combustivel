@@ -3,21 +3,10 @@ from datetime import date
 import pandas as pd
 import time
 
-# --- BLOCO 1: CONFIGURAÇÃO DE ÍCONE (PWA) E ESTILO ---
-st.set_page_config(
-    page_title="ZION - Gestão PRO",
-    page_icon="⛽",
-    layout="centered"
-)
+# --- BLOCO 1: CONFIGURAÇÃO DE ÍCONE E ESTILO ---
+st.set_page_config(page_title="ZION - Gestão PRO", page_icon="⛽", layout="centered")
 
 st.markdown("""
-    <head>
-        <link rel="manifest" href="manifest.json">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="default">
-        <meta name="apple-mobile-web-app-title" content="ZION Gestão">
-        <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/234/234718.png">
-    </head>
     <style>
     .stApp { background-color: #001f3f; } 
     label, .stWidgetLabel p { color: #007bff !important; font-weight: bold; } 
@@ -27,13 +16,28 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- BLOCO 2: INICIALIZAÇÃO E LISTAS ---
+# --- BLOCO 2: ESTADO DA SESSÃO ---
+if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'tela' not in st.session_state: st.session_state.tela = 'registro'
 if 'dados_nf' not in st.session_state: st.session_state.dados_nf = {}
 
 LISTA_EMPURRADORES = ["JACARANDA", "CUMARU", "SAMAUMA", "JATOBA", "TIMBORANA", "ANGELO", "QUARUBA", "BRENO", "CANJERANA", "IPE", "LUIZ FELLIPE", "AROEIRA", "ANGICO"]
 
-# --- BLOCO 3: TELA DE REGISTRO E SCANNER ---
+# --- BLOCO 3: TELA DE LOGIN ---
+if not st.session_state.autenticado:
+    st.markdown('<h2 style="color:white; text-align:center;">🔐 ZION - Acesso Restrito</h2>', unsafe_allow_html=True)
+    with st.form("login"):
+        usuario = st.text_input("Usuário")
+        senha = st.text_input("Senha", type="password")
+        if st.form_submit_button("ENTRAR NO SISTEMA"):
+            if usuario == "zion" and senha == "123": # Altere aqui suas credenciais
+                st.session_state.autenticado = True
+                st.rerun()
+            else:
+                st.error("Usuário ou senha incorretos")
+    st.stop()
+
+# --- BLOCO 4: TELA DE REGISTRO ---
 if st.session_state.tela == 'registro':
     st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
     
@@ -49,77 +53,66 @@ if st.session_state.tela == 'registro':
             forn = st.text_input("FORNECEDOR")
 
         st.write("---")
-        st.markdown('<p class="texto-verde">📸 Escanear ou Digitar Chave</p>', unsafe_allow_html=True)
-        st.camera_input("Capturar Código de Barras")
+        st.markdown('<p class="texto-verde">📸 Captura da Chave</p>', unsafe_allow_html=True)
+        st.camera_input("Scanner de NF")
         chave_input = st.text_input("CHAVE DA NF (44 dígitos)", max_chars=44)
         
         if st.form_submit_button("CONFERIR E EDITAR DADOS"):
             st.session_state.dados_nf = {
-                "emp": emp, 
-                "nf": nf if nf > 0 else (chave_input[25:34] if len(chave_input) == 44 else 0),
+                "emp": emp, "pedido": pedido, "nf": nf, 
                 "qtd": qtd, "dt": dt, "forn": forn, "chave": chave_input
             }
             st.session_state.tela = 'edicao'
             st.rerun()
 
-# --- BLOCO 4: TELA DE EDIÇÃO, MAPA E SALVAMENTO ---
+    if st.button("🚪 LOGOUT (SAIR)"):
+        st.session_state.autenticado = False
+        st.rerun()
+
+# --- BLOCO 5: TELA DE EDIÇÃO E MAPA ---
 elif st.session_state.tela == 'edicao':
     st.markdown('<h2 style="color:white; text-align:center;">🔍 Conferência Pro</h2>', unsafe_allow_html=True)
     d = st.session_state.dados_nf
 
     with st.form("form_edicao"):
-        st.markdown('<p class="texto-verde">Confirme os Dados da Chave:</p>', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1:
+        col_a, col_b = st.columns(2)
+        with col_a:
             ed_nf = st.text_input("Confirmar Nº NF", value=str(d['nf']))
             ed_chave = st.text_input("Confirmar Chave", value=d['chave'])
-        with c2:
+        with col_b:
             ed_forn = st.text_input("Confirmar Fornecedor", value=d['forn'])
-            ed_qtd = st.text_input("Confirmar Quantidade", value=str(d['qtd']))
+            ed_qtd = st.text_input("Confirmar Qtd (LTS)", value=str(d['qtd']))
 
         st.markdown('<p class="texto-verde">📊 Níveis de Tanque</p>', unsafe_allow_html=True)
-        ta, tb = st.columns(2)
-        t_bb = ta.number_input("TANQUE BB (m³)", step=0.01)
-        t_be = tb.number_input("TANQUE BE (m³)", step=0.01)
+        v_bb = st.number_input("TANQUE BB (m³)", step=0.01)
+        v_be = st.number_input("TANQUE BE (m³)", step=0.01)
 
         st.write("---")
-        st.markdown('<p class="texto-verde">📍 Local detectado: Belém - PA</p>', unsafe_allow_html=True)
-        map_data = pd.DataFrame({'lat': [-1.4000], 'lon': [-48.3963]})
-        st.map(map_data, zoom=14) 
+        st.markdown('<p class="texto-verde">📍 Localização</p>', unsafe_allow_html=True)
+        map_df = pd.DataFrame({'lat': [-1.4000], 'lon': [-48.3963]})
+        st.map(map_df, zoom=14)
 
-        col_b1, col_b2 = st.columns(2)
-        with col_b1:
-            if st.form_submit_button("✅ SALVAR NO NOTION"):
-                st.success("Enviando ao Notion...")
-                time.sleep(1)
-                st.session_state.tela = 'sucesso'
-                st.rerun()
-        with col_b2:
-            if st.form_submit_button("🔄 VOLTAR"):
-                st.session_state.tela = 'registro'
-                st.rerun()
+        if st.form_submit_button("✅ SALVAR NO NOTION"):
+            st.session_state.tela = 'sucesso'
+            st.rerun()
 
-# --- BLOCO 5: FINALIZAÇÃO (BOTÕES DE RETORNO / SAIR) ---
+    if st.button("🔄 VOLTAR"):
+        st.session_state.tela = 'registro'
+        st.rerun()
+
+# --- BLOCO 6: TELA FINAL (BOTAO RETORNAR AO INÍCIO/LOGIN) ---
 elif st.session_state.tela == 'sucesso':
     st.balloons()
     st.markdown('<h2 style="color:white; text-align:center;">✅ Registro Concluído!</h2>', unsafe_allow_html=True)
     
-    # Coluna tripla para organizar os botões finais
-    cf1, cf2, cf3 = st.columns(3)
-    
-    with cf1:
-        if st.button("➕ NOVO"):
-            st.session_state.tela = 'registro'
-            st.rerun()
-            
-    with cf2:
-        # Botão solicitado: Retornar à tela inicial limpando dados
-        if st.button("🏠 INÍCIO"):
-            st.session_state.dados_nf = {}
-            st.session_state.tela = 'registro'
-            st.rerun()
-    
-    with cf3:
-        if st.button("🚪 SAIR"):
-            st.session_state.clear()
-            st.rerun()
+    st.write("---")
+    # Botão para voltar à tela de Registro inicial
+    if st.button("🏠 NOVO LANÇAMENTO (TELA INICIAL)"):
+        st.session_state.dados_nf = {}
+        st.session_state.tela = 'registro'
+        st.rerun()
+        
+    # Botão para retornar à tela de Login
+    if st.button("🔐 RETORNAR AO LOGIN"):
+        st.session_state.clear()
+        st.rerun()
