@@ -1,5 +1,4 @@
 import streamlit as st
-import requests
 from datetime import date
 import base64
 import os
@@ -28,12 +27,14 @@ st.markdown(f"""
     <style>
     .stApp {{ {fundo_estilo} }}
     
+    /* Rótulos em AZUL */
     label, .stWidgetLabel p {{
         color: #007bff !important;
         font-weight: bold !important;
         font-size: 16px !important;
     }}
 
+    /* Destaque em VERDE FORTE */
     .texto-verde {{
         color: #00FF00 !important;
         font-size: 20px !important;
@@ -51,19 +52,20 @@ st.markdown(f"""
         color: white; font-weight: bold; border-radius: 12px; border: none;
     }}
     
-    /* Estilo para inputs e selectbox */
-    input, div[data-baseweb="select"] > div {{ background-color: white !important; color: black !important; }}
+    input, div[data-baseweb="select"] > div, div[data-baseweb="calendar"] {{ 
+        background-color: white !important; 
+        color: black !important; 
+    }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. LISTA PREDEFINIDA DE EMPURRADORES ---
+# --- 3. DADOS PREDEFINIDOS ---
 LISTA_EMPURRADORES = [
     "JACARANDA", "CUMARU", "SAMAUMA", "JATOBA", "TIMBORANA", 
     "ANGELO", "QUARUBA", "BRENO", "CANJERANA", "IPE", 
     "LUIZ FELLIPE", "AROEIRA", "ANGICO"
 ]
 
-# --- 4. GOVERNANÇA (13 VAGAS) ---
 USUARIOS = {
     "admin": "zion123", "user2": "senha2", "user3": "senha3", "user4": "senha4",
     "user5": "senha5", "user6": "senha6", "user7": "senha7", "user8": "senha8",
@@ -71,7 +73,7 @@ USUARIOS = {
     "user13": "senha13"
 }
 
-# --- 5. JANELA FLUTUANTE DE LOGIN ---
+# --- 4. JANELA FLUTUANTE DE LOGIN ---
 @st.dialog("Governança de Acesso")
 def login_modal():
     st.write("Identifique-se para acessar o formulário.")
@@ -85,7 +87,7 @@ def login_modal():
         else:
             st.error("Dados incorretos.")
 
-# --- 6. NAVEGAÇÃO ---
+# --- 5. LÓGICA DE NAVEGAÇÃO ---
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'tela' not in st.session_state: st.session_state.tela = 'inicio'
 
@@ -110,21 +112,22 @@ elif st.session_state.tela == 'inicio':
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-# TELA DO FORMULÁRIO ATUALIZADA
+# TELA DO FORMULÁRIO COM DATA AJUSTADA
 elif st.session_state.tela == 'form':
     st.markdown('<h2 style="color:white; text-align:center;">⛽ Registro de Combustível</h2>', unsafe_allow_html=True)
     
     with st.form("form_registro"):
         c1, c2 = st.columns(2)
         with c1:
-            # Lista Suspensa predefinida
             st.selectbox("EMPURRADOR", options=LISTA_EMPURRADORES)
             st.text_input("Nº PEDIDO")
             st.number_input("Nº NF", step=1)
         with c2:
-            # Quantidade sem vírgula (apenas números inteiros)
             st.number_input("QUANTIDADE (LTS)", step=1, format="%d")
-            st.date_input("DATA", date.today())
+            
+            # AJUSTE DA DATA: dd/mm/yyyy
+            st.date_input("DATA", value=date.today(), format="DD/MM/YYYY")
+            
             st.text_input("FORNECEDOR")
         
         st.markdown('<p class="texto-verde">📊 Níveis de Tanque</p>', unsafe_allow_html=True)
@@ -136,7 +139,7 @@ elif st.session_state.tela == 'form':
             st.number_input("TANQUE BE (m³)", step=0.01)
 
         if st.form_submit_button("CONCLUIR E ENVIAR AO NOTION"):
-            st.success("✅ Enviado com sucesso!")
+            st.success("✅ Registro concluído!")
             time.sleep(1)
             st.session_state.tela = 'inicio'
             st.rerun()
