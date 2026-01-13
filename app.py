@@ -10,7 +10,6 @@ st.set_page_config(
     layout="centered"
 )
 
-# Este bloco injeta o código necessário para o celular reconhecer o Ícone
 st.markdown("""
     <head>
         <link rel="manifest" href="manifest.json">
@@ -51,12 +50,10 @@ if st.session_state.tela == 'registro':
 
         st.write("---")
         st.markdown('<p class="texto-verde">📸 Escanear ou Digitar Chave</p>', unsafe_allow_html=True)
-        # Scanner restaurado conforme solicitado
         st.camera_input("Capturar Código de Barras")
         chave_input = st.text_input("CHAVE DA NF (44 dígitos)", max_chars=44)
         
         if st.form_submit_button("CONFERIR E EDITAR DADOS"):
-            # Lógica de preenchimento automático extraindo da chave
             st.session_state.dados_nf = {
                 "emp": emp, 
                 "nf": nf if nf > 0 else (chave_input[25:34] if len(chave_input) == 44 else 0),
@@ -65,7 +62,7 @@ if st.session_state.tela == 'registro':
             st.session_state.tela = 'edicao'
             st.rerun()
 
-# --- BLOCO 4: TELA DE EDIÇÃO, MAPA REDUZIDO E SALVAMENTO ---
+# --- BLOCO 4: TELA DE EDIÇÃO, MAPA E SALVAMENTO ---
 elif st.session_state.tela == 'edicao':
     st.markdown('<h2 style="color:white; text-align:center;">🔍 Conferência Pro</h2>', unsafe_allow_html=True)
     d = st.session_state.dados_nf
@@ -85,7 +82,6 @@ elif st.session_state.tela == 'edicao':
         t_bb = ta.number_input("TANQUE BB (m³)", step=0.01)
         t_be = tb.number_input("TANQUE BE (m³)", step=0.01)
 
-        # MAPA REDUZIDO NO RODAPÉ
         st.write("---")
         st.markdown('<p class="texto-verde">📍 Local detectado: Belém - PA</p>', unsafe_allow_html=True)
         map_data = pd.DataFrame({'lat': [-1.4000], 'lon': [-48.3963]})
@@ -103,15 +99,27 @@ elif st.session_state.tela == 'edicao':
                 st.session_state.tela = 'registro'
                 st.rerun()
 
-# --- BLOCO 5: FINALIZAÇÃO (NOVO LANÇAMENTO / SAIR) ---
+# --- BLOCO 5: FINALIZAÇÃO (BOTÕES DE RETORNO / SAIR) ---
 elif st.session_state.tela == 'sucesso':
     st.balloons()
     st.markdown('<h2 style="color:white; text-align:center;">✅ Registro Concluído!</h2>', unsafe_allow_html=True)
     
-    if st.button("➕ NOVO LANÇAMENTO"):
-        st.session_state.tela = 'registro'
-        st.rerun()
+    # Coluna tripla para organizar os botões finais
+    cf1, cf2, cf3 = st.columns(3)
     
-    if st.button("🚪 SAIR DO SISTEMA"):
-        st.session_state.clear()
-        st.rerun()
+    with cf1:
+        if st.button("➕ NOVO"):
+            st.session_state.tela = 'registro'
+            st.rerun()
+            
+    with cf2:
+        # Botão solicitado: Retornar à tela inicial limpando dados
+        if st.button("🏠 INÍCIO"):
+            st.session_state.dados_nf = {}
+            st.session_state.tela = 'registro'
+            st.rerun()
+    
+    with cf3:
+        if st.button("🚪 SAIR"):
+            st.session_state.clear()
+            st.rerun()
