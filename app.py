@@ -4,12 +4,12 @@ from datetime import date
 from fpdf import FPDF
 
 # #-------------------------------------------------------------------------#
-# BLOCOS DE CONFIGURAÇÃO E ESTILO
+#                             BLOCO 1: CONFIGURAÇÕES
 # #-------------------------------------------------------------------------#
 
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="centered")
 
-# Estilização Mobile e Alertas
+# Estilos Visuais e Alertas Coloridos
 st.markdown("""
     <style>
     .stApp { background-image: url("app/static/plataforma.jpg"); background-size: cover; }
@@ -21,7 +21,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Tabela de Capacidades conforme imagem
+# Tabela de Capacidades Oficiais
 CAPACIDADES = {
     "ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700,
     "CANJERANA": 18000, "CUMARU": 64000, "IPE": 29700, "SAMAUMA": 92000,
@@ -29,10 +29,11 @@ CAPACIDADES = {
     "TIMBORANA": 19792, "JATOBA": 84000
 }
 
-if 'passo' not in st.session_state: st.session_state.passo = 'INICIAL'
+if 'passo' not in st.session_state: 
+    st.session_state.passo = 'INICIAL'
 
 # #-------------------------------------------------------------------------#
-# BLOCO 2: TELA INICIAL
+#                             BLOCO 2: TELA INICIAL
 # #-------------------------------------------------------------------------#
 
 if st.session_state.passo == 'INICIAL':
@@ -43,7 +44,7 @@ if st.session_state.passo == 'INICIAL':
         st.rerun()
 
 # #-------------------------------------------------------------------------#
-# BLOCO 3: INPUT DE DADOS E VALIDAÇÃO
+#                             BLOCO 3: INPUT DE DADOS
 # #-------------------------------------------------------------------------#
 
 elif st.session_state.passo == 'INPUT':
@@ -52,7 +53,7 @@ elif st.session_state.passo == 'INPUT':
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
         
         navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
-        limite = CAPACIDADES[navio] #
+        limite = CAPACIDADES[navio]
         st.info(f"Capacidade Tanque: {limite:,} lts")
         
         c1, c2 = st.columns(2)
@@ -64,7 +65,7 @@ elif st.session_state.passo == 'INPUT':
             pedido = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
             s_be = st.number_input("SALDO BE (LTS)", min_value=0)
 
-        # Lógica de Soma
+        # Lógica de Soma: Saldo BB + Saldo BE + Remanescente + Pedido
         soma_total = s_bb + s_be + s_rem + pedido
         
         if soma_total > 0:
@@ -72,14 +73,14 @@ elif st.session_state.passo == 'INPUT':
                 st.markdown(f'''
                     <div class="alerta-erro">
                         ⚠️ ATENÇÃO A SOMA ULTRAPASSA A CAPACIDADE!<br>
-                        Excesso: {soma_total-limite:,} lts | CONTATE PCO/SUPRIMENTOS.
+                        Volume Calculado: {soma_total:,} lts | CONTATE PCO/SUPRIMENTOS.
                     </div>
                 ''', unsafe_allow_html=True)
             else:
                 st.markdown('<div class="alerta-sucesso">✅ EMPURRADOR HABILITADO PARA RECEBER ODM.</div>', unsafe_allow_html=True)
                 st.write(f"Soma Total Atual: **{soma_total:,} lts**")
 
-        if st.button("GERAR COMUNICADO EM PDF", use_container_width=True, type="primary"):
+        if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             st.session_state.dados_pdf = {
                 "navio": navio, "pedido": pedido, "s_bb": s_bb, "s_be": s_be, 
                 "s_rem": s_rem, "total": soma_total, "limite": limite
@@ -89,40 +90,41 @@ elif st.session_state.passo == 'INPUT':
         st.markdown('</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-# BLOCO 4: RELATÓRIO E DOWNLOAD
+#                             BLOCO 4: RELATÓRIO E PDF
 # #-------------------------------------------------------------------------#
 
 elif st.session_state.passo == 'RELATORIO':
     d = st.session_state.dados_pdf
-    st.markdown('<h2 style="color:white; text-align:center;">📄 Documento Gerado</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:white; text-align:center;">📄 Comunicado Oficial</h2>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
         
-        # Texto oficial solicitado
-        texto = (f"Comunicado de abastecimento.\n\n"
-                 f"Comunico que o empurrador {d['navio']} está apto a receber o consumo de "
-                 f"({d['pedido']:,} lts) devido ter o Saldo de ({d['s_bb']:,} lts BB) "
-                 f"e saldo de ({d['s_be']:,} lts BE) mais o saldo Remanescente de ({d['s_rem']:,} lts).\n\n"
-                 f"Portanto o saldo total após o abastecimento é de ({d['total']:,} lts).\n"
-                 f"A Capacidade do Empurrador é ({d['limite']:,} lts).")
+        # Texto oficial corrigido para o relatório
+        texto_corpo = (f"Comunico que o empurrador {d['navio']} está apto a receber o consumo de "
+                       f"({d['pedido']:,} lts) devido ter o Saldo de ({d['s_bb']:,} lts BB) "
+                       f"e saldo de ({d['s_be']:,} lts BE) mais o saldo Remanescente de ({d['s_rem']:,} lts).\n\n"
+                       f"Portanto o saldo total após o abastecimento é de ({d['total']:,} lts).\n"
+                       f"A Capacidade do Empurrador é ({d['limite']:,} lts).")
         
-        st.text_area("Prévia do Comunicado", texto, height=200)
+        st.markdown("**Comunicado de abastecimento.**")
+        st.write(texto_corpo)
 
-        # Geração do PDF usando FPDF
+        # Geração do PDF Corrigida para fpdf2
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", 'B', 16)
+        pdf.set_font("Helvetica", 'B', 16)
         pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align='C')
-        pdf.set_font("Arial", size=12)
+        pdf.set_font("Helvetica", size=12)
         pdf.ln(10)
-        pdf.multi_cell(0, 10, texto.replace('Comunicado de abastecimento.\n\n', ''))
+        pdf.multi_cell(0, 10, texto_corpo)
         
-        pdf_bytes = pdf.output(dest='S').encode('latin-1')
+        # O comando output() agora funciona corretamente com bytes na fpdf2
+        pdf_output = pdf.output()
 
         st.download_button(
-            label="📥 BAIXAR AGORA EM PDF",
-            data=pdf_bytes,
+            label="📥 BAIXAR RELATÓRIO EM PDF",
+            data=bytes(pdf_output),
             file_name=f"Comunicado_{d['navio']}.pdf",
             mime="application/pdf",
             use_container_width=True
