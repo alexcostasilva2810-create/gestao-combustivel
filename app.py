@@ -39,7 +39,7 @@ st.markdown("""
 # --- BLOCO 2: GOVERNANÇA E ESTADOS DE SESSÃO ---
 # Restaurando a lista completa de 13 usuários autorizados
 USUARIOS_AUTORIZADOS = {
-    "admin": "zion01", "gestor": "zion02", "usuario1": "123", "usuario2": "234",
+    "ALEX": "2463", "gestor": "zion02", "usuario1": "123", "usuario2": "234",
     "usuario3": "345", "usuario4": "456", "usuario5": "567", "usuario6": "678",
     "usuario7": "789", "usuario8": "890", "usuario9": "901", "usuario10": "012",
     "usuario11": "124"
