@@ -1,7 +1,10 @@
 import streamlit as st
 import time
-from datetime import date
+from datetime import datetime
 from fpdf import FPDF
+from streamlit_drawable_canvas import st_canvas
+from PIL import Image
+import io
 
 # #-------------------------------------------------------------------------#
 #                             BLOCO 1: CONFIGURAÇÕES
@@ -9,7 +12,6 @@ from fpdf import FPDF
 
 st.set_page_config(page_title="ZION TECNOLOGIA", layout="centered")
 
-# Estilos Visuais e Alertas Coloridos
 st.markdown("""
     <style>
     .stApp { background-image: url("app/static/plataforma.jpg"); background-size: cover; }
@@ -21,7 +23,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Tabela de Capacidades Oficiais
 CAPACIDADES = {
     "ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700,
     "CANJERANA": 18000, "CUMARU": 64000, "IPE": 29700, "SAMAUMA": 92000,
@@ -44,7 +45,7 @@ if st.session_state.passo == 'INICIAL':
         st.rerun()
 
 # #-------------------------------------------------------------------------#
-#                             BLOCO 3: INPUT DE DADOS
+#                             BLOCO 3: INPUT DE DADOS E ASSINATURA
 # #-------------------------------------------------------------------------#
 
 elif st.session_state.passo == 'INPUT':
@@ -58,35 +59,44 @@ elif st.session_state.passo == 'INPUT':
         
         c1, c2 = st.columns(2)
         with c1:
-            dt = st.date_input("DATA", format="DD/MM/YYYY")
+            dt_input = st.date_input("DATA", format="DD/MM/YYYY")
             s_bb = st.number_input("SALDO BB (LTS)", min_value=0)
             s_rem = st.number_input("REMANESCENTE (LTS)", min_value=0)
         with c2:
             pedido = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
             s_be = st.number_input("SALDO BE (LTS)", min_value=0)
 
-        # Lógica de Soma: Saldo BB + Saldo BE + Remanescente + Pedido
         soma_total = s_bb + s_be + s_rem + pedido
         
-        if soma_total > 0:
-            if soma_total > limite:
-                st.markdown(f'''
-                    <div class="alerta-erro">
-                        ⚠️ ATENÇÃO A SOMA ULTRAPASSA A CAPACIDADE!<br>
-                        Volume Calculado: {soma_total:,} lts | CONTATE PCO/SUPRIMENTOS.
-                    </div>
-                ''', unsafe_allow_html=True)
-            else:
-                st.markdown('<div class="alerta-sucesso">✅ EMPURRADOR HABILITADO PARA RECEBER ODM.</div>', unsafe_allow_html=True)
-                st.write(f"Soma Total Atual: **{soma_total:,} lts**")
+        if soma_total > limite:
+            st.markdown(f'<div class="alerta-erro">⚠️ EXCESSO: {soma_total-limite:,} lts</div>', unsafe_allow_html=True)
+        elif soma_total > 0:
+            st.markdown('<div class="alerta-sucesso">✅ ESPAÇO DISPONÍVEL CONFIRMADO.</div>', unsafe_allow_html=True)
 
-        if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            st.session_state.dados_pdf = {
-                "navio": navio, "pedido": pedido, "s_bb": s_bb, "s_be": s_be, 
-                "s_rem": s_rem, "total": soma_total, "limite": limite
-            }
-            st.session_state.passo = 'RELATORIO'
-            st.rerun()
+        st.markdown("---")
+        st.markdown("<label>ASSINATURA DIGITAL (TOUCH)</label>", unsafe_allow_html=True)
+        canvas_result = st_canvas(
+            fill_color="rgba(255, 255, 255, 1)",
+            stroke_width=3,
+            stroke_color="#000000",
+            background_color="#eeeeee",
+            height=150,
+            update_streamlit=True,
+            key="canvas",
+        )
+
+        if st.button("GERAR DOCUMENTO", use_container_width=True, type="primary"):
+            if canvas_result.image_data is not None:
+                # Converter assinatura para imagem
+                img_res = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
+                st.session_state.assinatura = img_res
+                st.session_state.dados_pdf = {
+                    "navio": navio, "pedido": pedido, "s_bb": s_bb, "s_be": s_be, 
+                    "s_rem": s_rem, "total": soma_total, "limite": limite,
+                    "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                }
+                st.session_state.passo = 'RELATORIO'
+                st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
@@ -95,37 +105,49 @@ elif st.session_state.passo == 'INPUT':
 
 elif st.session_state.passo == 'RELATORIO':
     d = st.session_state.dados_pdf
-    st.markdown('<h2 style="color:white; text-align:center;">📄 Comunicado Oficial</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:white; text-align:center;">📄 Documento Final</h2>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
         
-        # Texto oficial corrigido para o relatório
         texto_corpo = (f"Comunico que o empurrador {d['navio']} está apto a receber o consumo de "
                        f"({d['pedido']:,} lts) devido ter o Saldo de ({d['s_bb']:,} lts BB) "
                        f"e saldo de ({d['s_be']:,} lts BE) mais o saldo Remanescente de ({d['s_rem']:,} lts).\n\n"
                        f"Portanto o saldo total após o abastecimento é de ({d['total']:,} lts).\n"
                        f"A Capacidade do Empurrador é ({d['limite']:,} lts).")
-        
-        st.markdown("**Comunicado de abastecimento.**")
-        st.write(texto_corpo)
 
-        # Geração do PDF Corrigida para fpdf2
+        # Geração do PDF
         pdf = FPDF()
         pdf.add_page()
+        
+        # Topo ZION em Azul
+        pdf.set_text_color(0, 123, 255)
+        pdf.set_font("Helvetica", 'B', 24)
+        pdf.cell(0, 15, "ZION", ln=True, align='C')
+        
+        pdf.set_text_color(0, 0, 0)
         pdf.set_font("Helvetica", 'B', 16)
         pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align='C')
+        
         pdf.set_font("Helvetica", size=12)
         pdf.ln(10)
         pdf.multi_cell(0, 10, texto_corpo)
         
-        # O comando output() agora funciona corretamente com bytes na fpdf2
+        # Adicionar Assinatura
+        if 'assinatura' in st.session_state:
+            pdf.ln(10)
+            img_byte_arr = io.BytesIO()
+            st.session_state.assinatura.save(img_byte_arr, format='PNG')
+            pdf.image(img_byte_arr, x=75, w=60)
+            pdf.set_font("Helvetica", 'I', 10)
+            pdf.cell(0, 5, f"Assinado digitalmente em: {d['timestamp']}", ln=True, align='C')
+
         pdf_output = pdf.output()
 
         st.download_button(
-            label="📥 BAIXAR RELATÓRIO EM PDF",
+            label="📥 BAIXAR RELATÓRIO ASSINADO (PDF)",
             data=bytes(pdf_output),
-            file_name=f"Comunicado_{d['navio']}.pdf",
+            file_name=f"Comunicado_ZION_{d['navio']}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
