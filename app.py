@@ -31,21 +31,33 @@ st.markdown("""
         background: rgba(0, 0, 0, 0.6); padding: 8px 12px; border-radius: 5px;
         margin-bottom: 15px; display: inline-block; border: 1px solid #FFFF00;
     }
-    /* CORES DINÂMICAS DE SEGURANÇA */
     .quadro-seguro {
         color: #00FF00 !important; background: rgba(0, 0, 0, 0.7) !important;
         padding: 10px; border-radius: 8px; border: 2px solid #00FF00;
         font-weight: bold; text-align: center; font-size: 16px;
     }
-    .quadro-perigo {
-        color: #FF0000 !important; background: white !important;
-        padding: 10px; border-radius: 8px; border: 2px solid #FF0000;
-        font-weight: bold; text-align: center; font-size: 16px;
+    /* JANELA FLUTUANTE: FUNDO AMARELO, LETRA VERMELHA */
+    .alerta-transbordo-flutuante {
+        background-color: #FFFF00 !important; 
+        color: #FF0000 !important; 
+        padding: 20px;
+        border-radius: 10px;
+        border: 4px solid #FF0000;
+        font-weight: 900;
+        text-align: center;
+        font-size: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0px 10px 30px rgba(255, 0, 0, 0.7);
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
     }
     .banner-interno-verde {
         color: #28a745; text-align: center; font-weight: 900; font-size: 28px;
-        margin-bottom: 20px; text-transform: uppercase;
-        background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px;
+        margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -108,19 +120,20 @@ if st.session_state.pagina == "abastecimento":
     with col2:
         qtd_pedida = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0, key=f"ped_{st.session_state.form_id}")
         
-        # LÓGICA DE CORES DINÂMICAS
-        total_final = saldo_bb + saldo_be + remanescente + qtd_pedida
+        # SOMA DOS 4 CAMPOS PARA VALIDAÇÃO [Regra solicitada]
+        total_geral = saldo_bb + saldo_be + remanescente + qtd_pedida
         limite = CAPACIDADES[navio_selecionado]
+        transbordou = total_geral > limite
         
-        if total_final > limite:
-            st.markdown(f'<div class="quadro-perigo">⚠️ EXCESSO: {total_final:,} / {limite:,} lts</div>', unsafe_allow_html=True)
+        if transbordou:
+            st.markdown(f'<div style="color:red; background:white; padding:10px; border:2px solid red; font-weight:bold; text-align:center;">⚠️ VOLUME ATUAL: {total_geral:,} lts</div>', unsafe_allow_html=True)
         else:
-            st.markdown(f'<div class="quadro-seguro">✅ SEGURO: {total_final:,} / {limite:,} lts</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="quadro-seguro">✅ VOLUME SEGURO: {total_geral:,} lts</div>', unsafe_allow_html=True)
         
         st.markdown("<p style='margin-bottom: 0px;'>CONTROLE DE TEMPO</p>", unsafe_allow_html=True)
         placeholder_tempo = st.empty()
         
-        # ... (restante da lógica de timer e fotos mantida exatamente igual)
+        # ... Lógica de Timer
         if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
         if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
         
@@ -134,7 +147,7 @@ if st.session_state.pagina == "abastecimento":
             segundos = int(time.time() - st.session_state.t_inicio)
             st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
         
-        placeholder_tempo.markdown(f'<div class="timer-display" style="background:white; color:red; font-size:30px; text-align:center; border-radius:10px; border:2px solid blue;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
+        placeholder_tempo.markdown(f'<div style="background:white; color:red; font-size:30px; text-align:center; border-radius:10px; border:2px solid blue;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
         
         foto_antes = st.file_uploader("📷 FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"fa_{st.session_state.form_id}")
         foto_depois = st.file_uploader("📷 FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"fd_{st.session_state.form_id}")
@@ -142,24 +155,38 @@ if st.session_state.pagina == "abastecimento":
     st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"canvas_{st.session_state.form_id}")
 
-    if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-        if total_final > limite:
-            st.error("ERRO: Volume excede a capacidade. Abastecimento não autorizado.")
-        else:
+    # --- BLOQUEIO FINAL COM JANELA FLUTUANTE ---
+    if transbordou:
+        st.markdown(f"""
+            <div class="alerta-transbordo-flutuante">
+                🚨 BLOQUEIO DE SEGURANÇA 🚨<br>
+                A soma ({total_geral:,} lts) ultrapassou o limite de {limite:,} lts.<br>
+                <b>NÃO SERÁ POSSÍVEL SEGUIR COM A IMPRESSÃO</b><br>
+                enquanto não for evitado o <b>TRANSBORDO</b>!
+            </div>
+        """, unsafe_allow_html=True)
+        st.button("GERAR COMUNICADO FINAL (BLOQUEADO)", use_container_width=True, disabled=True)
+    else:
+        if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             try:
                 pdf = FPDF()
                 pdf.add_page()
-                # (Lógica de PDF com fotos A e D lado a lado preservada)
-                pdf.set_font("Arial", "B", 16)
-                pdf.cell(200, 10, f"ZION - {navio_selecionado}", ln=True, align="C")
+                pdf.set_font("Arial", "B", 20); pdf.set_text_color(0, 102, 255)
+                pdf.cell(200, 10, "ZION", ln=True, align="C")
+                pdf.ln(10)
+                pdf.set_font("Arial", "", 12); pdf.set_text_color(0, 0, 0)
                 
-                y_pos = pdf.get_y() + 60
+                texto = (f"Empurrador: {navio_selecionado}\n"
+                         f"Capacidade: {limite:,} lts\n"
+                         f"Volume Total Lançado: {total_geral:,} lts.\n"
+                         f"Operação realizada em conformidade com as normas de segurança.")
+                pdf.multi_cell(0, 8, texto)
+                
+                y_pos = pdf.get_y() + 5
                 if foto_antes: pdf.image(Image.open(foto_antes), x=40, y=y_pos, w=45)
                 if foto_depois: pdf.image(Image.open(foto_depois), x=115, y=y_pos, w=45)
                 
                 st.download_button("📥 BAIXAR PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio_selecionado}.pdf", use_container_width=True)
-                st.markdown('<div style="background-color: green; color: white; padding: 10px; border-radius: 5px; text-align: center;">Tudo corrigido! Linha, assinatura e fotos incluídas.</div>', unsafe_allow_html=True)
+                st.success("Tudo corrigido!")
             except Exception as e:
                 st.error(f"Erro: {e}")
-
-# ... (telas de menu e inicio)
