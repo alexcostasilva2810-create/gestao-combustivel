@@ -68,10 +68,9 @@ def reset_lancamento():
 # #-------------------------------------------------------------------------#
 #                               TELA DE LOGIN
 # #-------------------------------------------------------------------------#
-if st.session_state.pagina == "login":
+elif st.session_state.pagina == "login":
     st.markdown('<h1 style="color:white; text-align:center;">ACESSO AO SISTEMA</h1>', unsafe_allow_html=True)
     with st.form("login_form"):
-        # Sequência solicitada: EMPURRADOR - USUÁRIO - SENHA
         empurrador_login = st.selectbox("EMPURRADOR", options=list(LOGINS_VALIDOS.keys()))
         user_input = st.text_input("USUÁRIO")
         pw_input = st.text_input("SENHA", type="password")
@@ -79,11 +78,13 @@ if st.session_state.pagina == "login":
         if st.form_submit_button("ENTRAR"):
             credenciais = LOGINS_VALIDOS.get(empurrador_login)
             if user_input == credenciais["user"] and pw_input == credenciais["pass"]:
-                st.session_state.pagina = "abastecimento"
+                st.markdown(f'<div class="msg-sucesso">👍 SEJA BEM VINDO {user_input} ao Sistema Zion !</div>', unsafe_allow_html=True)
+                time.sleep(2) # Pequena pausa para ler a mensagem
+                st.session_state.pagina = "menu" # Vai para o Menu após o login
                 st.session_state.navio_atual = empurrador_login
                 st.rerun()
             else:
-                st.error("Credenciais incorretas para este empurrador.")
+                st.markdown('<div class="msg-erro">👎 SUAS CREDENCIAS ESTÃO INCONSISTENTE ENTRE EM CONTATO PELO ZAP 91-9-9349-7079 E DIGA QUE NÃO ESTA CONSEGUINDO ACESSA O SITEMA .</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
 #                             MENU DE NAVEGAÇÃO
