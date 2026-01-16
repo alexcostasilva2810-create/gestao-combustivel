@@ -156,15 +156,13 @@ if st.session_state.pagina == "abastecimento":
         if bt2.button("🛑 PARAR", use_container_width=True):
             st.session_state.t_rodando = False; st.rerun()
 
-    # CAMPO DE UPLOAD DE IMAGEM
-    st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos_upload:
         foto_a = st.file_uploader("CARREGAR FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
         foto_d = st.file_uploader("CARREGAR FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
 
-    st.markdown("ASSINATURA DIGITAL")
+    # Texto de assinatura alterado conforme solicitado
+    st.markdown("ASSINATURA DIGITAL :")
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
-    st.markdown('</div>', unsafe_allow_html=True) 
 
     st.markdown("---")
     
@@ -182,7 +180,6 @@ if st.session_state.pagina == "abastecimento":
             pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align="C")
             pdf.ln(10)
             
-            # Texto do comunicado
             pdf.set_font("Arial", "", 12)
             corpo = (f"Comunico que o empurrador {navio} está apto a receber o consumo de {qtd_pedida:,} lts, "
                      f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
@@ -194,29 +191,29 @@ if st.session_state.pagina == "abastecimento":
             pdf.multi_cell(0, 8, corpo)
             pdf.ln(5)
             
-            # Fotos lado a lado
             y_fotos = pdf.get_y()
             if foto_a:
                 pdf.image(Image.open(foto_a), x=15, y=y_fotos, w=85)
             if foto_d:
                 pdf.image(Image.open(foto_d), x=110, y=y_fotos, w=85)
             
-            # Ajuste de Assinatura: Próximo à linha
+            # Ajuste de Assinatura: Bem em cima da linha
             if canvas_result.image_data is not None:
                 img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
-                pdf.image(buf, x=75, y=215, w=60) # Posição Y ajustada para ficar colada na linha
+                pdf.image(buf, x=75, y=212, w=60) # Posição Y reduzida para aproximar da linha
             
-            # Rodapé: Linha e Dados Brasil + Geolocation
+            # Rodapé: Linha e Dados Brasília
             pdf.set_y(245)
-            pdf.line(30, 245, 180, 245) # Linha horizontal
+            pdf.line(30, 245, 180, 245) 
             
-            # Captura de geolocalização (Simulação via IP no backend)
-            geo_info = "Belém, Pará - Brasil" # Substituível por API de geo se necessário
-            data_br = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
+            # Configuração de Hora de Brasília (UTC-3)
+            fuso_br = timezone(timedelta(hours=-3))
+            agora_br = datetime.now(fuso_br).strftime("%d/%m/%Y às %H:%M:%S")
+            geo_info = "Belém, Pará - Brasil"
             
             pdf.set_font("Arial", "I", 9)
-            pdf.cell(0, 10, f"Assinado digitalmente em: {data_br}", ln=True, align="C")
+            pdf.cell(0, 10, f"Assinado digitalmente em: {agora_br}", ln=True, align="C")
             pdf.cell(0, 5, f"Localização: {geo_info}", ln=True, align="C")
             
             st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
