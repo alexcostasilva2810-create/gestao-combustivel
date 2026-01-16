@@ -231,35 +231,34 @@ if st.session_state.pagina == "registro_nf":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL - COMBUSTÍVEL</div>', unsafe_allow_html=True)
 
-    # 1. Campo de Entrada da Chave
-    st.subheader("Puxar Dados da Nota")
-    chave_acesso = st.text_input("DIGITE OU COLE A CHAVE DE ACESSO (44 DÍGITOS)", 
-                                 max_chars=44, 
-                                 help="A chave está localizada no canto superior direito do DANFE")
+    # 1. Entrada da Chave de Acesso
+    st.subheader("Consultar Nota Fiscal")
+    chave_acesso = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44, key="chave_nf")
 
-    # Botão simulando a chamada da API
-    if st.button("🔍 CONSULTAR E PREENCHER"):
-        if len(chave_acesso) == 44:
-            st.info("Consultando Web Service da SEFAZ...")
-            # Aqui no futuro conectamos a API. Por enquanto, vamos simular o preenchimento:
-            st.session_state.dados_nf = {
-                "num_nf": "000.125.893", "serie": "003",
-                "emitente": "IPIRANGA PRODUTOS DE PETROLEO S.A.",
-                "cnpj_emit": "33.337.122/0075-63",
-                "valor": 26704.50, "qtd": 5000.0,
-                "produto": "ORIGINAL DIESEL MARITIMO"
-            }
-            st.success("Dados recuperados com sucesso!")
-        else:
-            st.error("Chave inválida! A chave deve conter 44 dígitos numéricos.")
-
-    st.markdown("---")
-
-    # 2. Campos de Dados (Preenchidos automaticamente pela consulta)
-    # Usamos o st.session_state para manter os dados na tela após a busca
+    # Inicializa o estado dos dados se não existir
     if 'dados_nf' not in st.session_state:
         st.session_state.dados_nf = {"num_nf": "", "serie": "", "emitente": "", "cnpj_emit": "", "valor": 0.0, "qtd": 0.0, "produto": ""}
 
+    if st.button("🔍 PUXAR DADOS DA NF"):
+        if len(chave_acesso) == 44:
+            st.info("Conectando ao Web Service SEFAZ...")
+            # Simulação do preenchimento com os dados da imagem da NF enviada
+            st.session_state.dados_nf = {
+                "num_nf": "000.125.893",
+                "serie": "003",
+                "emitente": "IPIRANGA PRODUTOS DE PETROLEO S.A.",
+                "cnpj_emit": "33.337.122/0075-63",
+                "valor": 26704.50,
+                "qtd": 5000.0,
+                "produto": "ORIGINAL DIESEL MARITIMO"
+            }
+            st.success("Dados da Nota Ipiranga carregados!")
+        else:
+            st.error("Erro: A chave deve ter exatamente 44 dígitos.")
+
+    st.markdown("---")
+
+    # 2. Campos preenchidos automaticamente
     col_nf1, col_nf2 = st.columns(2)
     with col_nf1:
         st.text_input("NÚMERO DA NF", value=st.session_state.dados_nf["num_nf"])
@@ -273,11 +272,11 @@ if st.session_state.pagina == "registro_nf":
 
     st.text_area("DESCRIÇÃO DO PRODUTO", value=st.session_state.dados_nf["produto"])
 
-    # 3. Botão Final de Registro
-    if st.button("💾 CONFIRMAR RECEBIMENTO DA NF", use_container_width=True, type="primary"):
-        # Lógica para salvar no seu banco de dados (SQLite/Google Sheets)
+    # 3. Botão de Confirmação com correção de parêntese
+    if st.button("💾 CONFIRMAR REGISTRO DA NF", use_container_width=True):
         st.balloons()
-        st.success(f"Nota Fiscal {st.session_state.dados_nf['num_nf']} registrada no sistema Zion!")
+        st.success(f"Nota Fiscal {st.session_state.dados_nf['num_nf']} salva com sucesso!")
 
-
-                    
+    # Rodapé informativo corrigido
+    st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+        ⚠️ Certifique-se de que os dados conferem com o DANFE físico antes de salvar.</div>''', unsafe_allow_html=True)
