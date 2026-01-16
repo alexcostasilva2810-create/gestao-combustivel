@@ -222,4 +222,62 @@ if st.session_state.pagina == "abastecimento":
             st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
 
         st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
+            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True
+
+# #-------------------------------------------------------------------------#
+#                 BLOCO 5: ENTRADA DE NOTA FISCAL (VIA CHAVE)
+# #-------------------------------------------------------------------------#
+if st.session_state.pagina == "registro_nf":
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL - COMBUSTÍVEL</div>', unsafe_allow_html=True)
+
+    # 1. Campo de Entrada da Chave
+    st.subheader("Puxar Dados da Nota")
+    chave_acesso = st.text_input("DIGITE OU COLE A CHAVE DE ACESSO (44 DÍGITOS)", 
+                                 max_chars=44, 
+                                 help="A chave está localizada no canto superior direito do DANFE")
+
+    # Botão simulando a chamada da API
+    if st.button("🔍 CONSULTAR E PREENCHER"):
+        if len(chave_acesso) == 44:
+            st.info("Consultando Web Service da SEFAZ...")
+            # Aqui no futuro conectamos a API. Por enquanto, vamos simular o preenchimento:
+            st.session_state.dados_nf = {
+                "num_nf": "000.125.893", "serie": "003",
+                "emitente": "IPIRANGA PRODUTOS DE PETROLEO S.A.",
+                "cnpj_emit": "33.337.122/0075-63",
+                "valor": 26704.50, "qtd": 5000.0,
+                "produto": "ORIGINAL DIESEL MARITIMO"
+            }
+            st.success("Dados recuperados com sucesso!")
+        else:
+            st.error("Chave inválida! A chave deve conter 44 dígitos numéricos.")
+
+    st.markdown("---")
+
+    # 2. Campos de Dados (Preenchidos automaticamente pela consulta)
+    # Usamos o st.session_state para manter os dados na tela após a busca
+    if 'dados_nf' not in st.session_state:
+        st.session_state.dados_nf = {"num_nf": "", "serie": "", "emitente": "", "cnpj_emit": "", "valor": 0.0, "qtd": 0.0, "produto": ""}
+
+    col_nf1, col_nf2 = st.columns(2)
+    with col_nf1:
+        st.text_input("NÚMERO DA NF", value=st.session_state.dados_nf["num_nf"])
+        st.text_input("EMITENTE", value=st.session_state.dados_nf["emitente"])
+        st.text_input("CNPJ EMITENTE", value=st.session_state.dados_nf["cnpj_emit"])
+    
+    with col_nf2:
+        st.text_input("SÉRIE", value=st.session_state.dados_nf["serie"])
+        st.number_input("VALOR TOTAL (R$)", value=st.session_state.dados_nf["valor"], format="%.2f")
+        st.number_input("QUANTIDADE (LITROS)", value=st.session_state.dados_nf["qtd"])
+
+    st.text_area("DESCRIÇÃO DO PRODUTO", value=st.session_state.dados_nf["produto"])
+
+    # 3. Botão Final de Registro
+    if st.button("💾 CONFIRMAR RECEBIMENTO DA NF", use_container_width=True, type="primary"):
+        # Lógica para salvar no seu banco de dados (SQLite/Google Sheets)
+        st.balloons()
+        st.success(f"Nota Fiscal {st.session_state.dados_nf['num_nf']} registrada no sistema Zion!")
+
+
+                    
