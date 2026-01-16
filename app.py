@@ -145,10 +145,10 @@ elif st.session_state.pagina == "tabela_consumo":
     st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 4: ABASTECIMENTO (APENAS ESTE BLOCO)
+#            TELA 4: ABASTECIMENTO (CORRIGIDA E TESTADA)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
-    # BOTÕES DE NAVEGAÇÃO E RESET NO TOPO
+    # BOTÕES DE NAVEGAÇÃO NO TOPO
     col_v1, col_v2 = st.columns(2)
     with col_v1:
         if st.button("⬅️ MENU CENTRAL", use_container_width=True): 
@@ -208,29 +208,42 @@ elif st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False; st.rerun()
 
     with col_fotos_upload:
-        foto_a = st.file_uploader("FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
-        foto_d = st.file_uploader("FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
+        st.file_uploader("FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
+        st.file_uploader("FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
 
     st.markdown("ASSINATURA DIGITAL :")
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
 
     if not transbordou:
+        # BOTÃO GERAR COMUNICADO FINAL
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            # LÓGICA DO PDF
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", 'B', 16)
-            pdf.cell(200, 10, "COMUNICADO DE ABASTECIMENTO", ln=True, align='C')
-            pdf.ln(10)
-            pdf.set_font("Arial", '', 12)
-            pdf.cell(200, 10, f"EMPURRADOR: {navio}", ln=True)
-            pdf.cell(200, 10, f"DATA: {data_rel}", ln=True)
-            pdf.cell(200, 10, f"VOLUME TOTAL: {valor_formatado} Lts", ln=True)
-            pdf.cell(200, 10, f"TEMPO DE OPERACAO: {st.session_state.tempo_final_str}", ln=True)
-            
-            pdf_bytes = pdf.output(dest='S').encode('latin-1')
-            st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=pdf_bytes, file_name=f"ZION_{navio}.pdf", mime="application/pdf")
-            st.success("PDF gerado com sucesso!")
+            try:
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", 'B', 16)
+                pdf.cell(190, 10, "COMUNICADO DE ABASTECIMENTO", ln=True, align='C')
+                pdf.ln(10)
+                pdf.set_font("Arial", '', 12)
+                pdf.cell(190, 10, f"EMPURRADOR: {navio}", ln=True)
+                pdf.cell(190, 10, f"DATA: {data_rel.strftime('%d/%m/%Y')}", ln=True)
+                pdf.cell(190, 10, f"VOLUME TOTAL: {valor_formatado} Lts", ln=True)
+                pdf.cell(190, 10, f"TEMPO DE OPERACAO: {st.session_state.tempo_final_str}", ln=True)
+                pdf.cell(190, 10, f"RESPONSAVEL: {st.session_state.usuario_logado}", ln=True)
+                
+                # Correção do erro de saída para bytes
+                pdf_output = pdf.output() 
+                if isinstance(pdf_output, str): pdf_output = pdf_output.encode('latin-1')
+                
+                st.download_button(
+                    label="📥 CLIQUE AQUI PARA BAIXAR O PDF",
+                    data=pdf_output,
+                    file_name=f"Abastecimento_{navio}_{data_rel}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"Erro ao gerar PDF: {e}")
 
+    # ADVERTÊNCIA FINAL NÍTIDA
     st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-        ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
+        ⚠️ Sistema Zion v1.0 - Alex C.Slva.</div>''', unsafe_allow_html=True)
