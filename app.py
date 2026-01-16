@@ -135,7 +135,6 @@ if st.session_state.pagina == "abastecimento":
     total_geral = saldo_bb + saldo_be + remanescente + qtd_pedida
     transbordou = total_geral > CAPACIDADES[navio]
 
-    # --- AJUSTE DOS ALERTAS: TAMANHO 20 E NEGRITO ---
     if transbordou:
         st.markdown(f'''
             <div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; 
@@ -171,7 +170,7 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
             st.rerun()
 
-    # --- CAMPO DE UPLOAD DE IMAGEM ---
+    # CAMPO DE UPLOAD DE IMAGEM (Restaurado conforme solicitado)
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos_upload:
         foto_a = st.file_uploader("CARREGAR FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
@@ -182,6 +181,8 @@ if st.session_state.pagina == "abastecimento":
     st.markdown('</div>', unsafe_allow_html=True) 
 
     st.markdown("---")
+    
+    # --- RESTAURAÇÃO DO BOTÃO DE PDF E ALERTA CIOP ---
     if not transbordou:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             pdf = FPDF()
@@ -209,4 +210,14 @@ if st.session_state.pagina == "abastecimento":
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
                 pdf.image(buf, x=70, y=210, w=60)
             
+            # Gera o botão de download após clicar em Gerar
             st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
+
+        # Alerta final para o CIOP (Tamanho 20, Negrito, Verde com fundo Branco)
+        st.markdown(f'''
+            <div style="color: #008000; background-color: #FFFFFF; padding: 15px; 
+            border-radius: 10px; text-align: center; font-size: 20px; 
+            font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.
+            </div>
+        ''', unsafe_allow_html=True)
