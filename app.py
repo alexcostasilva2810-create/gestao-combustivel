@@ -12,7 +12,7 @@ st.set_page_config(page_title="ZION - ABASTECIMENTO NAVAL", layout="centered")
 
 st.markdown("""
     <style>
-    /* Plano de fundo aprovado: Navio Cargueiro e Mar */
+    /* Fundo Naval Aprovado */
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1524522173746-f628baad3644?q=80&w=2000&auto=format&fit=crop");
         background-size: cover;
@@ -24,7 +24,7 @@ st.markdown("""
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.75); z-index: -1;
     }
-    /* Letras brancas para contraste conforme solicitado */
+    /* Rótulos Brancos para Acessibilidade */
     label, .stMarkdown p { 
         font-size: 19px !important; 
         color: #FFFFFF !important;  
@@ -67,7 +67,6 @@ st.markdown('<h1 style="color:white; text-align:center; font-size: 45px; margin-
 st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
 navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
-# Alerta de capacidade restituído
 st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts")
 
 col1, col2 = st.columns(2)
@@ -77,7 +76,7 @@ with col1:
     saldo_bb = st.number_input("SALDO BB (LTS)", min_value=0)
     saldo_be = st.number_input("SALDO BE (LTS)", min_value=0)
     remanescente = st.number_input("REMANESCENTE (LTS)", min_value=0)
-    foto_antes = st.file_uploader("📷 FOTO ANTES DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
+    st.file_uploader("📷 FOTO ANTES DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
 
 with col2:
     qtd_pedida = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
@@ -92,7 +91,6 @@ with col2:
     if c2.button("🛑 PARAR", use_container_width=True):
         st.session_state.t_rodando = False
     
-    # Cronômetro funcionando segundo a segundo
     if st.session_state.t_rodando:
         segundos = int(time.time() - st.session_state.t_inicio)
         st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
@@ -102,14 +100,14 @@ with col2:
     else:
         placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
     
-    foto_depois = st.file_uploader("📷 FOTO DEPOIS DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
+    st.file_uploader("📷 FOTO DEPOIS DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_ok")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_restituido")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (LÓGICA BLINDADA)
+#                     GERAÇÃO DO PDF (RESTAURADA E COMPLETA)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -121,21 +119,26 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         
         pdf.set_font("Arial", "", 12)
         pdf.ln(10)
+        # Reinscrevendo todos os campos no PDF para não vir vazio
         pdf.cell(200, 10, f"Empurrador: {navio_selecionado}", ln=True)
-        pdf.cell(200, 10, f"Data: {data_abast.strftime('%d/%m/%Y')}", ln=True)
-        pdf.cell(200, 10, f"Tempo Total: {st.session_state.tempo_final_str}", ln=True)
+        pdf.cell(200, 10, f"Data da Operacao: {data_abast.strftime('%d/%m/%Y')}", ln=True)
+        pdf.cell(200, 10, f"Saldo Inicial BB: {saldo_bb} LTS", ln=True)
+        pdf.cell(200, 10, f"Saldo Inicial BE: {saldo_be} LTS", ln=True)
         pdf.cell(200, 10, f"Quantidade Pedida: {qtd_pedida} LTS", ln=True)
+        pdf.cell(200, 10, f"Tempo Total de Operacao: {st.session_state.tempo_final_str}", ln=True)
+        pdf.cell(200, 10, f"Remanescente: {remanescente} LTS", ln=True)
         
-        # Correção para evitar erro de 'bytearray'
-        pdf_bytes = bytes(pdf.output(dest='S'))
-        
+        pdf_bytes = pdf.output(dest='S')
+        if isinstance(pdf_bytes, str):
+            pdf_bytes = pdf_bytes.encode('latin-1')
+
         st.download_button(
-            label="📥 BAIXAR RELATÓRIO PDF",
+            label="📥 BAIXAR RELATÓRIO COMPLETO",
             data=pdf_bytes,
-            file_name=f"Relatorio_{navio_selecionado}.pdf",
+            file_name=f"Relatorio_Zion_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("PDF gerado com sucesso! Clique acima para baixar.")
+        st.success("O relatório foi processado com todos os dados!")
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {e}")
