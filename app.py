@@ -23,7 +23,6 @@ st.markdown("""
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.75); z-index: -1;
     }
-    /* Rótulos em branco conforme solicitado para acessibilidade */
     label, .stMarkdown p { 
         font-size: 19px !important; 
         color: #FFFFFF !important;  
@@ -65,7 +64,6 @@ if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str =
 st.markdown('<h1 style="color:white; text-align:center; font-size: 45px; margin-bottom: 5px;">ZION</h1>', unsafe_allow_html=True)
 st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
-# Seleção do Empurrador e Alerta de Capacidade
 navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
 st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts")
 
@@ -76,7 +74,6 @@ with col1:
     saldo_bb = st.number_input("SALDO BB (LTS)", min_value=0)
     saldo_be = st.number_input("SALDO BE (LTS)", min_value=0)
     remanescente = st.number_input("REMANESCENTE (LTS)", min_value=0)
-    # Campo de foto reintegrado
     foto_antes = st.file_uploader("📷 FOTO ANTES DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
 
 with col2:
@@ -92,7 +89,6 @@ with col2:
     if c2.button("🛑 PARAR", use_container_width=True):
         st.session_state.t_rodando = False
     
-    # Cronômetro funcional
     if st.session_state.t_rodando:
         segundos = int(time.time() - st.session_state.t_inicio)
         st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
@@ -106,10 +102,10 @@ with col2:
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_v3")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (CORREÇÃO DO ERRO)
+#                     GERAÇÃO DO PDF (CORREÇÃO DEFINITIVA)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -126,16 +122,16 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf.cell(200, 10, f"Tempo Total: {st.session_state.tempo_final_str}", ln=True)
         pdf.cell(200, 10, f"Quantidade Pedida: {qtd_pedida} LTS", ln=True)
         
-        # Correção definitiva do erro de codificação
-        pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='ignore')
+        # A correção aqui: removemos o .encode('latin-1') pois o fpdf já entrega bytes
+        pdf_bytes = pdf.output(dest='S')
         
         st.download_button(
-            label="📥 CLIQUE AQUI PARA BAIXAR O PDF",
+            label="📥 BAIXAR RELATÓRIO PDF",
             data=pdf_bytes,
-            file_name=f"Abastecimento_{navio_selecionado}_{datetime.now().strftime('%Y%m%d')}.pdf",
+            file_name=f"Zion_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("PDF gerado! O botão de download apareceu logo acima.")
+        st.success("PDF gerado com sucesso!")
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {e}")
