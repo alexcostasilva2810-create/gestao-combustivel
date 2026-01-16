@@ -39,6 +39,17 @@ st.markdown("""
         font-size: 36px; font-weight: bold; color: #d32f2f; text-align: center; 
         padding: 10px; background: white; border-radius: 10px; border: 3px solid #007bff; 
     }
+    /* Alerta personalizado solicitado */
+    .alerta-sucesso-custom {
+        background-color: rgba(0, 128, 0, 0.7); 
+        color: white; 
+        padding: 15px; 
+        border-radius: 5px; 
+        font-size: 14px; 
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -95,10 +106,10 @@ with col2:
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_fix")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_final")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (CORREÇÃO DE LINHA E FOTOS)
+#                     GERAÇÃO DO PDF E ALERTA CUSTOMIZADO
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -134,21 +145,19 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         # Inclusão das Fotos
         y_fotos = pdf.get_y()
         if foto_antes:
-            img_a = Image.open(foto_antes)
-            pdf.image(img_a, x=10, y=y_fotos, w=80)
+            pdf.image(Image.open(foto_antes), x=10, y=y_fotos, w=80)
         if foto_depois:
-            img_d = Image.open(foto_depois)
-            pdf.image(img_d, x=110, y=y_fotos, w=80)
+            pdf.image(Image.open(foto_depois), x=110, y=y_fotos, w=80)
         
-        # Área de Assinatura Corrigida (Linha menor e imagem)
+        # Assinatura (Centralizada acima da linha)
         pdf.set_y(230)
         if canvas_result.image_data is not None:
             signature_img = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
-            signature_buffer = io.BytesIO()
-            signature_img.save(signature_buffer, format='PNG')
-            pdf.image(signature_buffer, x=75, y=210, w=60) # Centralizada acima da linha
+            sig_buf = io.BytesIO()
+            signature_img.save(sig_buf, format='PNG')
+            pdf.image(sig_buf, x=75, y=210, w=60)
 
-        # Linha centralizada e curta
+        # Linha curta e centralizada
         pdf.line(60, 235, 150, 235) 
         pdf.set_y(236)
         pdf.set_font("Arial", "I", 8)
@@ -156,6 +165,7 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf.cell(0, 10, f"Assinado digitalmente em: {data_hora}", ln=True, align="C")
         
         pdf_bytes = pdf.output(dest='S')
+        
         st.download_button(
             label="📥 BAIXAR COMUNICADO FINAL CORRIGIDO",
             data=bytes(pdf_bytes),
@@ -163,6 +173,9 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("Tudo corrigido! Linha, assinatura e fotos incluídas.")
+        
+        # Mensagem de alerta customizada conforme sua imagem
+        st.markdown('<div class="alerta-sucesso-custom">Tudo corrigido! Linha, assinatura e fotos incluídas.</div>', unsafe_allow_html=True)
+
     except Exception as e:
         st.error(f"Erro ao gerar: {e}")
