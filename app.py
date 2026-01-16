@@ -1,17 +1,14 @@
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 from fpdf import FPDF
 from streamlit_drawable_canvas import st_canvas
-import time
 from PIL import Image
 import io
-from datetime import datetime, timezone, timedelta
-import time
 
 # #-------------------------------------------------------------------------#
-#                             CONFIGURAÇÕES VISUAIS
+#                           CONFIGURAÇÕES VISUAIS
 # #-------------------------------------------------------------------------#
-st.set_page_config(page_title="ZION - SISTEMA DE GESTÃO", layout="centered")
+st.set_page_config(page_title="ZION - Transdourada", layout="wide")
 
 st.markdown("""
     <style>
@@ -26,52 +23,33 @@ st.markdown("""
         background: rgba(0, 0, 0, 0.75); z-index: -1;
     }
     label, .stMarkdown p { font-size: 16px !important; color: #FFFFFF !important; font-weight: bold !important; text-shadow: 1px 1px 3px #000; }
-    .banner-interno-verde { color: #28a745; text-align: center; font-weight: 900; font-size: 24px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px; }
-    .quadro-seguro { color: #00FF00 !important; background: rgba(0, 0, 0, 0.8) !important; padding: 10px; border-radius: 8px; border: 2px solid #00FF00; font-weight: bold; text-align: center; font-size: 16px; }
+    .main-nav {background-color: rgba(240, 242, 246, 0.9); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;}
+    .banner-interno-verde { color: #28a745; text-align: center; font-weight: 900; font-size: 24px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px; border: 2px solid #28a745; }
     </style>
     """, unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#               LÓGICA DE NAVEGAÇÃO E ESTADO
+#                       LÓGICA DE ESTADO (SESSION STATE)
 # #-------------------------------------------------------------------------#
 if 'pagina' not in st.session_state: st.session_state.pagina = "login"
 if 'form_id' not in st.session_state: st.session_state.form_id = 0
-if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
-if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
+if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 
-# Dicionário de Login: EMPURRADOR - USUÁRIO - SENHA
 LOGINS_VALIDOS = {
     "ANGELO": {"user": "ALEX", "pass": "2463"},
     "ANGICO": {"user": "angico_zion", "pass": "zion02"},
     "AROEIRA": {"user": "aroeira_zion", "pass": "zion03"},
     "BRENO": {"user": "breno_zion", "pass": "zion04"},
-    "CANJERANA": {"user": "canjerana_zion", "pass": "zion05"},
-    "CUMARU": {"user": "cumaru_zion", "pass": "zion06"},
-    "IPE": {"user": "ipe_zion", "pass": "zion07"},
-    "SAMAUMA": {"user": "samauma_zion", "pass": "zion08"},
-    "JACARANDA": {"user": "jacaranda_zion", "pass": "zion09"},
-    "LUIZ FELIPE": {"user": "luizf_zion", "pass": "zion10"},
-    "QUARUBA": {"user": "quaruba_zion", "pass": "zion11"},
-    "TIMBORANA": {"user": "timborana_zion", "pass": "zion12"},
     "JATOBA": {"user": "jatoba_zion", "pass": "zion13"},
-    "CEDRO": {"user": "cedro_zion", "pass": "zion14"},
-    "MOGNO": {"user": "mogno_zion", "pass": "zion15"},
-    "FREIJO": {"user": "freijo_zion", "pass": "zion16"},
-    "SUCUPIRA": {"user": "sucupira_zion", "pass": "zion17"}
+    "CEDRO": {"user": "cedro_zion", "pass": "zion14"}
 }
 
-def reset_lancamento():
-    st.session_state.form_id += 1
-    st.session_state.t_rodando = False
-    st.session_state.tempo_final_str = "00:00:00"
-
 # #-------------------------------------------------------------------------#
-#                             TELA DE LOGIN
+#                               TELA DE LOGIN
 # #-------------------------------------------------------------------------#
-if st.session_state.pagina == "login":
-    st.markdown('<h1 style="color:white; text-align:center;">ACESSO AO SISTEMA</h1>', unsafe_allow_html=True)
+if not st.session_state.autenticado:
+    st.markdown('<h1 style="color:white; text-align:center;">ACESSO AO SISTEMA ZION</h1>', unsafe_allow_html=True)
     with st.form("login_form"):
-        # Sequência solicitada: EMPURRADOR - USUÁRIO - SENHA
         empurrador_login = st.selectbox("EMPURRADOR", options=list(LOGINS_VALIDOS.keys()))
         user_input = st.text_input("USUÁRIO")
         pw_input = st.text_input("SENHA", type="password")
@@ -79,54 +57,20 @@ if st.session_state.pagina == "login":
         if st.form_submit_button("ENTRAR"):
             credenciais = LOGINS_VALIDOS.get(empurrador_login)
             if user_input == credenciais["user"] and pw_input == credenciais["pass"]:
-                st.session_state.pagina = "abastecimento"
+                st.session_state.autenticado = True
+                st.session_state.pagina = "inicio"
                 st.session_state.navio_atual = empurrador_login
                 st.rerun()
             else:
-                st.error("Credenciais incorretas para este empurrador.")
-
-# 1. Importações e Configurações Iniciais
-import streamlit as st
-# ... suas outras importações ...
-
-# 2. Definição dos Estilos CSS (Banner verde, botões, etc.)
-st.markdown(""" <style> ... </style> """, unsafe_allow_html=True)
-
-# 3. Inicialização do Session State (Página atual)
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "inicio"
-
-import streamlit as st
-from datetime import datetime
-
-# 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="ZION - Transdourada", layout="wide")
-
-# 2. INICIALIZAÇÃO DO ESTADO DA PÁGINA
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "inicio"
-if 'form_id' not in st.session_state:
-    st.session_state.form_id = 0
-
-# 3. ESTILOS CSS (BANNER E MENU)
-st.markdown("""
-    <style>
-    .main-nav {background-color: #f0f2f6; padding: 10px; border-radius: 10px; margin-bottom: 20px; text-align: center;}
-    .banner-interno-verde {
-        background-color: #ffffff; color: #008000; padding: 15px; 
-        border-radius: 10px; text-align: center; font-size: 24px; 
-        font-weight: bold; border: 2px solid #008000; margin-bottom: 20px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+                st.error("Credenciais incorretas.")
+    st.stop() # Interrompe o código aqui se não estiver logado
 
 # #-------------------------------------------------------------------------#
-#      1. MENU DE NAVEGAÇÃO (BOTÕES DO TOPO)
+#                        MENU DE NAVEGAÇÃO (PÓS-LOGIN)
 # #-------------------------------------------------------------------------#
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
-st.markdown("📋 MENU DE NAVEGAÇÃO")
+st.markdown(f"🚢 **EMPURRADOR CONECTADO: {st.session_state.navio_atual}**")
 c1, c2, c3, c4 = st.columns(4)
-
 with c1:
     if st.button("🏠 TELA INICIAL", use_container_width=True):
         st.session_state.pagina = "inicio"; st.rerun()
@@ -142,66 +86,32 @@ with c4:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#      2. RODAPÉ FIXO (CORREÇÃO DA LINHA 289 - PARÊNTESE FECHADO)
-# #-------------------------------------------------------------------------#
-st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
-
-# #-------------------------------------------------------------------------#
-#      3. LÓGICA DE EXIBIÇÃO DAS PÁGINAS (SEM INTERVALO VAZIO)
-# #-------------------------------------------------------------------------#
-
-if st.session_state.pagina == "inicio":
-    st.info("Bem-vindo ao sistema ZION. Selecione uma opção acima.")
-
-elif st.session_state.pagina == "menu":
-    st.write("Módulos de gestão Transdourada ativos.")
-
-elif st.session_state.pagina == "abastecimento":
-    # --- INÍCIO DO SEU BLOCO 4 (ABASTECIMENTO) ---
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
-    
-    # Adicione aqui o restante do seu código de formulário (Empurrador, Saldos, etc.)
-    st.success("Página de Abastecimento carregada com sucesso!")
-
-elif st.session_state.pagina == "registro_nf":
-    # --- INÍCIO DO SEU BLOCO 5 (NOTA FISCAL) ---
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL</div>', unsafe_allow_html=True)
-    
-    chave = st.text_input("COLE A CHAVE DE ACESSO AQUI", max_chars=44)
-    if st.button("🔍 PUXAR DADOS"):
-        # Simulação dos dados da NF Ipiranga
-        st.session_state.nf_view = {"nf": "000.125.893", "valor": 26704.50}
-        st.write(f"Nota Fiscal: {st.session_state.nf_view['nf']} carregada!")
-
-# #-------------------------------------------------------------------------#
-#                    LÓGICA DE PÁGINAS (BLOCOS 4 E 5)
+#                         LÓGICA DAS PÁGINAS
 # #-------------------------------------------------------------------------#
 
 if st.session_state.pagina == "inicio":
     st.markdown('<h1 style="color:white; text-align:center;">ZION - TELA INICIAL</h1>', unsafe_allow_html=True)
-    st.info("Selecione uma opção no menu acima.")
+    st.info("Bem-vindo! Selecione uma operação no menu acima.")
 
 elif st.session_state.pagina == "menu":
     st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL</h1>', unsafe_allow_html=True)
+    st.write("Gerenciamento de combustível Transdourada.")
 
 elif st.session_state.pagina == "abastecimento":
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
+    # --- BLOCO 4: ABASTECIMENTO ---
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
     
-    # Lista de capacidades conforme imagens anteriores
     CAPACIDADES = {"ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700, "JATOBA": 84000, "CEDRO": 22000}
-    navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), key="nav_sel")
+    navio = st.session_state.navio_atual # Usa o navio do login
     
+    st.write(f"**Empurrador:** {navio} (Capacidade: {CAPACIDADES.get(navio, 0):,} lts)")
     col_a, col_b = st.columns(2)
     with col_a:
-        s_bb = st.number_input("SALDO BB (LTS)", min_value=0, key="sbb")
-        s_be = st.number_input("SALDO BE (LTS)", min_value=0, key="sbe")
+        s_bb = st.number_input("SALDO BB (LTS)", min_value=0)
+        s_be = st.number_input("SALDO BE (LTS)", min_value=0)
     with col_b:
-        q_p = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0, key="qp")
-        rem = st.number_input("REMANESCENTE (LTS)", min_value=0, key="rm")
+        q_p = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
+        rem = st.number_input("REMANESCENTE (LTS)", min_value=0)
     
     total = s_bb + s_be + q_p + rem
     if total > CAPACIDADES.get(navio, 0):
@@ -210,22 +120,15 @@ elif st.session_state.pagina == "abastecimento":
         st.success(f"✅ VOLUME SEGURO: {total:,} lts")
 
 elif st.session_state.pagina == "registro_nf":
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
+    # --- BLOCO 5: REGISTRO DE NF ---
     st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL (IPIRANGA)</div>', unsafe_allow_html=True)
-    
     chave = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
     if st.button("🔍 PUXAR DADOS DA NOTA"):
-        # Simulação com dados da imagem image_3c0190
-        st.session_state.nf_data = {"num": "000.125.893", "emit": "IPIRANGA PRODUTOS DE PETROLEO S.A.", "val": 26704.50}
-        st.success("Dados carregados com sucesso!")
-
-    if 'nf_data' in st.session_state:
-        st.text_input("NÚMERO DA NF", value=st.session_state.nf_data["num"])
-        st.text_input("EMITENTE", value=st.session_state.nf_data["emit"])
-        st.number_input("VALOR TOTAL (R$)", value=st.session_state.nf_data["val"])
+        st.session_state.nf_data = {"num": "000.125.893", "emit": "IPIRANGA S.A.", "val": 26704.50}
+        st.success("Dados carregados!")
 
 # #-------------------------------------------------------------------------#
-#             RODAPÉ FINAL (CORREÇÃO DO ERRO DA LINHA 255)
+#             RODAPÉ FINAL (FIXO NO FIM DO SCRIPT)
 # #-------------------------------------------------------------------------#
 st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
     ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
