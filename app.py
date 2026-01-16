@@ -96,9 +96,11 @@ st.markdown(""" <style> ... </style> """, unsafe_allow_html=True)
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "inicio"
 
-# ---------------------------------------------------------
-# COLOCAR O BLOCO DE MENU AQUI (LOGO ABAIXO DO CSS)
-# ---------------------------------------------------------
+# #-------------------------------------------------------------------------#
+#      ESTRUTURA CORRIGIDA: MENU + CONDICIONAIS DE PÁGINA
+# #-------------------------------------------------------------------------#
+
+# 1. MENU DE NAVEGAÇÃO (FICA FORA DOS "IFs" PARA APARECER EM TUDO)
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
 st.markdown("📋 MENU DE NAVEGAÇÃO")
 c1, c2, c3, c4 = st.columns(4)
@@ -120,6 +122,29 @@ with c4:
         st.session_state.pagina = "registro_nf"
         st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
+
+# 2. BLOCOS DE PÁGINA (AQUI É ONDE OCORREU O ERRO DE INDENTAÇÃO)
+if st.session_state.pagina == "inicio":
+    # Certifique-se de que existe código aqui dentro
+    st.write("Bem-vindo à tela inicial.") 
+
+elif st.session_state.pagina == "menu":
+    # Certifique-se de que existe código aqui dentro
+    st.write("Menu Principal")
+
+elif st.session_state.pagina == "abastecimento":
+    # COLOQUE AQUI TODO O CONTEÚDO DO BLOCO 4 QUE SALVAMOS ANTERIORMENTE
+    st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
+    # ... resto do código do bloco 4 ...
+
+elif st.session_state.pagina == "registro_nf":
+    # COLOQUE AQUI TODO O CONTEÚDO DO BLOCO 5 (NOTA FISCAL)
+    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL</div>', unsafe_allow_html=True)
+    # ... resto do código do bloco 5 ...
+
+# 3. CORREÇÃO DO RODAPÉ (LINHA 224 QUE ESTAVA DANDO ERRO)
+st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
 # ---------------------------------------------------------
 
 # 4. Blocos de Conteúdo (Definição de qual página mostrar)
