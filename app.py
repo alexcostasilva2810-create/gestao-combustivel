@@ -158,15 +158,15 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
             st.rerun()
 
-    # --- ÁREA DE CAPTURA DE IMAGEM (Ajustada para Webcam/Câmera) ---
+    # --- AJUSTE DEFINITIVO DA CÂMERA ---
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos_cam:
-        # st.camera_input é o componente que aciona a câmera do notebook/celular
-        foto_a = st.camera_input("FOTO ANTES (A)", key=f"cam_a_{st.session_state.form_id}")
-        foto_d = st.camera_input("FOTO DEPOIS (D)", key=f"cam_d_{st.session_state.form_id}")
+        # Usamos labels curtos para evitar que o Streamlit gere o link de ajuda externo
+        foto_a = st.camera_input("FOTO ANTES", key=f"f_ant_{st.session_state.form_id}")
+        foto_d = st.camera_input("FOTO DEPOIS", key=f"f_dep_{st.session_state.form_id}")
 
     st.markdown("ASSINATURA DIGITAL")
-    canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"c_{st.session_state.form_id}")
+    canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
     st.markdown('</div>', unsafe_allow_html=True) 
 
     st.markdown("---")
@@ -187,7 +187,6 @@ if st.session_state.pagina == "abastecimento":
                      f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.")
             pdf.multi_cell(0, 8, texto)
             
-            # Lógica para inserir as fotos capturadas no PDF
             if foto_a:
                 pdf.image(Image.open(foto_a), x=10, y=100, w=90)
             if foto_d:
