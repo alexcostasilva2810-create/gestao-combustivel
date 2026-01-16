@@ -28,10 +28,13 @@ st.markdown("""
 # 3. INICIALIZAÇÃO DO ESTADO
 if 'pagina' not in st.session_state: st.session_state.pagina = "inicio"
 
-# 4. MENU DE NAVEGAÇÃO FIXO
+# #-------------------------------------------------------------------------#
+#      1. MENU DE NAVEGAÇÃO (BOTÕES DO TOPO)
+# #-------------------------------------------------------------------------#
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
-st.markdown("📋 **MENU DE NAVEGAÇÃO**")
+st.markdown("📋 MENU DE NAVEGAÇÃO")
 c1, c2, c3, c4 = st.columns(4)
+
 with c1:
     if st.button("🏠 TELA INICIAL", use_container_width=True):
         st.session_state.pagina = "inicio"; st.rerun()
@@ -46,32 +49,34 @@ with c4:
         st.session_state.pagina = "registro_nf"; st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 5. RODAPÉ FIXO (CORREÇÃO DEFINITIVA DO ERRO DE SINTAXE)
+# #-------------------------------------------------------------------------#
+#      2. RODAPÉ FIXO (CORREÇÃO DEFINITIVA DO ERRO NA LINHA 192)
+# #-------------------------------------------------------------------------#
+# Note o fechamento correto com ) no final da linha abaixo:
 st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
     ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
 
-# 6. LÓGICA DE EXIBIÇÃO (CADA PÁGINA COM CONTEÚDO PARA EVITAR IndentationError)
+# #-------------------------------------------------------------------------#
+#      3. LÓGICA DE EXIBIÇÃO DAS PÁGINAS (EVITA O IndentationError)
+# #-------------------------------------------------------------------------#
 
 if st.session_state.pagina == "inicio":
-    st.markdown('<h1 style="color:white; text-align:center;">BEM-VINDO AO ZION</h1>', unsafe_allow_html=True)
-    st.info("Selecione um módulo no menu acima para começar.")
+    st.info("Bem-vindo ao sistema ZION. Selecione uma opção acima.")
 
 elif st.session_state.pagina == "menu":
-    st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL</h1>', unsafe_allow_html=True)
-    st.write("Aqui você encontrará o dashboard geral de logística (Em desenvolvimento).")
+    st.write("Módulos de gestão Transdourada ativos (Em desenvolvimento).")
 
 elif st.session_state.pagina == "registro_nf":
-    st.markdown('<h1 style="color:white; text-align:center;">REGISTRO DE NOTA FISCAL</h1>', unsafe_allow_html=True)
-    # Exemplo do Bloco 5
-    chave = st.text_input("Chave de Acesso (44 dígitos)")
-    st.button("Puxar Dados da Nota")
+    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL</div>', unsafe_allow_html=True)
+    st.write("Página de Nota Fiscal (Em desenvolvimento).")
 
 elif st.session_state.pagina == "abastecimento":
-    # --- INÍCIO DO BLOCO 4 (TELA DE ABASTECIMENTO) ---
+    # --- INÍCIO DO BLOCO 4 (ABASTECIMENTO) ---
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
     
-    # Adicione abaixo o seu código de formulário (Empurrador, Calculo de Volume, etc)
-    st.success("Formulário de Abastecimento Carregado!")
+    # Adicione o restante do seu código do Bloco 4 aqui...
+    st.success("TELA DE ABASTECIMENTO CARREGADA")
 # #-------------------------------------------------------------------------#
 #                         TELA DE ABASTECIMENTO (BLOCO 4)
 # #-------------------------------------------------------------------------#
