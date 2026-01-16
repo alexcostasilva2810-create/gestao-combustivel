@@ -12,30 +12,21 @@ st.set_page_config(page_title="ZION - ABASTECIMENTO NAVAL", layout="centered")
 
 st.markdown("""
     <style>
-    /* Plano de fundo naval aprovado */
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1524522173746-f628baad3644?q=80&w=2000&auto=format&fit=crop");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
+        background-size: cover; background-position: center; background-attachment: fixed;
     }
     .stApp::before {
-        content: "";
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.75); z-index: -1;
     }
-    /* Rótulos em branco conforme solicitado */
     label, .stMarkdown p { 
-        font-size: 19px !important; 
-        color: #FFFFFF !important;  
-        font-weight: bold !important;
-        text-shadow: 1px 1px 3px #000;
+        font-size: 19px !important; color: #FFFFFF !important;  
+        font-weight: bold !important; text-shadow: 1px 1px 3px #000;
     }
     .stSelectbox div, .stNumberInput input, .stDateInput input, .stFileUploader section {
-        background-color: white !important;
-        color: black !important;
-        font-size: 19px !important;
-        border-radius: 8px !important;
+        background-color: white !important; color: black !important;
+        font-size: 19px !important; border-radius: 8px !important;
     }
     .banner-interno-verde {
         color: #28a745; text-align: center; font-weight: 900; font-size: 28px;
@@ -67,7 +58,7 @@ st.markdown('<h1 style="color:white; text-align:center; font-size: 45px; margin-
 st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
 navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
-st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts") #
+st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts")
 
 col1, col2 = st.columns(2)
 
@@ -85,19 +76,16 @@ with col2:
     
     c1, c2 = st.columns(2)
     if c1.button("▶️ INICIAR", use_container_width=True):
-        st.session_state.t_inicio = time.time()
-        st.session_state.t_rodando = True
+        st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True
     
     if c2.button("🛑 PARAR", use_container_width=True):
         st.session_state.t_rodando = False
     
-    # Cronômetro restaurado
     if st.session_state.t_rodando:
         segundos = int(time.time() - st.session_state.t_inicio)
         st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
         placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
-        time.sleep(1)
-        st.rerun()
+        time.sleep(1); st.rerun()
     else:
         placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
     
@@ -105,39 +93,57 @@ with col2:
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_fix")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_restored")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (RESTAURADA E LIMPA)
+#                     GERAÇÃO DO PDF (TEXTO RESTAURADO)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
     try:
         pdf = FPDF()
         pdf.add_page()
-        pdf.set_font("Arial", "B", 16)
-        pdf.cell(200, 10, "ZION - COMUNICADO DE ABASTECIMENTO", ln=True, align="C")
         
-        pdf.set_font("Arial", "", 12)
+        # Cabeçalho Azul ZION
+        pdf.set_font("Arial", "B", 20)
+        pdf.set_text_color(0, 102, 255)
+        pdf.cell(200, 10, "ZION", ln=True, align="C")
+        
+        pdf.set_font("Arial", "B", 14)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(200, 10, "Comunicado de Abastecimento", ln=True, align="C")
         pdf.ln(10)
-        pdf.cell(200, 10, f"Empurrador: {navio_selecionado}", ln=True)
-        pdf.cell(200, 10, f"Data da Operacao: {data_abast.strftime('%d/%m/%Y')}", ln=True)
-        pdf.cell(200, 10, f"Saldo BB: {saldo_bb} LTS", ln=True)
-        pdf.cell(200, 10, f"Saldo BE: {saldo_be} LTS", ln=True)
-        pdf.cell(200, 10, f"Quantidade Pedida: {qtd_pedida} LTS", ln=True)
-        pdf.cell(200, 10, f"Tempo Total: {st.session_state.tempo_final_str}", ln=True)
-        pdf.cell(200, 10, f"Remanescente Final: {remanescente} LTS", ln=True)
         
-        # Forma padrão de gerar o PDF em memória para Streamlit
-        pdf_out = pdf.output(dest='S')
+        # Texto Redigido Restaurado
+        pdf.set_font("Arial", "", 15)
+        total_atual = saldo_bb + saldo_be + remanescente
+        total_pos = total_atual + qtd_pedida
         
+        texto_corpo = (
+            f"Comunico que o empurrador {navio_selecionado} está apto a receber o consumo de {qtd_pedida:,} lts, "
+            f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), somados ao saldo remanescente de {remanescente:,} lts.\n\n"
+            f"Portanto, o saldo total após o abastecimento será de {total_pos:,} lts.\n"
+            f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio_selecionado]:,} lts.\n\n"
+            f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.\n\n"
+            f"Segue abaixo as fotos do antes e depois do abastecimento:"
+        )
+        pdf.multi_cell(0, 8, texto_corpo)
+        
+        # Rodapé de Assinatura
+        pdf.ln(50)
+        pdf.cell(0, 0, "", border="T", ln=1, align="C")
+        pdf.set_font("Arial", "I", 8)
+        data_hora = datetime.now().strftime('%d/%m/%Y às %H:%M:%S')
+        pdf.cell(0, 10, f"Assinado digitalmente em: {data_hora}", ln=True, align="C")
+        
+        pdf_bytes = pdf.output(dest='S')
         st.download_button(
-            label="📥 BAIXAR RELATÓRIO PDF",
-            data=bytes(pdf_out),
-            file_name=f"Relatorio_{navio_selecionado}.pdf",
+            label="📥 BAIXAR COMUNICADO RESTAURADO",
+            data=bytes(pdf_bytes),
+            file_name=f"Comunicado_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("Relatório gerado com sucesso!")
+        st.success("O texto original foi restaurado com sucesso!")
     except Exception as e:
-        st.error(f"Erro ao gerar PDF: {e}")
+        st.error(f"Erro ao gerar: {e}")
