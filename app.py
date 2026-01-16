@@ -103,7 +103,7 @@ if st.session_state.pagina != "login":
     st.markdown("---")
 
 # #-------------------------------------------------------------------------#
-#                         TELA DE ABASTECIMENTO (BLOCO INTEIRO)
+#                         TELA DE ABASTECIMENTO (BLOCO 4)
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "abastecimento":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
@@ -117,8 +117,10 @@ if st.session_state.pagina == "abastecimento":
         "FREIJO": 18000, "SUCUPIRA": 30000
     }
     
-    # Define o navio com base no login
-    navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), index=list(CAPACIDADES.keys()).index(st.session_state.navio_atual), key=f"n_{st.session_state.form_id}")
+    navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), 
+                         index=list(CAPACIDADES.keys()).index(st.session_state.navio_atual), 
+                         key=f"n_{st.session_state.form_id}")
+    
     st.markdown(f'<div style="color: #FFFF00; font-weight: bold;">Capacidade do Tanque: {CAPACIDADES[navio]:,} lts</div>', unsafe_allow_html=True)
 
     col_a, col_b = st.columns(2)
@@ -138,9 +140,9 @@ if st.session_state.pagina == "abastecimento":
     else:
         st.markdown(f'<div class="quadro-seguro">✅ VOLUME SEGURO: {total_geral:,} lts</div>', unsafe_allow_html=True)
 
-    # CRONÔMETRO PISCANTE
+    # CRONÔMETRO
     classe_piscante = "piscando" if st.session_state.t_rodando else ""
-    col_timer, col_fotos = st.columns([1, 2])
+    col_timer, col_fotos_cam = st.columns([1, 2])
     
     with col_timer:
         if st.session_state.t_rodando:
@@ -156,21 +158,16 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
             st.rerun()
 
-    # --- INÍCIO DO AJUSTE DE CAPTURA DE IMAGEM ---
+    # --- ÁREA DE CAPTURA DE IMAGEM (Ajustada para Webcam/Câmera) ---
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
-    with col_fotos:
-        f1, f2 = st.columns(2)
-        with f1: 
-            # Abre a câmera nativa do celular/tablet
-            foto_a = st.camera_input("FOTO ANTES (A)", key=f"fa_{st.session_state.form_id}")
-        with f2: 
-            # Abre a câmera nativa do celular/tablet
-            foto_d = st.camera_input("FOTO DEPOIS (D)", key=f"fd_{st.session_state.form_id}")
+    with col_fotos_cam:
+        # st.camera_input é o componente que aciona a câmera do notebook/celular
+        foto_a = st.camera_input("FOTO ANTES (A)", key=f"cam_a_{st.session_state.form_id}")
+        foto_d = st.camera_input("FOTO DEPOIS (D)", key=f"cam_d_{st.session_state.form_id}")
 
     st.markdown("ASSINATURA DIGITAL")
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"c_{st.session_state.form_id}")
     st.markdown('</div>', unsafe_allow_html=True) 
-    # --- FIM DO AJUSTE DE CAPTURA DE IMAGEM ---
 
     st.markdown("---")
     if not transbordou:
@@ -190,9 +187,12 @@ if st.session_state.pagina == "abastecimento":
                      f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.")
             pdf.multi_cell(0, 8, texto)
             
-            if foto_a and foto_d:
+            # Lógica para inserir as fotos capturadas no PDF
+            if foto_a:
                 pdf.image(Image.open(foto_a), x=10, y=100, w=90)
+            if foto_d:
                 pdf.image(Image.open(foto_d), x=110, y=100, w=90)
+                
             if canvas_result.image_data is not None:
                 img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
