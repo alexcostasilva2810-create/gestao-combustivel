@@ -134,45 +134,27 @@ if st.session_state.pagina == "abastecimento":
 
     total_geral = saldo_bb + saldo_be + remanescente + qtd_pedida
     transbordou = total_geral > CAPACIDADES[navio]
-
-    # Formatação do valor com ponto (ex: 14.700)
     valor_formatado = f"{total_geral:,}".replace(",", ".")
 
-    # ALERTAS COM TAMANHO 20 E TEXTO PERSONALIZADO
     if transbordou:
-        st.markdown(f'''
-            <div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; 
-            border-radius: 10px; text-align: center; font-size: 20px; 
-            font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!
-            </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(f'''<div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
+            🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>''', unsafe_allow_html=True)
     else:
-        st.markdown(f'''
-            <div style="color: #FFFFFF; background-color: #28a745; padding: 15px; 
-            border-radius: 10px; text-align: center; font-size: 20px; 
-            font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            ✅ VOLUME SEGURO: {valor_formatado} Lts Capacidade permitida!
-            </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(f'''<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
+            ✅ VOLUME SEGURO: {valor_formatado} Lts Capacidade permitida!</div>''', unsafe_allow_html=True)
 
     # CRONÔMETRO
     classe_piscante = "piscando" if st.session_state.t_rodando else ""
     col_timer, col_fotos_upload = st.columns([1, 2])
-    
     with col_timer:
         if st.session_state.t_rodando:
             st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(int(time.time() - st.session_state.t_inicio)))
-        
         st.markdown(f'<div style="background:white; color:red; font-size:24px; text-align:center; border:2px solid blue; padding:5px;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
         bt1, bt2 = st.columns(2)
         if bt1.button("▶️ INICIAR", use_container_width=True):
-            st.session_state.t_inicio = time.time()
-            st.session_state.t_rodando = True
-            st.rerun()
+            st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True; st.rerun()
         if bt2.button("🛑 PARAR", use_container_width=True):
-            st.session_state.t_rodando = False
-            st.rerun()
+            st.session_state.t_rodando = False; st.rerun()
 
     # CAMPO DE UPLOAD DE IMAGEM
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
@@ -187,40 +169,49 @@ if st.session_state.pagina == "abastecimento":
     st.markdown("---")
     
     if not transbordou:
-        # Botão de Gerar PDF
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Arial", "B", 16)
-            pdf.cell(200, 10, "ZION - Comunicado de Abastecimento", ln=True, align="C")
+            # Título conforme imagem
+            pdf.set_font("Arial", "B", 20)
+            pdf.set_text_color(0, 51, 204) # Azul
+            pdf.cell(200, 10, "ZION", ln=True, align="C")
+            pdf.set_font("Arial", "B", 14)
+            pdf.set_text_color(0, 0, 0) # Preto
+            pdf.cell(200, 10, "Comunicado de Abastecimento", ln=True, align="C")
             pdf.ln(10)
-            pdf.set_font("Arial", "", 12)
             
-            texto = (f"Comunico que o empurrador {navio} recebeu o consumo de {qtd_pedida:,} lts, "
+            # Texto do corpo conforme imagem
+            pdf.set_font("Arial", "", 11)
+            corpo = (f"Comunico que o empurrador {navio} está apto a receber o consumo de {qtd_pedida:,} lts, "
                      f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
-                     f"e estava com saldo remanescente de {remanescente:,} lts.\n\n"
-                     f"Portanto, o saldo total após o abastecimento é de {total_geral:,} lts.\n"
-                     f"Ressaltamos que a capacidade total do tanque do empurrador é de {CAPACIDADES[navio]:,} lts.\n\n"
-                     f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.")
-            pdf.multi_cell(0, 8, texto)
+                     f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
+                     f"Portanto, o saldo total após o abastecimento será de {total_geral:,} lts.\n"
+                     f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio]:,} lts.\n\n"
+                     f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.\n\n"
+                     f"Segue abaixo as fotos do antes e depois do abastecimento:")
+            pdf.multi_cell(0, 7, corpo)
+            pdf.ln(10)
             
+            # Posicionamento das imagens lado a lado (onde estavam as bandeirinhas)
             if foto_a:
-                pdf.image(Image.open(foto_a), x=10, y=100, w=90)
+                pdf.image(Image.open(foto_a), x=20, y=pdf.get_y(), w=70)
             if foto_d:
-                pdf.image(Image.open(foto_d), x=110, y=100, w=90)
-                
+                pdf.image(Image.open(foto_d), x=110, y=pdf.get_y(), w=70)
+            
+            # Assinatura e Rodapé
             if canvas_result.image_data is not None:
                 img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
-                pdf.image(buf, x=70, y=210, w=60)
+                pdf.image(buf, x=75, y=210, w=50)
+            
+            pdf.set_y(250)
+            pdf.line(40, 250, 170, 250)
+            pdf.set_font("Arial", "I", 8)
+            data_hora = datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
+            pdf.cell(0, 10, f"Assinado digitalmente em: {data_hora}", align="C")
             
             st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
 
-        # Alerta CIOP: Verde com fundo Branco, Tamanho 20, Negrito
-        st.markdown(f'''
-            <div style="color: #008000; background-color: #FFFFFF; padding: 15px; 
-            border-radius: 10px; text-align: center; font-size: 20px; 
-            font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.
-            </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
