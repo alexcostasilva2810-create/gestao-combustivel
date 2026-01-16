@@ -14,24 +14,24 @@ st.set_page_config(page_title="ZION TECNOLOGIA", layout="centered")
 
 st.markdown("""
     <style>
-    /* Imagem de fundo: Homens trabalhando em abastecimento offshore */
+    /* Plano de fundo: Navio Petroleiro (conforme imagem escolhida) */
     .stApp {
-        background-image: url("https://images.unsplash.com/photo-1516939884455-1445c8652f83?q=80&w=2000&auto=format&fit=crop");
+        background-image: url("https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?q=80&w=2000&auto=format&fit=crop");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
     
-    /* Overlay escuro para tirar a claridade e destacar o texto */
+    /* Camada de escurecimento para conforto visual e destaque das letras */
     .stApp::before {
         content: "";
         position: absolute;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.7); 
+        background: rgba(0, 0, 0, 0.75); 
         z-index: -1;
     }
 
-    /* Caixa de dados nítida e opaca */
+    /* Caixa de dados branca e opaca */
     .box-branco { 
         background-color: rgba(255, 255, 255, 0.98); 
         padding: 30px; 
@@ -40,22 +40,22 @@ st.markdown("""
         box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
     }
     
-    /* Acessibilidade: Letras em tamanho 14pt (aprox 19px) */
+    /* Acessibilidade: Letras em tamanho 14pt (19px) */
     label, .stSelectbox, .stNumberInput, .stDateInput, p, .stButton { 
         font-size: 19px !important; 
         color: #004a99 !important; 
         font-weight: bold !important;
     }
     
-    /* Ajuste para os campos de entrada */
+    /* Estilo dos campos de texto/números */
     input { font-size: 19px !important; color: black !important; }
 
-    /* Título Verde Interno */
+    /* Cabeçalho Verde Interno Centralizado */
     .banner-interno-verde {
         color: #28a745;
         text-align: center;
         font-weight: 900;
-        font-size: 26px;
+        font-size: 28px;
         margin-bottom: 25px;
         text-transform: uppercase;
     }
@@ -74,7 +74,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                             BLOCO 2: LOGICA E DADOS
+#                             BLOCO 2: DADOS E ESTADO
 # #-------------------------------------------------------------------------#
 
 CAPACIDADES = {
@@ -90,16 +90,17 @@ if 't_inicio' not in st.session_state: st.session_state.t_inicio = 0
 if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
 
 # #-------------------------------------------------------------------------#
-#                             BLOCO 3: TELA DE ENTRADA
+#                             BLOCO 3: TELA DE REGISTRO
 # #-------------------------------------------------------------------------#
 
 if st.session_state.passo == 'INPUT':
-    st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
+    # Título externo em branco para contrastar com o fundo escuro
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
         
-        # Cabeçalho verde centralizado e sem campo vazio acima
+        # Banner verde centralizado (sem campo vazio acima)
         st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
         
         navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
@@ -116,7 +117,7 @@ if st.session_state.passo == 'INPUT':
         with col2:
             pedido = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
             
-            # Cronômetro funcional
+            # Controle de Tempo
             st.markdown("<label>CONTROLE DE TEMPO</label>", unsafe_allow_html=True)
             placeholder_tempo = st.empty()
             
@@ -138,11 +139,12 @@ if st.session_state.passo == 'INPUT':
                 placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
 
         st.markdown("---")
-        # Assinatura digital simplificada (sem texto "tela touch")
+        # Assinatura digital sem o texto "Tela Touch"
         st.markdown("<label>ASSINATURA DIGITAL</label>", unsafe_allow_html=True)
-        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_zion_final")
+        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_final_zion")
 
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            st.success("Relatório gerado com sucesso!")
+            st.balloons()
+            st.success("Relatório pronto para download!")
             
         st.markdown('</div>', unsafe_allow_html=True)
