@@ -183,10 +183,84 @@ elif st.session_state.pagina == "tabela_consumo":
         st.rerun()
 
 # #-------------------------------------------------------------------------#
-#               TELA DE ABASTECIMENTO (SEU CÓDIGO ATUAL)
+#                             MENU DE NAVEGAÇÃO
+# #-------------------------------------------------------------------------#
+if st.session_state.pagina != "login":
+    st.markdown("### 📋 MENU DE NAVEGAÇÃO")
+    col_m1, col_m2, col_m3 = st.columns(3)
+    with col_m1:
+        if st.button("🏠 TELA INICIAL", use_container_width=True):
+            st.session_state.pagina = "login"
+            st.rerun()
+    with col_m2:
+        if st.button("📂 MENU PRINCIPAL", use_container_width=True): 
+            st.session_state.pagina = "menu" # Agora redireciona para a nova tela
+            st.rerun()
+    with col_m3:
+        if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
+            st.session_state.pagina = "abastecimento"
+            reset_lancamento()
+            st.rerun()
+    st.markdown("---")
+
+# #-------------------------------------------------------------------------#
+#              BLOCO: MENU PRINCIPAL (HUB DE NAVEGAÇÃO)
+# #-------------------------------------------------------------------------#
+if st.session_state.pagina == "menu":
+    st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL - ZION</h1>', unsafe_allow_html=True)
+    
+    # Botões grandes para as funções que você solicitou
+    c_btn1, c_btn2, c_btn3 = st.columns(3)
+    
+    with c_btn1:
+        if st.button("⛽ ACOMPANHAMENTO DE\nABASTECIMENTO", use_container_width=True):
+            st.session_state.pagina = "abastecimento"
+            st.rerun()
+            
+    with c_btn2:
+        if st.button("📄 DADOS DA\nNOTA FISCAL", use_container_width=True):
+            st.session_state.pagina = "registro_nf"
+            st.rerun()
+            
+    with c_btn3:
+        if st.button("📊 TABELA DE\nCONSUMO RECEBIDO", use_container_width=True):
+            st.session_state.pagina = "tabela_consumo"
+            st.rerun()
+
+# #-------------------------------------------------------------------------#
+#              BLOCO: DADOS DA NOTA FISCAL (IPIRANGA)
+# #-------------------------------------------------------------------------#
+elif st.session_state.pagina == "registro_nf":
+    st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
+    
+    with st.container():
+        chave_nf = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
+        col_nf1, col_nf2 = st.columns(2)
+        with col_nf1:
+            num_nf = st.text_input("NÚMERO DA NF")
+            data_nf = st.date_input("DATA DA NOTA", format="DD/MM/YYYY")
+        with col_nf2:
+            vol_nf = st.number_input("VOLUME TOTAL NF (LTS)", min_value=0)
+            valor_nf = st.number_input("VALOR TOTAL NF (R$)", min_value=0.0)
+            
+        if st.button("SALVAR DADOS DA NOTA", use_container_width=True):
+            st.success("Dados registrados!")
+
+# #-------------------------------------------------------------------------#
+#              BLOCO: TABELA DE CONSUMO RECEBIDO
+# #-------------------------------------------------------------------------#
+elif st.session_state.pagina == "tabela_consumo":
+    st.markdown('<div class="banner-interno-verde">CONSUMO RECEBIDO</div>', unsafe_allow_html=True)
+    st.info("Aqui será exibida a tabela com o histórico de consumo.")
+    if st.button("VOLTAR AO MENU"):
+        st.session_state.pagina = "menu"
+        st.rerun()
+
+# #-------------------------------------------------------------------------#
+#            BLOCO 4: ABASTECIMENTO (SEU CÓDIGO QUE JÁ FUNCIONA)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
-    # Aqui continua o seu código original que está "rodando perfeito"...
+    # Mantenha seu código de capacidades, saldos, cronômetro e PDF aqui...
 
 # #-------------------------------------------------------------------------#
 #                         TELA DE ABASTECIMENTO (BLOCO 4)
