@@ -145,14 +145,19 @@ elif st.session_state.pagina == "tabela_consumo":
     st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 4: ABASTECIMENTO (SEU CÓDIGO ORIGINAL INTEGRAL)
+#            TELA 4: ABASTECIMENTO (APENAS ESTE BLOCO)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
+    # BOTÕES DE NAVEGAÇÃO E RESET NO TOPO
     col_v1, col_v2 = st.columns(2)
     with col_v1:
-        if st.button("⬅️ MENU CENTRAL"): st.session_state.pagina = "menu_central"; st.rerun()
+        if st.button("⬅️ MENU CENTRAL", use_container_width=True): 
+            st.session_state.pagina = "menu_central"
+            st.rerun()
     with col_v2:
-        if st.button("➕ NOVO ABASTECIMENTO"): reset_lancamento(); st.rerun()
+        if st.button("➕ NOVO ABASTECIMENTO", use_container_width=True): 
+            reset_lancamento()
+            st.rerun()
 
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
@@ -173,7 +178,7 @@ elif st.session_state.pagina == "abastecimento":
 
     col_a, col_b = st.columns(2)
     with col_a:
-        st.date_input("DATA", format="DD/MM/YYYY", key=f"d_{st.session_state.form_id}")
+        data_rel = st.date_input("DATA", format="DD/MM/YYYY", key=f"d_{st.session_state.form_id}")
         saldo_bb = st.number_input("SALDO BB (LTS)", min_value=0, key=f"bb_{st.session_state.form_id}")
         saldo_be = st.number_input("SALDO BE (LTS)", min_value=0, key=f"be_{st.session_state.form_id}")
     with col_b:
@@ -211,7 +216,21 @@ elif st.session_state.pagina == "abastecimento":
 
     if not transbordou:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            st.success("Relatório pronto!")
+            # LÓGICA DO PDF
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", 'B', 16)
+            pdf.cell(200, 10, "COMUNICADO DE ABASTECIMENTO", ln=True, align='C')
+            pdf.ln(10)
+            pdf.set_font("Arial", '', 12)
+            pdf.cell(200, 10, f"EMPURRADOR: {navio}", ln=True)
+            pdf.cell(200, 10, f"DATA: {data_rel}", ln=True)
+            pdf.cell(200, 10, f"VOLUME TOTAL: {valor_formatado} Lts", ln=True)
+            pdf.cell(200, 10, f"TEMPO DE OPERACAO: {st.session_state.tempo_final_str}", ln=True)
+            
+            pdf_bytes = pdf.output(dest='S').encode('latin-1')
+            st.download_button(label="📥 BAIXAR RELATÓRIO PDF", data=pdf_bytes, file_name=f"ZION_{navio}.pdf", mime="application/pdf")
+            st.success("PDF gerado com sucesso!")
 
     st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
         ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
