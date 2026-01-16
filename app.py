@@ -1,12 +1,22 @@
 import streamlit as st
 from datetime import datetime
+from fpdf import FPDF
+from streamlit_drawable_canvas import st_canvas
+import time
+from PIL import Image
+import io
+from datetime import datetime, timezone, timedelta
+import time
 
-# 1. CONFIGURAÇÃO ÚNICA DA PÁGINA
-st.set_page_config(page_title="ZION - Transdourada", layout="wide")
+# #-------------------------------------------------------------------------#
+#                             CONFIGURAÇÕES VISUAIS
+# #-------------------------------------------------------------------------#
+st.set_page_config(page_title="ZION - SISTEMA DE GESTÃO", layout="centered")
 
-# 2. ESTILOS CSS (BANNER E MENU)
 st.markdown("""
     <style>
+    @keyframes blinking { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    .piscando { animation: blinking 1s infinite; }
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1524522173746-f628baad3644?q=80&w=2000&auto=format&fit=crop");
         background-size: cover; background-position: center; background-attachment: fixed;
@@ -15,68 +25,85 @@ st.markdown("""
         content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.75); z-index: -1;
     }
-    .main-nav {background-color: rgba(240, 242, 246, 0.9); padding: 10px; border-radius: 10px; margin-bottom: 20px; text-align: center;}
-    .banner-interno-verde {
-        background-color: #ffffff; color: #008000; padding: 15px; 
-        border-radius: 10px; text-align: center; font-size: 24px; 
-        font-weight: bold; border: 2px solid #008000; margin-bottom: 20px;
-    }
-    label, .stMarkdown p { color: white !important; font-weight: bold; }
+    label, .stMarkdown p { font-size: 16px !important; color: #FFFFFF !important; font-weight: bold !important; text-shadow: 1px 1px 3px #000; }
+    .banner-interno-verde { color: #28a745; text-align: center; font-weight: 900; font-size: 24px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px; }
+    .quadro-seguro { color: #00FF00 !important; background: rgba(0, 0, 0, 0.8) !important; padding: 10px; border-radius: 8px; border: 2px solid #00FF00; font-weight: bold; text-align: center; font-size: 16px; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. INICIALIZAÇÃO DO ESTADO
-if 'pagina' not in st.session_state: st.session_state.pagina = "inicio"
+# #-------------------------------------------------------------------------#
+#               LÓGICA DE NAVEGAÇÃO E ESTADO
+# #-------------------------------------------------------------------------#
+if 'pagina' not in st.session_state: st.session_state.pagina = "login"
+if 'form_id' not in st.session_state: st.session_state.form_id = 0
+if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
+if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
+
+# Dicionário de Login: EMPURRADOR - USUÁRIO - SENHA
+LOGINS_VALIDOS = {
+    "ANGELO": {"user": "ALEX", "pass": "2463"},
+    "ANGICO": {"user": "angico_zion", "pass": "zion02"},
+    "AROEIRA": {"user": "aroeira_zion", "pass": "zion03"},
+    "BRENO": {"user": "breno_zion", "pass": "zion04"},
+    "CANJERANA": {"user": "canjerana_zion", "pass": "zion05"},
+    "CUMARU": {"user": "cumaru_zion", "pass": "zion06"},
+    "IPE": {"user": "ipe_zion", "pass": "zion07"},
+    "SAMAUMA": {"user": "samauma_zion", "pass": "zion08"},
+    "JACARANDA": {"user": "jacaranda_zion", "pass": "zion09"},
+    "LUIZ FELIPE": {"user": "luizf_zion", "pass": "zion10"},
+    "QUARUBA": {"user": "quaruba_zion", "pass": "zion11"},
+    "TIMBORANA": {"user": "timborana_zion", "pass": "zion12"},
+    "JATOBA": {"user": "jatoba_zion", "pass": "zion13"},
+    "CEDRO": {"user": "cedro_zion", "pass": "zion14"},
+    "MOGNO": {"user": "mogno_zion", "pass": "zion15"},
+    "FREIJO": {"user": "freijo_zion", "pass": "zion16"},
+    "SUCUPIRA": {"user": "sucupira_zion", "pass": "zion17"}
+}
+
+def reset_lancamento():
+    st.session_state.form_id += 1
+    st.session_state.t_rodando = False
+    st.session_state.tempo_final_str = "00:00:00"
 
 # #-------------------------------------------------------------------------#
-#      1. MENU DE NAVEGAÇÃO (BOTÕES DO TOPO)
+#                             TELA DE LOGIN
 # #-------------------------------------------------------------------------#
-st.markdown('<div class="main-nav">', unsafe_allow_html=True)
-st.markdown("📋 MENU DE NAVEGAÇÃO")
-c1, c2, c3, c4 = st.columns(4)
-
-with c1:
-    if st.button("🏠 TELA INICIAL", use_container_width=True):
-        st.session_state.pagina = "inicio"; st.rerun()
-with c2:
-    if st.button("📁 MENU PRINCIPAL", use_container_width=True):
-        st.session_state.pagina = "menu"; st.rerun()
-with c3:
-    if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
-        st.session_state.pagina = "abastecimento"; st.rerun()
-with c4:
-    if st.button("🧾 REGISTRO DE NF", use_container_width=True):
-        st.session_state.pagina = "registro_nf"; st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
-
-# #-------------------------------------------------------------------------#
-#      2. RODAPÉ FIXO (CORREÇÃO DEFINITIVA DO ERRO NA LINHA 192)
-# #-------------------------------------------------------------------------#
-# Note o fechamento correto com ) no final da linha abaixo:
-st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
+if st.session_state.pagina == "login":
+    st.markdown('<h1 style="color:white; text-align:center;">ACESSO AO SISTEMA</h1>', unsafe_allow_html=True)
+    with st.form("login_form"):
+        # Sequência solicitada: EMPURRADOR - USUÁRIO - SENHA
+        empurrador_login = st.selectbox("EMPURRADOR", options=list(LOGINS_VALIDOS.keys()))
+        user_input = st.text_input("USUÁRIO")
+        pw_input = st.text_input("SENHA", type="password")
+        
+        if st.form_submit_button("ENTRAR"):
+            credenciais = LOGINS_VALIDOS.get(empurrador_login)
+            if user_input == credenciais["user"] and pw_input == credenciais["pass"]:
+                st.session_state.pagina = "abastecimento"
+                st.session_state.navio_atual = empurrador_login
+                st.rerun()
+            else:
+                st.error("Credenciais incorretas para este empurrador.")
 
 # #-------------------------------------------------------------------------#
-#      3. LÓGICA DE EXIBIÇÃO DAS PÁGINAS (EVITA O IndentationError)
+#                             MENU DE NAVEGAÇÃO
 # #-------------------------------------------------------------------------#
+if st.session_state.pagina != "login":
+    st.markdown("### 📋 MENU DE NAVEGAÇÃO")
+    col_m1, col_m2, col_m3 = st.columns(3)
+    with col_m1:
+        if st.button("🏠 TELA INICIAL", use_container_width=True): # Redireciona para Login
+            st.session_state.pagina = "login"
+            st.rerun()
+    with col_m2:
+        if st.button("📂 MENU PRINCIPAL", use_container_width=True): st.session_state.pagina = "menu"
+    with col_m3:
+        if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
+            st.session_state.pagina = "abastecimento"
+            reset_lancamento()
+            st.rerun()
+    st.markdown("---")
 
-if st.session_state.pagina == "inicio":
-    st.info("Bem-vindo ao sistema ZION. Selecione uma opção acima.")
-
-elif st.session_state.pagina == "menu":
-    st.write("Módulos de gestão Transdourada ativos (Em desenvolvimento).")
-
-elif st.session_state.pagina == "registro_nf":
-    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL</div>', unsafe_allow_html=True)
-    st.write("Página de Nota Fiscal (Em desenvolvimento).")
-
-elif st.session_state.pagina == "abastecimento":
-    # --- INÍCIO DO BLOCO 4 (ABASTECIMENTO) ---
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
-    
-    # Adicione o restante do seu código do Bloco 4 aqui...
-    st.success("TELA DE ABASTECIMENTO CARREGADA")
 # #-------------------------------------------------------------------------#
 #                         TELA DE ABASTECIMENTO (BLOCO 4)
 # #-------------------------------------------------------------------------#
@@ -195,61 +222,4 @@ if st.session_state.pagina == "abastecimento":
             st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
 
         st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True
-
-# #-------------------------------------------------------------------------#
-#                 BLOCO 5: ENTRADA DE NOTA FISCAL (VIA CHAVE)
-# #-------------------------------------------------------------------------#
-if st.session_state.pagina == "registro_nf":
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL - COMBUSTÍVEL</div>', unsafe_allow_html=True)
-
-    # 1. Entrada da Chave de Acesso
-    st.subheader("Consultar Nota Fiscal")
-    chave_acesso = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44, key="chave_nf")
-
-    # Inicializa o estado dos dados se não existir
-    if 'dados_nf' not in st.session_state:
-        st.session_state.dados_nf = {"num_nf": "", "serie": "", "emitente": "", "cnpj_emit": "", "valor": 0.0, "qtd": 0.0, "produto": ""}
-
-    if st.button("🔍 PUXAR DADOS DA NF"):
-        if len(chave_acesso) == 44:
-            st.info("Conectando ao Web Service SEFAZ...")
-            # Simulação do preenchimento com os dados da imagem da NF enviada
-            st.session_state.dados_nf = {
-                "num_nf": "000.125.893",
-                "serie": "003",
-                "emitente": "IPIRANGA PRODUTOS DE PETROLEO S.A.",
-                "cnpj_emit": "33.337.122/0075-63",
-                "valor": 26704.50,
-                "qtd": 5000.0,
-                "produto": "ORIGINAL DIESEL MARITIMO"
-            }
-            st.success("Dados da Nota Ipiranga carregados!")
-        else:
-            st.error("Erro: A chave deve ter exatamente 44 dígitos.")
-
-    st.markdown("---")
-
-    # 2. Campos preenchidos automaticamente
-    col_nf1, col_nf2 = st.columns(2)
-    with col_nf1:
-        st.text_input("NÚMERO DA NF", value=st.session_state.dados_nf["num_nf"])
-        st.text_input("EMITENTE", value=st.session_state.dados_nf["emitente"])
-        st.text_input("CNPJ EMITENTE", value=st.session_state.dados_nf["cnpj_emit"])
-    
-    with col_nf2:
-        st.text_input("SÉRIE", value=st.session_state.dados_nf["serie"])
-        st.number_input("VALOR TOTAL (R$)", value=st.session_state.dados_nf["valor"], format="%.2f")
-        st.number_input("QUANTIDADE (LITROS)", value=st.session_state.dados_nf["qtd"])
-
-    st.text_area("DESCRIÇÃO DO PRODUTO", value=st.session_state.dados_nf["produto"])
-
-    # 3. Botão de Confirmação com correção de parêntese
-    if st.button("💾 CONFIRMAR REGISTRO DA NF", use_container_width=True):
-        st.balloons()
-        st.success(f"Nota Fiscal {st.session_state.dados_nf['num_nf']} salva com sucesso!")
-
-    # Rodapé informativo corrigido
-    st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-        ⚠️ Certifique-se de que os dados conferem com o DANFE físico antes de salvar.</div>''', unsafe_allow_html=True)
+            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
