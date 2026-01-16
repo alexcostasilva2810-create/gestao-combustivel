@@ -58,7 +58,7 @@ def reset_lancamento():
     st.session_state.tempo_final_str = "00:00:00"
 
 # #-------------------------------------------------------------------------#
-#             RESTAURAÇÃO DO MENU (NÃO REMOVER ESTE BLOCO)
+#                             MENU DE NAVEGAÇÃO
 # #-------------------------------------------------------------------------#
 
 st.markdown("### 📋 MENU DE NAVEGAÇÃO")
@@ -92,7 +92,6 @@ if st.session_state.pagina == "abastecimento":
     navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), key=f"navio_{st.session_state.form_id}")
     st.markdown(f'<div style="color: #FFFF00; font-weight: bold; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; display: inline-block;">Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts</div>', unsafe_allow_html=True)
 
-    # DADOS DE ENTRADA
     col_a, col_b = st.columns(2)
     with col_a:
         data_abast = st.date_input("DATA", format="DD/MM/YYYY", key=f"dt_{st.session_state.form_id}")
@@ -102,7 +101,6 @@ if st.session_state.pagina == "abastecimento":
         qtd_pedida = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0, key=f"qp_{st.session_state.form_id}")
         remanescente = st.number_input("REMANESCENTE (LTS)", min_value=0, key=f"rm_{st.session_state.form_id}")
 
-    # SOMA QUÁDRUPLA DE SEGURANÇA
     total_geral = saldo_bb + saldo_be + remanescente + qtd_pedida
     limite = CAPACIDADES[navio_selecionado]
     transbordou = total_geral > limite
@@ -113,21 +111,15 @@ if st.session_state.pagina == "abastecimento":
         st.markdown(f'<div class="quadro-seguro">✅ VOLUME SEGURO: {total_geral:,} lts</div>', unsafe_allow_html=True)
 
     st.markdown("---")
-
-    # CRONÔMETRO E FOTOS LADO A LADO
-    c_timer, c_fotos = st.columns([1, 2])
     
+    c_timer, c_fotos = st.columns([1, 2])
     with c_timer:
         st.markdown("<p style='text-align:center;'>CRONÔMETRO</p>", unsafe_allow_html=True)
         if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
-        if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
-        
         if st.session_state.t_rodando:
             segundos = int(time.time() - st.session_state.t_inicio)
             st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
-        
         st.markdown(f'<div style="background:white; color:red; font-size:24px; text-align:center; border-radius:8px; border:2px solid blue; padding:5px;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
-        
         b1, b2 = st.columns(2)
         if b1.button("▶️ INICIAR", use_container_width=True):
             st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True
@@ -135,7 +127,6 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
 
     with c_fotos:
-        # FOTOS LADO A LADO COM ACESSO DIRETO À CÂMERA
         f_col1, f_col2 = st.columns(2)
         with f_col1:
             foto_antes = st.camera_input("FOTO ANTES (A)", key=f"fa_{st.session_state.form_id}")
@@ -146,16 +137,42 @@ if st.session_state.pagina == "abastecimento":
     st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=120, key=f"canvas_{st.session_state.form_id}")
 
-    # --- TRAVA FINAL ---
     if transbordou:
-        st.markdown(f"""
-            <div class="alerta-transbordo-flutuante">
-                🚨 BLOQUEIO DE SEGURANÇA 🚨<br>
-                Soma de litros excede a capacidade do tanque!<br>
-                <b>REDUZA OS VALORES PARA EVITAR O TRANSBORDO</b>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="alerta-transbordo-flutuante">🚨 BLOQUEIO DE SEGURANÇA: TRANSBORDO! 🚨</div>', unsafe_allow_html=True)
         st.button("GERAR COMUNICADO FINAL (BLOQUEADO)", use_container_width=True, disabled=True)
     else:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            st.success("Tudo certo! Documento pronto para geração.")
+            try:
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", "B", 16)
+                pdf.cell(200, 10, "ZION - Comunicado de Abastecimento", ln=True, align="C")
+                pdf.ln(10)
+                pdf.set_font("Arial", "", 12)
+                texto = (f"Empurrador: {navio_selecionado}\n"
+                         f"Data: {data_abast.strftime('%d/%m/%Y')}\n"
+                         f"Volume Total: {total_geral:,} lts\n"
+                         f"Tempo de Operação: {st.session_state.tempo_final_str}")
+                pdf.multi_cell(0, 10, texto)
+                
+                # Inserção das fotos no PDF
+                if foto_antes and foto_depois:
+                    img_a = Image.open(foto_antes)
+                    img_d = Image.open(foto_depois)
+                    pdf.image(img_a, x=10, y=70, w=90)
+                    pdf.image(img_d, x=110, y=70, w=90)
+                
+                # Assinatura
+                if canvas_result.image_data is not None:
+                    img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
+                    sig_buffer = io.BytesIO()
+                    img_sig.save(sig_buffer, format="PNG")
+                    pdf.image(sig_buffer, x=70, y=160, w=60)
+                
+                st.session_state.pdf_output = pdf.output(dest='S')
+                st.success("Documento preparado com sucesso!")
+                st.download_button("📥 BAIXAR COMUNICADO FINAL", data=bytes(st.session_state.pdf_output), file_name=f"Zion_{navio_selecionado}.pdf", use_container_width=True)
+            except Exception as e:
+                st.error(f"Erro ao gerar PDF: {e}")
+
+# ... (outras telas ignoradas para brevidade)
