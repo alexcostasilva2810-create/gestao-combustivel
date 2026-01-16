@@ -1,5 +1,3 @@
-corrgio 2 
-
 import streamlit as st
 from datetime import datetime
 from fpdf import FPDF
