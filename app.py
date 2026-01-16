@@ -103,7 +103,7 @@ if st.session_state.pagina != "login":
     st.markdown("---")
 
 # #-------------------------------------------------------------------------#
-#                         TELA DE ABASTECIMENTO
+#                         TELA DE ABASTECIMENTO (BLOCO INTEIRO)
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "abastecimento":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
@@ -117,7 +117,7 @@ if st.session_state.pagina == "abastecimento":
         "FREIJO": 18000, "SUCUPIRA": 30000
     }
     
-    # Define o navio com base no login ou permite troca
+    # Define o navio com base no login
     navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), index=list(CAPACIDADES.keys()).index(st.session_state.navio_atual), key=f"n_{st.session_state.form_id}")
     st.markdown(f'<div style="color: #FFFF00; font-weight: bold;">Capacidade do Tanque: {CAPACIDADES[navio]:,} lts</div>', unsafe_allow_html=True)
 
@@ -156,19 +156,24 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
             st.rerun()
 
+    # --- INÍCIO DO AJUSTE DE CAPTURA DE IMAGEM ---
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos:
         f1, f2 = st.columns(2)
-        with f1: foto_a = st.camera_input("FOTO ANTES (A)", key=f"fa_{st.session_state.form_id}")
-        with f2: foto_d = st.camera_input("FOTO DEPOIS (D)", key=f"fd_{st.session_state.form_id}")
+        with f1: 
+            # Abre a câmera nativa do celular/tablet
+            foto_a = st.camera_input("FOTO ANTES (A)", key=f"fa_{st.session_state.form_id}")
+        with f2: 
+            # Abre a câmera nativa do celular/tablet
+            foto_d = st.camera_input("FOTO DEPOIS (D)", key=f"fd_{st.session_state.form_id}")
 
     st.markdown("ASSINATURA DIGITAL")
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"c_{st.session_state.form_id}")
     st.markdown('</div>', unsafe_allow_html=True) 
+    # --- FIM DO AJUSTE DE CAPTURA DE IMAGEM ---
 
     st.markdown("---")
     if not transbordou:
-        # BOTÃO GERAR COMUNICADO FINAL
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             pdf = FPDF()
             pdf.add_page()
@@ -177,7 +182,6 @@ if st.session_state.pagina == "abastecimento":
             pdf.ln(10)
             pdf.set_font("Arial", "", 12)
             
-            # TEXTO DETALHADO ORIGINAL
             texto = (f"Comunico que o empurrador {navio} está apto a receber o consumo de {qtd_pedida:,} lts, "
                      f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
                      f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
