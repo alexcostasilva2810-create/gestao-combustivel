@@ -160,8 +160,9 @@ elif st.session_state.pagina == "nota_fiscal":
     if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
         st.markdown('<div class="msg-sucesso">👍 Dados da Nota Salvos com Sucesso!</div>', unsafe_allow_html=True)
 
+
 # #-------------------------------------------------------------------------#
-#            TELA 4: ABASTECIMENTO (LÓGICA INTEGRAL)
+#            TELA 4: ABASTECIMENTO (SEU CÓDIGO ORIGINAL INTEGRAL)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
     col_v1, col_v2 = st.columns(2)
@@ -170,7 +171,7 @@ elif st.session_state.pagina == "abastecimento":
     with col_v2:
         if st.button("➕ NOVO ABASTECIMENTO"): reset_lancamento(); st.rerun()
 
-    st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
     CAPACIDADES = {
@@ -201,9 +202,11 @@ elif st.session_state.pagina == "abastecimento":
     valor_formatado = f"{total_geral:,}".replace(",", ".")
 
     if transbordou:
-        st.markdown(f'''<div class="msg-erro">🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>''', unsafe_allow_html=True)
+        st.markdown(f'''<div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
+            🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>''', unsafe_allow_html=True)
     else:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">✅ VOLUME SEGURO: {valor_formatado} Lts</div>''', unsafe_allow_html=True)
+        st.markdown(f'''<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
+            ✅ VOLUME SEGURO: {valor_formatado} Lts Capacidade permitida!</div>''', unsafe_allow_html=True)
 
     col_timer, col_fotos_upload = st.columns([1, 2])
     with col_timer:
@@ -211,12 +214,14 @@ elif st.session_state.pagina == "abastecimento":
             st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(int(time.time() - st.session_state.t_inicio)))
         st.markdown(f'<div style="background:white; color:red; font-size:24px; text-align:center; border:2px solid blue; padding:5px;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
         bt1, bt2 = st.columns(2)
-        if bt1.button("▶️ INICIAR"): st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True; st.rerun()
-        if bt2.button("🛑 PARAR"): st.session_state.t_rodando = False; st.rerun()
+        if bt1.button("▶️ INICIAR"):
+            st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True; st.rerun()
+        if bt2.button("🛑 PARAR"):
+            st.session_state.t_rodando = False; st.rerun()
 
     with col_fotos_upload:
-        foto_a = st.file_uploader("FOTO ANTES (A)", key=f"up_a_{st.session_state.form_id}")
-        foto_d = st.file_uploader("FOTO DEPOIS (D)", key=f"up_d_{st.session_state.form_id}")
+        foto_a = st.file_uploader("FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
+        foto_d = st.file_uploader("FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
 
     st.markdown("ASSINATURA DIGITAL :")
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
@@ -225,6 +230,5 @@ elif st.session_state.pagina == "abastecimento":
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             st.success("Relatório pronto!")
 
-elif st.session_state.pagina == "tabela_consumo":
-    if st.button("⬅️ VOLTAR"): st.session_state.pagina = "menu_central"; st.rerun()
-    st.markdown('<div class="banner-interno-verde">📊 TABELA DE CONSUMO</div>', unsafe_allow_html=True)
+    st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+        ⚠️ Sistema Zion - Alex C Silva.</div>''', unsafe_allow_html=True)
