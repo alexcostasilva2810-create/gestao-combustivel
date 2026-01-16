@@ -12,8 +12,6 @@ st.set_page_config(page_title="ZION - Transdourada", layout="wide")
 
 st.markdown("""
     <style>
-    @keyframes blinking { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-    .piscando { animation: blinking 1s infinite; }
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1524522173746-f628baad3644?q=80&w=2000&auto=format&fit=crop");
         background-size: cover; background-position: center; background-attachment: fixed;
@@ -29,47 +27,14 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                       LÓGICA DE ESTADO (SESSION STATE)
+#                       LÓGICA DE NAVEGAÇÃO
 # #-------------------------------------------------------------------------#
-if 'pagina' not in st.session_state: st.session_state.pagina = "login"
-if 'form_id' not in st.session_state: st.session_state.form_id = 0
-if 'autenticado' not in st.session_state: st.session_state.autenticado = False
+if 'pagina' not in st.session_state: st.session_state.pagina = "inicio"
+if 'autenticado' not in st.session_state: st.session_state.autenticado = True # Definido como True para teste
 
-LOGINS_VALIDOS = {
-    "ANGELO": {"user": "ALEX", "pass": "2463"},
-    "ANGICO": {"user": "angico_zion", "pass": "zion02"},
-    "AROEIRA": {"user": "aroeira_zion", "pass": "zion03"},
-    "BRENO": {"user": "breno_zion", "pass": "zion04"},
-    "JATOBA": {"user": "jatoba_zion", "pass": "zion13"},
-    "CEDRO": {"user": "cedro_zion", "pass": "zion14"}
-}
-
-# #-------------------------------------------------------------------------#
-#                               TELA DE LOGIN
-# #-------------------------------------------------------------------------#
-if not st.session_state.autenticado:
-    st.markdown('<h1 style="color:white; text-align:center;">ACESSO AO SISTEMA ZION</h1>', unsafe_allow_html=True)
-    with st.form("login_form"):
-        empurrador_login = st.selectbox("EMPURRADOR", options=list(LOGINS_VALIDOS.keys()))
-        user_input = st.text_input("USUÁRIO")
-        pw_input = st.text_input("SENHA", type="password")
-        
-        if st.form_submit_button("ENTRAR"):
-            credenciais = LOGINS_VALIDOS.get(empurrador_login)
-            if user_input == credenciais["user"] and pw_input == credenciais["pass"]:
-                st.session_state.autenticado = True
-                st.session_state.pagina = "inicio"
-                st.session_state.navio_atual = empurrador_login
-                st.rerun()
-            else:
-                st.error("Credenciais incorretas.")
-    st.stop() # Interrompe o código aqui se não estiver logado
-
-# #-------------------------------------------------------------------------#
-#                        MENU DE NAVEGAÇÃO (PÓS-LOGIN)
-# #-------------------------------------------------------------------------#
+# MENU DE NAVEGAÇÃO (BOTÕES DO TOPO)
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
-st.markdown(f"🚢 **EMPURRADOR CONECTADO: {st.session_state.navio_atual}**")
+st.markdown("📋 MENU DE NAVEGAÇÃO")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
     if st.button("🏠 TELA INICIAL", use_container_width=True):
@@ -86,49 +51,30 @@ with c4:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                         LÓGICA DAS PÁGINAS
+#      LÓGICA DAS PÁGINAS (CORRIGINDO OS INTERVALOS VAZIOS)
 # #-------------------------------------------------------------------------#
 
 if st.session_state.pagina == "inicio":
-    st.markdown('<h1 style="color:white; text-align:center;">ZION - TELA INICIAL</h1>', unsafe_allow_html=True)
-    st.info("Bem-vindo! Selecione uma operação no menu acima.")
+    st.markdown('<h1 style="color:white; text-align:center;">SISTEMA ZION - INÍCIO</h1>', unsafe_allow_html=True)
+    st.info("Bem-vindo! Selecione uma opção no menu acima.")
 
 elif st.session_state.pagina == "menu":
     st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL</h1>', unsafe_allow_html=True)
-    st.write("Gerenciamento de combustível Transdourada.")
-
-elif st.session_state.pagina == "abastecimento":
-    # --- BLOCO 4: ABASTECIMENTO ---
-    st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
-    
-    CAPACIDADES = {"ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700, "JATOBA": 84000, "CEDRO": 22000}
-    navio = st.session_state.navio_atual # Usa o navio do login
-    
-    st.write(f"**Empurrador:** {navio} (Capacidade: {CAPACIDADES.get(navio, 0):,} lts)")
-    col_a, col_b = st.columns(2)
-    with col_a:
-        s_bb = st.number_input("SALDO BB (LTS)", min_value=0)
-        s_be = st.number_input("SALDO BE (LTS)", min_value=0)
-    with col_b:
-        q_p = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
-        rem = st.number_input("REMANESCENTE (LTS)", min_value=0)
-    
-    total = s_bb + s_be + q_p + rem
-    if total > CAPACIDADES.get(navio, 0):
-        st.error(f"🚨 BLOQUEIO: {total:,} lts excede o limite!")
-    else:
-        st.success(f"✅ VOLUME SEGURO: {total:,} lts")
+    st.write("A tela do Menu Principal será configurada aqui.")
 
 elif st.session_state.pagina == "registro_nf":
-    # --- BLOCO 5: REGISTRO DE NF ---
-    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL (IPIRANGA)</div>', unsafe_allow_html=True)
-    chave = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
-    if st.button("🔍 PUXAR DADOS DA NOTA"):
-        st.session_state.nf_data = {"num": "000.125.893", "emit": "IPIRANGA S.A.", "val": 26704.50}
-        st.success("Dados carregados!")
+    st.markdown('<h1 style="color:white; text-align:center;">REGISTRO DE NOTA FISCAL</h1>', unsafe_allow_html=True)
+    st.write("A tela do Bloco 5 (NF) será configurada aqui.")
+
+elif st.session_state.pagina == "abastecimento":
+    # --- INÍCIO DO BLOCO 4 (TELA DE ABASTECIMENTO) ---
+    st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
+    
+    # Adicione aqui o seu código do Bloco 4 (Empurrador, Saldos, etc.)
+    st.success("TELA DE ABASTECIMENTO ATIVA")
 
 # #-------------------------------------------------------------------------#
-#             RODAPÉ FINAL (FIXO NO FIM DO SCRIPT)
+#             RODAPÉ FINAL (FECHADO CORRETAMENTE)
 # #-------------------------------------------------------------------------#
 st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
     ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
