@@ -141,7 +141,7 @@ if st.session_state.pagina == "abastecimento":
             <div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; 
             border-radius: 10px; text-align: center; font-size: 20px; 
             font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            🚨 BLOQUEIO: {total_geral:,} lts excede o limite!
+            🚨 BLOQUEIO: {total_geral:.} lts excede o limite!
             </div>
         ''', unsafe_allow_html=True)
     else:
@@ -149,7 +149,7 @@ if st.session_state.pagina == "abastecimento":
             <div style="color: #FFFFFF; background-color: #28a745; padding: 15px; 
             border-radius: 10px; text-align: center; font-size: 20px; 
             font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            ✅ VOLUME SEGURO: {total_geral:,} lts
+            ✅ VOLUME SEGURO: {total_geral:.} lts
             </div>
         ''', unsafe_allow_html=True)
 
