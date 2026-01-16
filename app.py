@@ -57,7 +57,6 @@ if st.session_state.pagina == "abastecimento":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
-    # Lista completa de capacidades conforme as imagens
     CAPACIDADES = {
         "ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700,
         "CANJERANA": 18000, "CUMARU": 64000, "IPE": 29700, "SAMAUMA": 92000,
@@ -85,7 +84,7 @@ if st.session_state.pagina == "abastecimento":
     else:
         st.markdown(f'<div class="quadro-seguro">✅ VOLUME SEGURO: {total_geral:,} lts</div>', unsafe_allow_html=True)
 
-    # CRONÔMETRO E ÁREA PISCANTE
+    # CRONÔMETRO
     if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
     classe_piscante = "piscando" if st.session_state.t_rodando else ""
 
@@ -98,7 +97,7 @@ if st.session_state.pagina == "abastecimento":
         if bt1.button("▶️ INICIAR"): st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True; st.rerun()
         if bt2.button("🛑 PARAR"): st.session_state.t_rodando = False; st.rerun()
 
-    # ÁREA DE FOTOS E ASSINATURA (COM EFEITO PISCANTE RESTAURADO)
+    # ÁREA PISCANTE (FOTOS E ASSINATURA)
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos:
         f1, f2 = st.columns(2)
@@ -106,10 +105,10 @@ if st.session_state.pagina == "abastecimento":
         with f2: foto_d = st.camera_input("FOTO DEPOIS (D)", key=f"fd_{st.session_state.form_id}")
 
     st.markdown("ASSINATURA DIGITAL")
-    canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=120, key=f"c_{st.session_state.form_id}")
-    st.markdown('</div>', unsafe_allow_html=True) 
+    canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"c_{st.session_state.form_id}")
+    st.markdown('</div>', unsafe_allow_html=True) # FIM DA ÁREA PISCANTE
 
-    # BOTÃO GERAR COMUNICADO - POSIÇÃO ORIGINAL RESTAURADA
+    # BOTÃO GERAR RELATÓRIO - FORA DA DIV PISCANTE PARA SEMPRE APARECER
     st.markdown("---")
     if not transbordou:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -120,7 +119,7 @@ if st.session_state.pagina == "abastecimento":
             pdf.ln(10)
             pdf.set_font("Arial", "", 12)
             
-            # Texto detalhado original restaurado
+            # TEXTO COMPLETO E DETALHADO
             texto = (f"Comunico que o empurrador {navio} está apto a receber o consumo de {qtd_pedida:,} lts, "
                      f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
                      f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
@@ -137,8 +136,8 @@ if st.session_state.pagina == "abastecimento":
                 img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
                 pdf.image(buf, x=70, y=200, w=60)
-                pdf.text(70, 245, f"Assinado digitalmente em: {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')}")
+                pdf.text(70, 245, f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
             
-            st.download_button("📥 BAIXAR COMUNICADO FINAL", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
+            st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
     else:
-        st.button("GERAR COMUNICADO FINAL (BLOQUEADO)", use_container_width=True, disabled=True)
+        st.error("Geração bloqueada devido ao excesso de volume!")
