@@ -1,15 +1,10 @@
 import streamlit as st
-from datetime import datetime, timedelta
-from fpdf import FPDF
-from streamlit_drawable_canvas import st_canvas
-from PIL import Image
-import io
+from datetime import datetime
 
-# #-------------------------------------------------------------------------#
-#                           CONFIGURAÇÕES VISUAIS
-# #-------------------------------------------------------------------------#
+# 1. CONFIGURAÇÃO ÚNICA DA PÁGINA
 st.set_page_config(page_title="ZION - Transdourada", layout="wide")
 
+# 2. ESTILOS CSS (BANNER E MENU)
 st.markdown("""
     <style>
     .stApp {
@@ -20,21 +15,22 @@ st.markdown("""
         content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.75); z-index: -1;
     }
-    label, .stMarkdown p { font-size: 16px !important; color: #FFFFFF !important; font-weight: bold !important; text-shadow: 1px 1px 3px #000; }
-    .main-nav {background-color: rgba(240, 242, 246, 0.9); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;}
-    .banner-interno-verde { color: #28a745; text-align: center; font-weight: 900; font-size: 24px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px; border: 2px solid #28a745; }
+    .main-nav {background-color: rgba(240, 242, 246, 0.9); padding: 10px; border-radius: 10px; margin-bottom: 20px; text-align: center;}
+    .banner-interno-verde {
+        background-color: #ffffff; color: #008000; padding: 15px; 
+        border-radius: 10px; text-align: center; font-size: 24px; 
+        font-weight: bold; border: 2px solid #008000; margin-bottom: 20px;
+    }
+    label, .stMarkdown p { color: white !important; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# #-------------------------------------------------------------------------#
-#                       LÓGICA DE NAVEGAÇÃO
-# #-------------------------------------------------------------------------#
+# 3. INICIALIZAÇÃO DO ESTADO
 if 'pagina' not in st.session_state: st.session_state.pagina = "inicio"
-if 'autenticado' not in st.session_state: st.session_state.autenticado = True # Definido como True para teste
 
-# MENU DE NAVEGAÇÃO (BOTÕES DO TOPO)
+# 4. MENU DE NAVEGAÇÃO FIXO
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
-st.markdown("📋 MENU DE NAVEGAÇÃO")
+st.markdown("📋 **MENU DE NAVEGAÇÃO**")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
     if st.button("🏠 TELA INICIAL", use_container_width=True):
@@ -50,34 +46,32 @@ with c4:
         st.session_state.pagina = "registro_nf"; st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
-# #-------------------------------------------------------------------------#
-#      LÓGICA DAS PÁGINAS (CORRIGINDO OS INTERVALOS VAZIOS)
-# #-------------------------------------------------------------------------#
+# 5. RODAPÉ FIXO (CORREÇÃO DEFINITIVA DO ERRO DE SINTAXE)
+st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
+
+# 6. LÓGICA DE EXIBIÇÃO (CADA PÁGINA COM CONTEÚDO PARA EVITAR IndentationError)
 
 if st.session_state.pagina == "inicio":
-    st.markdown('<h1 style="color:white; text-align:center;">SISTEMA ZION - INÍCIO</h1>', unsafe_allow_html=True)
-    st.info("Bem-vindo! Selecione uma opção no menu acima.")
+    st.markdown('<h1 style="color:white; text-align:center;">BEM-VINDO AO ZION</h1>', unsafe_allow_html=True)
+    st.info("Selecione um módulo no menu acima para começar.")
 
 elif st.session_state.pagina == "menu":
     st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL</h1>', unsafe_allow_html=True)
-    st.write("A tela do Menu Principal será configurada aqui.")
+    st.write("Aqui você encontrará o dashboard geral de logística (Em desenvolvimento).")
 
 elif st.session_state.pagina == "registro_nf":
     st.markdown('<h1 style="color:white; text-align:center;">REGISTRO DE NOTA FISCAL</h1>', unsafe_allow_html=True)
-    st.write("A tela do Bloco 5 (NF) será configurada aqui.")
+    # Exemplo do Bloco 5
+    chave = st.text_input("Chave de Acesso (44 dígitos)")
+    st.button("Puxar Dados da Nota")
 
 elif st.session_state.pagina == "abastecimento":
     # --- INÍCIO DO BLOCO 4 (TELA DE ABASTECIMENTO) ---
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
     
-    # Adicione aqui o seu código do Bloco 4 (Empurrador, Saldos, etc.)
-    st.success("TELA DE ABASTECIMENTO ATIVA")
-
-# #-------------------------------------------------------------------------#
-#             RODAPÉ FINAL (FECHADO CORRETAMENTE)
-# #-------------------------------------------------------------------------#
-st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
+    # Adicione abaixo o seu código de formulário (Empurrador, Calculo de Volume, etc)
+    st.success("Formulário de Abastecimento Carregado!")
 # #-------------------------------------------------------------------------#
 #                         TELA DE ABASTECIMENTO (BLOCO 4)
 # #-------------------------------------------------------------------------#
