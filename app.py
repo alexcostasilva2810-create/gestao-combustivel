@@ -26,10 +26,9 @@ st.markdown("""
         font-size: 16px !important; color: #FFFFFF !important;  
         font-weight: bold !important; text-shadow: 1px 1px 3px #000;
     }
-    .alerta-capacidade {
-        color: #FFFF00 !important; font-size: 14px !important; font-weight: 800 !important;
-        background: rgba(0, 0, 0, 0.6); padding: 8px 12px; border-radius: 5px;
-        margin-bottom: 10px; display: inline-block; border: 1px solid #FFFF00;
+    .banner-interno-verde {
+        color: #28a745; text-align: center; font-weight: 900; font-size: 24px;
+        margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px;
     }
     .quadro-seguro {
         color: #00FF00 !important; background: rgba(0, 0, 0, 0.8) !important;
@@ -41,10 +40,6 @@ st.markdown("""
         padding: 15px; border-radius: 10px; border: 4px solid #FF0000;
         font-weight: 900; text-align: center; font-size: 18px;
         margin-bottom: 15px; box-shadow: 0px 10px 30px rgba(255, 0, 0, 0.7);
-    }
-    .banner-interno-verde {
-        color: #28a745; text-align: center; font-weight: 900; font-size: 24px;
-        margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -63,7 +58,24 @@ def reset_lancamento():
     st.session_state.tempo_final_str = "00:00:00"
 
 # #-------------------------------------------------------------------------#
-#                             TELA DE ABASTECIMENTO
+#             RESTAURAÇÃO DO MENU (NÃO REMOVER ESTE BLOCO)
+# #-------------------------------------------------------------------------#
+
+st.markdown("### 📋 MENU DE NAVEGAÇÃO")
+col_m1, col_m2, col_m3 = st.columns(3)
+with col_m1:
+    if st.button("🏠 TELA INICIAL", use_container_width=True): st.session_state.pagina = "inicio"
+with col_m2:
+    if st.button("📂 MENU PRINCIPAL", use_container_width=True): st.session_state.pagina = "menu"
+with col_m3:
+    if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
+        st.session_state.pagina = "abastecimento"
+        reset_lancamento()
+
+st.markdown("---")
+
+# #-------------------------------------------------------------------------#
+#                         TELA DE ABASTECIMENTO
 # #-------------------------------------------------------------------------#
 
 if st.session_state.pagina == "abastecimento":
@@ -78,7 +90,7 @@ if st.session_state.pagina == "abastecimento":
     }
 
     navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), key=f"navio_{st.session_state.form_id}")
-    st.markdown(f'<div class="alerta-capacidade">Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="color: #FFFF00; font-weight: bold; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; display: inline-block;">Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts</div>', unsafe_allow_html=True)
 
     # DADOS DE ENTRADA
     col_a, col_b = st.columns(2)
@@ -90,45 +102,42 @@ if st.session_state.pagina == "abastecimento":
         qtd_pedida = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0, key=f"qp_{st.session_state.form_id}")
         remanescente = st.number_input("REMANESCENTE (LTS)", min_value=0, key=f"rm_{st.session_state.form_id}")
 
-    # CÁLCULO DE SEGURANÇA (SOMA QUÁDRUPLA)
+    # SOMA QUÁDRUPLA DE SEGURANÇA
     total_geral = saldo_bb + saldo_be + remanescente + qtd_pedida
     limite = CAPACIDADES[navio_selecionado]
     transbordou = total_geral > limite
 
-    # STATUS DE VOLUME
     if transbordou:
-        st.markdown(f'<div style="color:red; background:white; padding:10px; border:2px solid red; font-weight:bold; text-align:center; border-radius:8px;">⚠️ VOLUME ATUAL: {total_geral:,} lts (EXCEDE O LIMITE!)</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="color:red; background:white; padding:10px; border:2px solid red; font-weight:bold; text-align:center; border-radius:8px;">⚠️ EXCESSO: {total_geral:,} lts / {limite:,} lts</div>', unsafe_allow_html=True)
     else:
         st.markdown(f'<div class="quadro-seguro">✅ VOLUME SEGURO: {total_geral:,} lts</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # CONTROLE DE TEMPO E FOTOS LADO A LADO
-    col_esq, col_dir = st.columns(2)
+    # CRONÔMETRO E FOTOS LADO A LADO
+    c_timer, c_fotos = st.columns([1, 2])
     
-    with col_esq:
+    with c_timer:
         st.markdown("<p style='text-align:center;'>CRONÔMETRO</p>", unsafe_allow_html=True)
         if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
         if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
         
-        # Display do Timer
         if st.session_state.t_rodando:
             segundos = int(time.time() - st.session_state.t_inicio)
             st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
         
-        st.markdown(f'<div style="background:white; color:red; font-size:28px; text-align:center; border-radius:10px; border:2px solid blue; padding:5px;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background:white; color:red; font-size:24px; text-align:center; border-radius:8px; border:2px solid blue; padding:5px;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
         
-        btn_c1, btn_c2 = st.columns(2)
-        if btn_c1.button("▶️ INICIAR", use_container_width=True):
+        b1, b2 = st.columns(2)
+        if b1.button("▶️ INICIAR", use_container_width=True):
             st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True
-        if btn_c2.button("🛑 PARAR", use_container_width=True):
+        if b2.button("🛑 PARAR", use_container_width=True):
             st.session_state.t_rodando = False
 
-    with col_dir:
-        # CAPTURADORES DE IMAGEM LADO A LADO [Solicitado pelo usuário]
+    with c_fotos:
+        # FOTOS LADO A LADO COM ACESSO DIRETO À CÂMERA
         f_col1, f_col2 = st.columns(2)
         with f_col1:
-            # camera_input abre a câmera diretamente no mobile
             foto_antes = st.camera_input("FOTO ANTES (A)", key=f"fa_{st.session_state.form_id}")
         with f_col2:
             foto_depois = st.camera_input("FOTO DEPOIS (D)", key=f"fd_{st.session_state.form_id}")
@@ -137,22 +146,16 @@ if st.session_state.pagina == "abastecimento":
     st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=120, key=f"canvas_{st.session_state.form_id}")
 
-    # --- BLOQUEIO E BOTÃO FINAL ---
+    # --- TRAVA FINAL ---
     if transbordou:
         st.markdown(f"""
             <div class="alerta-transbordo-flutuante">
                 🚨 BLOQUEIO DE SEGURANÇA 🚨<br>
-                A soma ({total_geral:,} lts) ultrapassa o limite!<br>
-                <b>IMPEDIR O TRANSBORDO PARA LIBERAR IMPRESSÃO</b>
+                Soma de litros excede a capacidade do tanque!<br>
+                <b>REDUZA OS VALORES PARA EVITAR O TRANSBORDO</b>
             </div>
         """, unsafe_allow_html=True)
         st.button("GERAR COMUNICADO FINAL (BLOQUEADO)", use_container_width=True, disabled=True)
     else:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            st.success("Gerando documento... Verifique o download abaixo.")
-            # (Aqui entra a lógica do FPDF conforme histórico anterior)
-
-st.markdown("---")
-if st.button("📂 LIMPAR TUDO / NOVO LANÇAMENTO", use_container_width=True):
-    reset_lancamento()
-    st.rerun()
+            st.success("Tudo certo! Documento pronto para geração.")
