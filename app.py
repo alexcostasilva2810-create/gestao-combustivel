@@ -26,16 +26,17 @@ st.markdown("""
         font-size: 18px !important; color: #FFFFFF !important;  
         font-weight: bold !important; text-shadow: 1px 1px 3px #000;
     }
-    /* ESTILO DO ALERTA DE CAPACIDADE */
+    /* ALERTA DE CAPACIDADE - AMARELO 15PX */
     .alerta-capacidade {
-        color: #FFFF00 !important; /* Amarelo Vibrante para contraste */
-        font-size: 15px !important; /* Tamanho solicitado */
+        color: #FFFF00 !important; 
+        font-size: 15px !important; 
         font-weight: 800 !important;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 5px 10px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 8px 12px;
         border-radius: 5px;
         margin-bottom: 15px;
         display: inline-block;
+        border: 1px solid #FFFF00;
     }
     .stSelectbox div, .stNumberInput input, .stDateInput input, .stFileUploader section {
         background-color: white !important; color: black !important;
@@ -99,11 +100,26 @@ if st.session_state.pagina == "abastecimento":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px; margin-bottom: 5px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
-    CAPACIDADES = {"ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "CANJERANA": 18000, "JATOBA": 84000}
+    # LISTA CORRIGIDA CONFORME TABELA ENVIADA
+    CAPACIDADES = {
+        "ANGELO": 17000,
+        "ANGICO": 88000,
+        "AROEIRA": 88000,
+        "BRENO": 34700,
+        "CANJERANA": 18000,
+        "CUMARU": 64000,
+        "IPE": 29700,
+        "SAMAUMA": 92000,
+        "JACARANDA": 19792,
+        "LUIZ FELIPE": 25000,
+        "QUARUBA": 19792,
+        "TIMBORANA": 19792,
+        "JATOBA": 84000
+    }
 
     navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), key=f"navio_{st.session_state.form_id}")
     
-    # ALERTA DE CAPACIDADE ATUALIZADO (AMARELO E 15px)
+    # ALERTA DE CAPACIDADE VISÍVEL EM AMARELO
     st.markdown(f'<div class="alerta-capacidade">Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts</div>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
@@ -143,33 +159,32 @@ if st.session_state.pagina == "abastecimento":
             pdf = FPDF()
             pdf.add_page()
             
-            # (Lógica do PDF mantida conforme image_ea9c7a e image_eb0159)
+            # Cabeçalho
             pdf.set_font("Arial", "B", 20)
             pdf.set_text_color(0, 102, 255)
             pdf.cell(200, 10, "ZION", ln=True, align="C")
+            pdf.ln(10)
             
             pdf.set_font("Arial", "", 12)
             pdf.set_text_color(0, 0, 0)
-            pdf.ln(10)
             total_pos = saldo_bb + saldo_be + remanescente + qtd_pedida
-            texto_pdf = (f"Comunico que o empurrador {navio_selecionado} está apto a receber {qtd_pedida:,} lts...\n"
-                         f"Capacidade total: {CAPACIDADES[navio_selecionado]:,} lts.")
-            pdf.multi_cell(0, 8, texto_pdf)
+            texto = (f"Comunico que o empurrador {navio_selecionado} está apto a receber o consumo de {qtd_pedida:,} lts.\n"
+                     f"Capacidade total do empurrador: {CAPACIDADES[navio_selecionado]:,} lts.\n"
+                     f"Saldo Total Pós-Abastecimento: {total_pos:,} lts.")
+            pdf.multi_cell(0, 8, texto)
 
-            # Fotos lado a lado (A e D)
-            y_fotos = pdf.get_y() + 5
-            if foto_antes: pdf.image(Image.open(foto_antes), x=40, y=y_fotos, w=45)
-            if foto_depois: pdf.image(Image.open(foto_depois), x=115, y=y_fotos, w=45)
+            # Fotos lado a lado A e D
+            y_pos = pdf.get_y() + 5
+            if foto_antes: pdf.image(Image.open(foto_antes), x=40, y=y_pos, w=45)
+            if foto_depois: pdf.image(Image.open(foto_depois), x=115, y=y_pos, w=45)
             
-            pdf_bytes = pdf.output(dest='S')
-            st.download_button(label="📥 BAIXAR COMUNICADO", data=bytes(pdf_bytes), file_name="Zion_Abastecimento.pdf", use_container_width=True)
+            st.download_button("📥 BAIXAR PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio_selecionado}.pdf", use_container_width=True)
             st.markdown('<div class="alerta-sucesso-custom">Tudo corrigido! Linha, assinatura e fotos incluídas.</div>', unsafe_allow_html=True)
 
         except Exception as e:
             st.error(f"Erro: {e}")
 
-# (Telas de Menu e Início simplificadas para navegação)
 elif st.session_state.pagina == "menu":
-    st.info("📂 Menu Principal Carregado")
+    st.info("📂 Menu Principal")
 elif st.session_state.pagina == "inicio":
-    st.info("🏠 Tela Inicial Carregada")
+    st.info("🏠 Tela Inicial")
