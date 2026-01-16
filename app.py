@@ -135,12 +135,16 @@ if st.session_state.pagina == "abastecimento":
     total_geral = saldo_bb + saldo_be + remanescente + qtd_pedida
     transbordou = total_geral > CAPACIDADES[navio]
 
+    # Formatação do valor com ponto (ex: 14.700)
+    valor_formatado = f"{total_geral:,}".replace(",", ".")
+
+    # ALERTAS COM TAMANHO 20 E TEXTO PERSONALIZADO
     if transbordou:
         st.markdown(f'''
             <div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; 
             border-radius: 10px; text-align: center; font-size: 20px; 
             font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            🚨 BLOQUEIO: {total_geral:,} lts excede o limite!
+            🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!
             </div>
         ''', unsafe_allow_html=True)
     else:
@@ -148,7 +152,7 @@ if st.session_state.pagina == "abastecimento":
             <div style="color: #FFFFFF; background-color: #28a745; padding: 15px; 
             border-radius: 10px; text-align: center; font-size: 20px; 
             font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            ✅ VOLUME SEGURO: {total_geral:,} lts
+            ✅ VOLUME SEGURO: {valor_formatado} Lts Capacidade permitida!
             </div>
         ''', unsafe_allow_html=True)
 
@@ -170,7 +174,7 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
             st.rerun()
 
-    # CAMPO DE UPLOAD DE IMAGEM (Restaurado conforme solicitado)
+    # CAMPO DE UPLOAD DE IMAGEM
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos_upload:
         foto_a = st.file_uploader("CARREGAR FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
@@ -182,8 +186,8 @@ if st.session_state.pagina == "abastecimento":
 
     st.markdown("---")
     
-    # --- RESTAURAÇÃO DO BOTÃO DE PDF E ALERTA CIOP ---
     if not transbordou:
+        # Botão de Gerar PDF
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             pdf = FPDF()
             pdf.add_page()
@@ -210,10 +214,9 @@ if st.session_state.pagina == "abastecimento":
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
                 pdf.image(buf, x=70, y=210, w=60)
             
-            # Gera o botão de download após clicar em Gerar
             st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
 
-        # Alerta final para o CIOP (Tamanho 20, Negrito, Verde com fundo Branco)
+        # Alerta CIOP: Verde com fundo Branco, Tamanho 20, Negrito
         st.markdown(f'''
             <div style="color: #008000; background-color: #FFFFFF; padding: 15px; 
             border-radius: 10px; text-align: center; font-size: 20px; 
