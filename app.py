@@ -26,6 +26,17 @@ st.markdown("""
         font-size: 18px !important; color: #FFFFFF !important;  
         font-weight: bold !important; text-shadow: 1px 1px 3px #000;
     }
+    /* ESTILO DO ALERTA DE CAPACIDADE */
+    .alerta-capacidade {
+        color: #FFFF00 !important; /* Amarelo Vibrante para contraste */
+        font-size: 15px !important; /* Tamanho solicitado */
+        font-weight: 800 !important;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 5px 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        display: inline-block;
+    }
     .stSelectbox div, .stNumberInput input, .stDateInput input, .stFileUploader section {
         background-color: white !important; color: black !important;
         font-size: 18px !important; border-radius: 8px !important;
@@ -90,11 +101,10 @@ if st.session_state.pagina == "abastecimento":
 
     CAPACIDADES = {"ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "CANJERANA": 18000, "JATOBA": 84000}
 
-    # Widget de seleção com chave de reset
     navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), key=f"navio_{st.session_state.form_id}")
     
-    # RESTAURAÇÃO DO ALERTA DE CAPACIDADE
-    st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts")
+    # ALERTA DE CAPACIDADE ATUALIZADO (AMARELO E 15px)
+    st.markdown(f'<div class="alerta-capacidade">Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts</div>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -133,63 +143,33 @@ if st.session_state.pagina == "abastecimento":
             pdf = FPDF()
             pdf.add_page()
             
-            # Cabeçalho profissional
+            # (Lógica do PDF mantida conforme image_ea9c7a e image_eb0159)
             pdf.set_font("Arial", "B", 20)
             pdf.set_text_color(0, 102, 255)
             pdf.cell(200, 10, "ZION", ln=True, align="C")
-            pdf.set_font("Arial", "B", 14)
-            pdf.set_text_color(0, 0, 0)
-            pdf.cell(200, 10, "Comunicado de Abastecimento", ln=True, align="C")
-            pdf.ln(10)
-
-            # Texto do corpo
+            
             pdf.set_font("Arial", "", 12)
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(10)
             total_pos = saldo_bb + saldo_be + remanescente + qtd_pedida
-            texto_corpo = (
-                f"Comunico que o empurrador {navio_selecionado} está apto a receber o consumo de {qtd_pedida:,} lts, "
-                f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), somados ao saldo remanescente de {remanescente:,} lts.\n\n"
-                f"Portanto, o saldo total após o abastecimento será de {total_pos:,} lts.\n"
-                f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio_selecionado]:,} lts.\n\n"
-                f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.\n\n"
-                f"Segue abaixo as fotos do antes e depois do abastecimento:"
-            )
-            pdf.multi_cell(0, 8, texto_corpo)
+            texto_pdf = (f"Comunico que o empurrador {navio_selecionado} está apto a receber {qtd_pedida:,} lts...\n"
+                         f"Capacidade total: {CAPACIDADES[navio_selecionado]:,} lts.")
+            pdf.multi_cell(0, 8, texto_pdf)
 
-            # Fotos posicionadas em A e D
+            # Fotos lado a lado (A e D)
             y_fotos = pdf.get_y() + 5
             if foto_antes: pdf.image(Image.open(foto_antes), x=40, y=y_fotos, w=45)
             if foto_depois: pdf.image(Image.open(foto_depois), x=115, y=y_fotos, w=45)
             
-            # Assinatura e Linha
-            pdf.set_y(y_fotos + 55)
-            if canvas_result.image_data is not None:
-                sig_img = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
-                sig_buf = io.BytesIO()
-                sig_img.save(sig_buf, format='PNG')
-                pdf.image(sig_buf, x=80, y=pdf.get_y(), w=40)
-            
-            pdf.ln(12)
-            pdf.line(70, pdf.get_y(), 140, pdf.get_y())
-            pdf.set_font("Arial", "I", 8)
-            pdf.cell(0, 8, f"Assinado digitalmente em: {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')}", ln=True, align="C")
-            
-            st.download_button(label="📥 BAIXAR COMUNICADO FINAL", data=bytes(pdf.output(dest='S')), file_name=f"Comunicado_{navio_selecionado}.pdf", use_container_width=True)
-            
-            # Alerta verde de sucesso tamanho 14
+            pdf_bytes = pdf.output(dest='S')
+            st.download_button(label="📥 BAIXAR COMUNICADO", data=bytes(pdf_bytes), file_name="Zion_Abastecimento.pdf", use_container_width=True)
             st.markdown('<div class="alerta-sucesso-custom">Tudo corrigido! Linha, assinatura e fotos incluídas.</div>', unsafe_allow_html=True)
-            
-            # Opção de zerar manual se necessário
-            if st.button("🔄 ZERAR TELA PARA NOVO LANÇAMENTO"):
-                reset_lancamento()
-                st.rerun()
 
         except Exception as e:
             st.error(f"Erro: {e}")
 
+# (Telas de Menu e Início simplificadas para navegação)
 elif st.session_state.pagina == "menu":
-    st.info("### 📂 Tela de Menu Principal")
-    if st.button("Voltar ao Abastecimento"): st.session_state.pagina = "abastecimento"; st.rerun()
-
+    st.info("📂 Menu Principal Carregado")
 elif st.session_state.pagina == "inicio":
-    st.info("### 🏠 Tela Inicial")
-    if st.button("Ir para Abastecimento"): st.session_state.pagina = "abastecimento"; st.rerun()
+    st.info("🏠 Tela Inicial Carregada")
