@@ -12,7 +12,7 @@ st.set_page_config(page_title="ZION - ABASTECIMENTO NAVAL", layout="centered")
 
 st.markdown("""
     <style>
-    /* Fundo Naval Aprovado */
+    /* Plano de fundo naval aprovado */
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1524522173746-f628baad3644?q=80&w=2000&auto=format&fit=crop");
         background-size: cover;
@@ -24,7 +24,7 @@ st.markdown("""
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.75); z-index: -1;
     }
-    /* Rótulos Brancos para Acessibilidade */
+    /* Rótulos em branco conforme solicitado */
     label, .stMarkdown p { 
         font-size: 19px !important; 
         color: #FFFFFF !important;  
@@ -67,7 +67,7 @@ st.markdown('<h1 style="color:white; text-align:center; font-size: 45px; margin-
 st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
 navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
-st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts")
+st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts") #
 
 col1, col2 = st.columns(2)
 
@@ -91,6 +91,7 @@ with col2:
     if c2.button("🛑 PARAR", use_container_width=True):
         st.session_state.t_rodando = False
     
+    # Cronômetro restaurado
     if st.session_state.t_rodando:
         segundos = int(time.time() - st.session_state.t_inicio)
         st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
@@ -104,10 +105,10 @@ with col2:
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_restituido")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_fix")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (RESTAURADA E COMPLETA)
+#                     GERAÇÃO DO PDF (RESTAURADA E LIMPA)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -119,26 +120,24 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         
         pdf.set_font("Arial", "", 12)
         pdf.ln(10)
-        # Reinscrevendo todos os campos no PDF para não vir vazio
         pdf.cell(200, 10, f"Empurrador: {navio_selecionado}", ln=True)
         pdf.cell(200, 10, f"Data da Operacao: {data_abast.strftime('%d/%m/%Y')}", ln=True)
-        pdf.cell(200, 10, f"Saldo Inicial BB: {saldo_bb} LTS", ln=True)
-        pdf.cell(200, 10, f"Saldo Inicial BE: {saldo_be} LTS", ln=True)
+        pdf.cell(200, 10, f"Saldo BB: {saldo_bb} LTS", ln=True)
+        pdf.cell(200, 10, f"Saldo BE: {saldo_be} LTS", ln=True)
         pdf.cell(200, 10, f"Quantidade Pedida: {qtd_pedida} LTS", ln=True)
-        pdf.cell(200, 10, f"Tempo Total de Operacao: {st.session_state.tempo_final_str}", ln=True)
-        pdf.cell(200, 10, f"Remanescente: {remanescente} LTS", ln=True)
+        pdf.cell(200, 10, f"Tempo Total: {st.session_state.tempo_final_str}", ln=True)
+        pdf.cell(200, 10, f"Remanescente Final: {remanescente} LTS", ln=True)
         
-        pdf_bytes = pdf.output(dest='S')
-        if isinstance(pdf_bytes, str):
-            pdf_bytes = pdf_bytes.encode('latin-1')
-
+        # Forma padrão de gerar o PDF em memória para Streamlit
+        pdf_out = pdf.output(dest='S')
+        
         st.download_button(
-            label="📥 BAIXAR RELATÓRIO COMPLETO",
-            data=pdf_bytes,
-            file_name=f"Relatorio_Zion_{navio_selecionado}.pdf",
+            label="📥 BAIXAR RELATÓRIO PDF",
+            data=bytes(pdf_out),
+            file_name=f"Relatorio_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("O relatório foi processado com todos os dados!")
+        st.success("Relatório gerado com sucesso!")
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {e}")
