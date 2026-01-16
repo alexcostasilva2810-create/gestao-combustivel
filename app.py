@@ -91,7 +91,7 @@ if st.session_state.pagina == "abastecimento":
         if bt1.button("▶️ INICIAR"): st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True; st.rerun()
         if bt2.button("🛑 PARAR"): st.session_state.t_rodando = False; st.rerun()
 
-    # ÁREA QUE PISCA
+    # ÁREA QUE PISCA E CAPTURA IMAGEM DIRETA
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos:
         f1, f2 = st.columns(2)
@@ -102,6 +102,7 @@ if st.session_state.pagina == "abastecimento":
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=120, key=f"c_{st.session_state.form_id}")
 
     if not transbordou:
+        # BOTÃO RESTAURADO
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             pdf = FPDF()
             pdf.add_page()
@@ -109,7 +110,8 @@ if st.session_state.pagina == "abastecimento":
             pdf.cell(200, 10, "ZION - Comunicado de Abastecimento", ln=True, align="C")
             pdf.ln(10)
             pdf.set_font("Arial", "", 12)
-            # RESTAURAÇÃO DO TEXTO ORIGINAL
+            
+            # TEXTO ORIGINAL RESTAURADO
             texto = (f"Comunico que o empurrador {navio} está apto a receber o consumo de {qtd_pedida:,} lts, "
                      f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
                      f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
@@ -128,5 +130,5 @@ if st.session_state.pagina == "abastecimento":
                 pdf.image(buf, x=70, y=200, w=60)
                 pdf.text(70, 245, f"Assinado digitalmente em: {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')}")
             
-            st.download_button("📥 BAIXAR COMUNICADO FINAL CORRIGIDO", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
+            st.download_button("📥 BAIXAR COMUNICADO FINAL", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
