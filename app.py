@@ -37,6 +37,27 @@ if 'form_id' not in st.session_state: st.session_state.form_id = 0
 if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
 if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
 
+# Dicionário de Login: EMPURRADOR - USUÁRIO - SENHA
+LOGINS_VALIDOS = {
+    "ANGELO": {"user": "ALEX", "pass": "2463"},
+    "ANGICO": {"user": "angico_zion", "pass": "zion02"},
+    "AROEIRA": {"user": "aroeira_zion", "pass": "zion03"},
+    "BRENO": {"user": "breno_zion", "pass": "zion04"},
+    "CANJERANA": {"user": "canjerana_zion", "pass": "zion05"},
+    "CUMARU": {"user": "cumaru_zion", "pass": "zion06"},
+    "IPE": {"user": "ipe_zion", "pass": "zion07"},
+    "SAMAUMA": {"user": "samauma_zion", "pass": "zion08"},
+    "JACARANDA": {"user": "jacaranda_zion", "pass": "zion09"},
+    "LUIZ FELIPE": {"user": "luizf_zion", "pass": "zion10"},
+    "QUARUBA": {"user": "quaruba_zion", "pass": "zion11"},
+    "TIMBORANA": {"user": "timborana_zion", "pass": "zion12"},
+    "JATOBA": {"user": "jatoba_zion", "pass": "zion13"},
+    "CEDRO": {"user": "cedro_zion", "pass": "zion14"},
+    "MOGNO": {"user": "mogno_zion", "pass": "zion15"},
+    "FREIJO": {"user": "freijo_zion", "pass": "zion16"},
+    "SUCUPIRA": {"user": "sucupira_zion", "pass": "zion17"}
+}
+
 def reset_lancamento():
     st.session_state.form_id += 1
     st.session_state.t_rodando = False
@@ -48,14 +69,19 @@ def reset_lancamento():
 if st.session_state.pagina == "login":
     st.markdown('<h1 style="color:white; text-align:center;">ACESSO AO SISTEMA</h1>', unsafe_allow_html=True)
     with st.form("login_form"):
-        user = st.text_input("Usuário")
-        pw = st.text_input("Senha", type="password")
+        # Sequência solicitada: EMPURRADOR - USUÁRIO - SENHA
+        empurrador_login = st.selectbox("EMPURRADOR", options=list(LOGINS_VALIDOS.keys()))
+        user_input = st.text_input("USUÁRIO")
+        pw_input = st.text_input("SENHA", type="password")
+        
         if st.form_submit_button("ENTRAR"):
-            if user == "admin" and pw == "zion123": # Altere aqui suas credenciais
+            credenciais = LOGINS_VALIDOS.get(empurrador_login)
+            if user_input == credenciais["user"] and pw_input == credenciais["pass"]:
                 st.session_state.pagina = "abastecimento"
+                st.session_state.navio_atual = empurrador_login
                 st.rerun()
             else:
-                st.error("Usuário ou senha incorretos")
+                st.error("Credenciais incorretas para este empurrador.")
 
 # #-------------------------------------------------------------------------#
 #                             MENU DE NAVEGAÇÃO
@@ -64,8 +90,7 @@ if st.session_state.pagina != "login":
     st.markdown("### 📋 MENU DE NAVEGAÇÃO")
     col_m1, col_m2, col_m3 = st.columns(3)
     with col_m1:
-        # AGORA LEVA PARA O LOGIN
-        if st.button("🏠 TELA INICIAL", use_container_width=True): 
+        if st.button("🏠 TELA INICIAL", use_container_width=True): # Redireciona para Login
             st.session_state.pagina = "login"
             st.rerun()
     with col_m2:
@@ -81,17 +106,19 @@ if st.session_state.pagina != "login":
 #                         TELA DE ABASTECIMENTO
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "abastecimento":
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px; margin-bottom: 5px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
     CAPACIDADES = {
         "ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700,
         "CANJERANA": 18000, "CUMARU": 64000, "IPE": 29700, "SAMAUMA": 92000,
         "JACARANDA": 19792, "LUIZ FELIPE": 25000, "QUARUBA": 19792,
-        "TIMBORANA": 19792, "JATOBA": 84000
+        "TIMBORANA": 19792, "JATOBA": 84000, "CEDRO": 22000, "MOGNO": 25000,
+        "FREIJO": 18000, "SUCUPIRA": 30000
     }
     
-    navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), key=f"n_{st.session_state.form_id}")
+    # Define o navio com base no login ou permite troca
+    navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), index=list(CAPACIDADES.keys()).index(st.session_state.navio_atual), key=f"n_{st.session_state.form_id}")
     st.markdown(f'<div style="color: #FFFF00; font-weight: bold;">Capacidade do Tanque: {CAPACIDADES[navio]:,} lts</div>', unsafe_allow_html=True)
 
     col_a, col_b = st.columns(2)
@@ -111,7 +138,7 @@ if st.session_state.pagina == "abastecimento":
     else:
         st.markdown(f'<div class="quadro-seguro">✅ VOLUME SEGURO: {total_geral:,} lts</div>', unsafe_allow_html=True)
 
-    # CRONÔMETRO
+    # CRONÔMETRO PISCANTE
     classe_piscante = "piscando" if st.session_state.t_rodando else ""
     col_timer, col_fotos = st.columns([1, 2])
     
@@ -129,7 +156,6 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
             st.rerun()
 
-    # ÁREA PISCANTE
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos:
         f1, f2 = st.columns(2)
@@ -142,7 +168,7 @@ if st.session_state.pagina == "abastecimento":
 
     st.markdown("---")
     if not transbordou:
-        # BOTÃO GERAR COMUNICADO
+        # BOTÃO GERAR COMUNICADO FINAL
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             pdf = FPDF()
             pdf.add_page()
@@ -166,6 +192,6 @@ if st.session_state.pagina == "abastecimento":
             if canvas_result.image_data is not None:
                 img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
-                pdf.image(buf, x=70, y=200, w=60)
+                pdf.image(buf, x=70, y=210, w=60)
             
             st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
