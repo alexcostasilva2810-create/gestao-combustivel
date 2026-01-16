@@ -3,6 +3,8 @@ from datetime import datetime
 from fpdf import FPDF
 from streamlit_drawable_canvas import st_canvas
 import time
+from PIL import Image
+import io
 
 # #-------------------------------------------------------------------------#
 #                             CONFIGURAÇÕES VISUAIS
@@ -67,7 +69,7 @@ with col1:
     saldo_bb = st.number_input("SALDO BB (LTS)", min_value=0)
     saldo_be = st.number_input("SALDO BE (LTS)", min_value=0)
     remanescente = st.number_input("REMANESCENTE (LTS)", min_value=0)
-    st.file_uploader("📷 FOTO ANTES DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
+    foto_antes = st.file_uploader("📷 FOTO ANTES DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
 
 with col2:
     qtd_pedida = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
@@ -89,14 +91,14 @@ with col2:
     else:
         placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
     
-    st.file_uploader("📷 FOTO DEPOIS DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
+    foto_depois = st.file_uploader("📷 FOTO DEPOIS DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_restored")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_fix")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (TEXTO RESTAURADO)
+#                     GERAÇÃO DO PDF (CORREÇÃO DE LINHA E FOTOS)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -104,7 +106,7 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf = FPDF()
         pdf.add_page()
         
-        # Cabeçalho Azul ZION
+        # Cabeçalho Azul
         pdf.set_font("Arial", "B", 20)
         pdf.set_text_color(0, 102, 255)
         pdf.cell(200, 10, "ZION", ln=True, align="C")
@@ -114,10 +116,9 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf.cell(200, 10, "Comunicado de Abastecimento", ln=True, align="C")
         pdf.ln(10)
         
-        # Texto Redigido Restaurado
-        pdf.set_font("Arial", "", 15)
-        total_atual = saldo_bb + saldo_be + remanescente
-        total_pos = total_atual + qtd_pedida
+        # Texto Profissional
+        pdf.set_font("Arial", "", 12)
+        total_pos = saldo_bb + saldo_be + remanescente + qtd_pedida
         
         texto_corpo = (
             f"Comunico que o empurrador {navio_selecionado} está apto a receber o consumo de {qtd_pedida:,} lts, "
@@ -128,22 +129,40 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
             f"Segue abaixo as fotos do antes e depois do abastecimento:"
         )
         pdf.multi_cell(0, 8, texto_corpo)
+        pdf.ln(10)
+
+        # Inclusão das Fotos
+        y_fotos = pdf.get_y()
+        if foto_antes:
+            img_a = Image.open(foto_antes)
+            pdf.image(img_a, x=10, y=y_fotos, w=80)
+        if foto_depois:
+            img_d = Image.open(foto_depois)
+            pdf.image(img_d, x=110, y=y_fotos, w=80)
         
-        # Rodapé de Assinatura
-        pdf.ln(50)
-        pdf.cell(0, 0, "", border="T", ln=1, align="C")
+        # Área de Assinatura Corrigida (Linha menor e imagem)
+        pdf.set_y(230)
+        if canvas_result.image_data is not None:
+            signature_img = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
+            signature_buffer = io.BytesIO()
+            signature_img.save(signature_buffer, format='PNG')
+            pdf.image(signature_buffer, x=75, y=210, w=60) # Centralizada acima da linha
+
+        # Linha centralizada e curta
+        pdf.line(60, 235, 150, 235) 
+        pdf.set_y(236)
         pdf.set_font("Arial", "I", 8)
         data_hora = datetime.now().strftime('%d/%m/%Y às %H:%M:%S')
         pdf.cell(0, 10, f"Assinado digitalmente em: {data_hora}", ln=True, align="C")
         
         pdf_bytes = pdf.output(dest='S')
         st.download_button(
-            label="📥 BAIXAR COMUNICADO RESTAURADO",
+            label="📥 BAIXAR COMUNICADO FINAL CORRIGIDO",
             data=bytes(pdf_bytes),
-            file_name=f"Comunicado_{navio_selecionado}.pdf",
+            file_name=f"Comunicado_Zion_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("O texto original foi restaurado com sucesso!")
+        st.success("Tudo corrigido! Linha, assinatura e fotos incluídas.")
     except Exception as e:
         st.error(f"Erro ao gerar: {e}")
