@@ -97,10 +97,10 @@ if 'pagina' not in st.session_state:
     st.session_state.pagina = "inicio"
 
 # #-------------------------------------------------------------------------#
-#      ESTRUTURA CORRIGIDA: MENU + CONDICIONAIS DE PÁGINA
+#                         ESTRUTURA FINAL CORRIGIDA
 # #-------------------------------------------------------------------------#
 
-# 1. MENU DE NAVEGAÇÃO (FICA FORA DOS "IFs" PARA APARECER EM TUDO)
+# 1. MENU DE NAVEGAÇÃO (Fica no topo, fora dos IFs)
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
 st.markdown("📋 MENU DE NAVEGAÇÃO")
 c1, c2, c3, c4 = st.columns(4)
@@ -123,28 +123,31 @@ with c4:
         st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 2. BLOCOS DE PÁGINA (AQUI É ONDE OCORREU O ERRO DE INDENTAÇÃO)
+# 2. BLOCOS DE CONTEÚDO (Correção do IndentationError)
 if st.session_state.pagina == "inicio":
-    # Certifique-se de que existe código aqui dentro
-    st.write("Bem-vindo à tela inicial.") 
+    st.write("### Bem-vindo ao Sistema ZION")
+    st.info("Selecione uma opção no menu acima para começar.")
 
 elif st.session_state.pagina == "menu":
-    # Certifique-se de que existe código aqui dentro
-    st.write("Menu Principal")
+    st.write("### Menu de Opções")
+    st.write("Gerenciamento de combustível e logística.")
 
 elif st.session_state.pagina == "abastecimento":
-    # COLOQUE AQUI TODO O CONTEÚDO DO BLOCO 4 QUE SALVAMOS ANTERIORMENTE
+    # IMPORTANTE: Todo o código do Bloco 4 deve vir aqui, com 4 espaços de recuo
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
-    # ... resto do código do bloco 4 ...
+    # [Cole aqui o restante do código do Bloco 4 que salvamos antes]
 
 elif st.session_state.pagina == "registro_nf":
-    # COLOQUE AQUI TODO O CONTEÚDO DO BLOCO 5 (NOTA FISCAL)
-    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL</div>', unsafe_allow_html=True)
-    # ... resto do código do bloco 5 ...
+    # IMPORTANTE: Todo o código do Bloco 5 deve vir aqui, com 4 espaços de recuo
+    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL - COMBUSTÍVEL</div>', unsafe_allow_html=True)
+    # [Cole aqui o restante do código do Bloco 5 da Ipiranga]
 
-# 3. CORREÇÃO DO RODAPÉ (LINHA 224 QUE ESTAVA DANDO ERRO)
-st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
+# 3. RODAPÉ FIXO (Correção do SyntaxError da linha 224)
+st.markdown(f'''
+<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.
+</div>
+''', unsafe_allow_html=True)
 # ---------------------------------------------------------
 
 # 4. Blocos de Conteúdo (Definição de qual página mostrar)
