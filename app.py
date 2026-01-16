@@ -96,12 +96,37 @@ st.markdown(""" <style> ... </style> """, unsafe_allow_html=True)
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "inicio"
 
+import streamlit as st
+from datetime import datetime
+
+# 1. CONFIGURAÇÃO DA PÁGINA
+st.set_page_config(page_title="ZION - Transdourada", layout="wide")
+
+# 2. INICIALIZAÇÃO DO ESTADO DA PÁGINA
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = "inicio"
+if 'form_id' not in st.session_state:
+    st.session_state.form_id = 0
+
+# 3. ESTILOS CSS (BANNER E MENU)
+st.markdown("""
+    <style>
+    .main-nav {background-color: #f0f2f6; padding: 10px; border-radius: 10px; margin-bottom: 20px; text-align: center;}
+    .banner-interno-verde {
+        background-color: #ffffff; color: #008000; padding: 15px; 
+        border-radius: 10px; text-align: center; font-size: 24px; 
+        font-weight: bold; border: 2px solid #008000; margin-bottom: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # #-------------------------------------------------------------------------#
-#                         MENU DE NAVEGAÇÃO FIXO
+#      1. MENU DE NAVEGAÇÃO (BOTÕES DO TOPO)
 # #-------------------------------------------------------------------------#
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
 st.markdown("📋 MENU DE NAVEGAÇÃO")
 c1, c2, c3, c4 = st.columns(4)
+
 with c1:
     if st.button("🏠 TELA INICIAL", use_container_width=True):
         st.session_state.pagina = "inicio"; st.rerun()
@@ -110,11 +135,46 @@ with c2:
         st.session_state.pagina = "menu"; st.rerun()
 with c3:
     if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
-        st.session_state.pagina = "abastecimento"; st.session_state.form_id += 1; st.rerun()
+        st.session_state.pagina = "abastecimento"; st.rerun()
 with c4:
     if st.button("🧾 REGISTRO DE NF", use_container_width=True):
         st.session_state.pagina = "registro_nf"; st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
+
+# #-------------------------------------------------------------------------#
+#      2. RODAPÉ FIXO (CORREÇÃO DA LINHA 289 - PARÊNTESE FECHADO)
+# #-------------------------------------------------------------------------#
+st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
+
+# #-------------------------------------------------------------------------#
+#      3. LÓGICA DE EXIBIÇÃO DAS PÁGINAS (SEM INTERVALO VAZIO)
+# #-------------------------------------------------------------------------#
+
+if st.session_state.pagina == "inicio":
+    st.info("Bem-vindo ao sistema ZION. Selecione uma opção acima.")
+
+elif st.session_state.pagina == "menu":
+    st.write("Módulos de gestão Transdourada ativos.")
+
+elif st.session_state.pagina == "abastecimento":
+    # --- INÍCIO DO SEU BLOCO 4 (ABASTECIMENTO) ---
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
+    
+    # Adicione aqui o restante do seu código de formulário (Empurrador, Saldos, etc.)
+    st.success("Página de Abastecimento carregada com sucesso!")
+
+elif st.session_state.pagina == "registro_nf":
+    # --- INÍCIO DO SEU BLOCO 5 (NOTA FISCAL) ---
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL</div>', unsafe_allow_html=True)
+    
+    chave = st.text_input("COLE A CHAVE DE ACESSO AQUI", max_chars=44)
+    if st.button("🔍 PUXAR DADOS"):
+        # Simulação dos dados da NF Ipiranga
+        st.session_state.nf_view = {"nf": "000.125.893", "valor": 26704.50}
+        st.write(f"Nota Fiscal: {st.session_state.nf_view['nf']} carregada!")
 
 # #-------------------------------------------------------------------------#
 #                    LÓGICA DE PÁGINAS (BLOCOS 4 E 5)
