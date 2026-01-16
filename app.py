@@ -1,5 +1,4 @@
 import streamlit as st
-import time
 from datetime import datetime
 from fpdf import FPDF
 from streamlit_drawable_canvas import st_canvas
@@ -55,7 +54,7 @@ elif st.session_state.passo == 'INPUT':
         
         navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
         limite = CAPACIDADES[navio]
-        st.info(f"Capacidade Tanque: {limite:,} lts")
+        st.info(f"Capacidade do Tanque: {limite:,} lts")
         
         c1, c2 = st.columns(2)
         with c1:
@@ -69,31 +68,30 @@ elif st.session_state.passo == 'INPUT':
         soma_total = s_bb + s_be + s_rem + pedido
         
         if soma_total > limite:
-            st.markdown(f'<div class="alerta-erro">⚠️ EXCESSO: {soma_total-limite:,} lts</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="alerta-erro">⚠️ ATENÇÃO: A SOMA ULTRAPASSA A CAPACIDADE! Excesso: {soma_total-limite:,} lts</div>', unsafe_allow_html=True)
         elif soma_total > 0:
-            st.markdown('<div class="alerta-sucesso">✅ ESPAÇO DISPONÍVEL CONFIRMADO.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="alerta-sucesso">✅ EMPURRADOR HABILITADO PARA RECEBER ODM.</div>', unsafe_allow_html=True)
 
         st.markdown("---")
-        st.markdown("<label>ASSINATURA DIGITAL (TOUCH)</label>", unsafe_allow_html=True)
+        st.markdown("<label>ASSINATURA DIGITAL (TELA TOUCH)</label>", unsafe_allow_html=True)
         canvas_result = st_canvas(
             fill_color="rgba(255, 255, 255, 1)",
             stroke_width=3,
             stroke_color="#000000",
-            background_color="#eeeeee",
+            background_color="#f8f9fa",
             height=150,
             update_streamlit=True,
-            key="canvas",
+            key="canvas_assinatura",
         )
 
-        if st.button("GERAR DOCUMENTO", use_container_width=True, type="primary"):
+        if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             if canvas_result.image_data is not None:
-                # Converter assinatura para imagem
                 img_res = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 st.session_state.assinatura = img_res
                 st.session_state.dados_pdf = {
                     "navio": navio, "pedido": pedido, "s_bb": s_bb, "s_be": s_be, 
                     "s_rem": s_rem, "total": soma_total, "limite": limite,
-                    "timestamp": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    "timestamp": datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
                 }
                 st.session_state.passo = 'RELATORIO'
                 st.rerun()
@@ -105,54 +103,62 @@ elif st.session_state.passo == 'INPUT':
 
 elif st.session_state.passo == 'RELATORIO':
     d = st.session_state.dados_pdf
-    st.markdown('<h2 style="color:white; text-align:center;">📄 Documento Final</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:white; text-align:center;">📄 Documento Gerado</h2>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
         
+        # Texto com correções gramaticais aplicadas
         texto_corpo = (f"Comunico que o empurrador {d['navio']} está apto a receber o consumo de "
-                       f"({d['pedido']:,} lts) devido ter o Saldo de ({d['s_bb']:,} lts BB) "
-                       f"e saldo de ({d['s_be']:,} lts BE) mais o saldo Remanescente de ({d['s_rem']:,} lts).\n\n"
-                       f"Portanto o saldo total após o abastecimento é de ({d['total']:,} lts).\n"
-                       f"A Capacidade do Empurrador é ({d['limite']:,} lts).")
+                       f"{d['pedido']:,} lts, visto que possui um saldo de {d['s_bb']:,} lts (BB) "
+                       f"e {d['s_be']:,} lts (BE), somados ao saldo remanescente de {d['s_rem']:,} lts.\n\n"
+                       f"Portanto, o saldo total após o abastecimento será de {d['total']:,} lts.\n"
+                       f"Ressaltamos que a capacidade total do empurrador é de {d['limite']:,} lts.")
 
-        # Geração do PDF
+        # Geração do PDF Corrigida
         pdf = FPDF()
         pdf.add_page()
         
-        # Topo ZION em Azul
+        # Cabeçalho ZION Centralizado e Azul
         pdf.set_text_color(0, 123, 255)
-        pdf.set_font("Helvetica", 'B', 24)
-        pdf.cell(0, 15, "ZION", ln=True, align='C')
+        pdf.set_font("Helvetica", 'B', 26)
+        pdf.cell(0, 20, "ZION", ln=True, align='C')
         
         pdf.set_text_color(0, 0, 0)
         pdf.set_font("Helvetica", 'B', 16)
         pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align='C')
         
         pdf.set_font("Helvetica", size=12)
-        pdf.ln(10)
-        pdf.multi_cell(0, 10, texto_corpo)
+        pdf.ln(15)
+        pdf.multi_cell(0, 8, texto_corpo)
         
-        # Adicionar Assinatura
+        # Área de Assinatura com maior afastamento e linha
         if 'assinatura' in st.session_state:
-            pdf.ln(10)
+            pdf.ln(30) # Afastamento do corpo do texto
             img_byte_arr = io.BytesIO()
             st.session_state.assinatura.save(img_byte_arr, format='PNG')
-            pdf.image(img_byte_arr, x=75, w=60)
+            
+            # Centraliza a imagem da assinatura
+            pdf.image(img_byte_arr, x=65, w=80)
+            
+            # Linha de assinatura e registro de data/hora
+            pdf.set_draw_color(255, 0, 0) # Linha vermelha conforme solicitado visualmente
+            pdf.line(60, pdf.get_y(), 150, pdf.get_y())
+            pdf.ln(2)
             pdf.set_font("Helvetica", 'I', 10)
-            pdf.cell(0, 5, f"Assinado digitalmente em: {d['timestamp']}", ln=True, align='C')
+            pdf.cell(0, 10, f"Assinado digitalmente em: {d['timestamp']}", ln=True, align='C')
 
         pdf_output = pdf.output()
 
         st.download_button(
-            label="📥 BAIXAR RELATÓRIO ASSINADO (PDF)",
+            label="📥 BAIXAR COMUNICADO ASSINADO (PDF)",
             data=bytes(pdf_output),
             file_name=f"Comunicado_ZION_{d['navio']}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
 
-        if st.button("NOVO REGISTRO"):
+        if st.button("REALIZAR NOVO REGISTRO"):
             st.session_state.passo = 'INICIAL'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
