@@ -9,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 import time
 
 # #-------------------------------------------------------------------------#
-#                             CONFIGURAÇÕES VISUAIS
+#                                CONFIGURAÇÕES VISUAIS
 # #-------------------------------------------------------------------------#
 st.set_page_config(page_title="ZION - SISTEMA DE GESTÃO", layout="centered")
 
@@ -32,7 +32,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#               LÓGICA DE NAVEGAÇÃO E ESTADO
+#                LÓGICA DE NAVEGAÇÃO E ESTADO
 # #-------------------------------------------------------------------------#
 if 'pagina' not in st.session_state: st.session_state.pagina = "login"
 if 'form_id' not in st.session_state: st.session_state.form_id = 0
@@ -66,7 +66,7 @@ def reset_lancamento():
     st.session_state.tempo_final_str = "00:00:00"
 
 # #-------------------------------------------------------------------------#
-#                             TELA DE LOGIN
+#                               TELA DE LOGIN
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "login":
     st.markdown('<h1 style="color:white; text-align:center;">ACESSO AO SISTEMA</h1>', unsafe_allow_html=True)
@@ -96,7 +96,9 @@ if st.session_state.pagina != "login":
             st.session_state.pagina = "login"
             st.rerun()
     with col_m2:
-        if st.button("📂 MENU PRINCIPAL", use_container_width=True): st.session_state.pagina = "menu"
+        if st.button("📂 MENU PRINCIPAL", use_container_width=True): 
+            st.session_state.pagina = "menu"
+            st.rerun()
     with col_m3:
         if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
             st.session_state.pagina = "abastecimento"
@@ -105,167 +107,48 @@ if st.session_state.pagina != "login":
     st.markdown("---")
 
 # #-------------------------------------------------------------------------#
-#              NOVA TELA: MENU PRINCIPAL (BOTÕES DE ACESSO)
+#                        TELA DO MENU PRINCIPAL
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "menu":
-    st.markdown('<h1 style="color:white; text-align:center;">PAINEL DE CONTROLE ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL</h1>', unsafe_allow_html=True)
     
-    # Criando os botões de navegação interna caprichados
     col_btn1, col_btn2, col_btn3 = st.columns(3)
-    
     with col_btn1:
-        if st.button("📊 ACOMPANHAMENTO DE\nABASTECIMENTO", use_container_width=True):
+        if st.button("⛽ ACOMPANHAMENTO\nDE ABASTECIMENTO", use_container_width=True):
             st.session_state.pagina = "abastecimento"
             st.rerun()
-            
     with col_btn2:
         if st.button("📄 DADOS DA\nNOTA FISCAL", use_container_width=True):
-            st.session_state.pagina = "registro_nf"
+            st.session_state.pagina = "nota_fiscal"
             st.rerun()
-            
     with col_btn3:
-        if st.button("📈 TABELA DE\nCONSUMO RECEBIDO", use_container_width=True):
-            st.session_state.pagina = "tabela_consumo"
-            st.rerun()
-
-    st.markdown("""
-        <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px; border: 1px solid #444; margin-top: 30px;">
-            <h3 style="color: white; text-align: center;">Informativo Zion</h3>
-            <p style="color: #ddd; text-align: center;">Selecione um dos módulos acima para gerenciar as operações do <b>{0}</b>.</p>
-        </div>
-    """.format(st.session_state.get('navio_atual', 'Empurrador')), unsafe_allow_html=True)
-
-# #-------------------------------------------------------------------------#
-#              NOVA TELA: REGISTRO DE NF (DADOS DA NOTA)
-# #-------------------------------------------------------------------------#
-elif st.session_state.pagina == "registro_nf":
-    st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL (IPIRANGA)</div>', unsafe_allow_html=True)
-
-    with st.container():
-        st.markdown('<p style="color: #FFFF00; font-weight: bold;">IDENTIFICAÇÃO DA NOTA</p>', unsafe_allow_html=True)
-        chave_acesso = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44, placeholder="Cole aqui a chave de acesso da NF-e")
-        
-        col_nf1, col_nf2 = st.columns(2)
-        with col_nf1:
-            num_nf = st.text_input("NÚMERO DA NF", placeholder="Ex: 000.125.893")
-            data_emissao = st.date_input("DATA DE EMISSÃO", format="DD/MM/YYYY")
-        with col_nf2:
-            valor_total = st.number_input("VALOR TOTAL (R$)", min_value=0.0, format="%.2f")
-            produto_nf = st.selectbox("PRODUTO", ["DIESEL MARÍTIMO", "DIESEL S10", "OUTROS"])
-
-        if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
-            st.success("✅ Dados da Nota Fiscal registrados com sucesso no sistema!")
-
-# #-------------------------------------------------------------------------#
-#              NOVA TELA: TABELA DE CONSUMO RECEBIDO
-# #-------------------------------------------------------------------------#
-elif st.session_state.pagina == "tabela_consumo":
-    st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO RECEBIDO</div>', unsafe_allow_html=True)
-    
-    # Exemplo de como a tabela pode ser exibida
-    st.markdown('<p style="color: white;">Histórico de recebimentos recentes:</p>', unsafe_allow_html=True)
-    
-    import pandas as pd
-    # Dados de exemplo para visualização
-    dados_exemplo = {
-        "Data": ["10/01/2026", "12/01/2026", "15/01/2026"],
-        "NF": ["125.893", "125.910", "126.005"],
-        "Volume (Lts)": ["25.000", "18.500", "30.000"],
-        "Status": ["Concluído", "Concluído", "Em Processo"]
-    }
-    df = pd.DataFrame(dados_exemplo)
-    st.table(df)
-    
-    if st.button("⬅️ VOLTAR AO MENU", use_container_width=True):
-        st.session_state.pagina = "menu"
-        st.rerun()
-
-# #-------------------------------------------------------------------------#
-#                             MENU DE NAVEGAÇÃO
-# #-------------------------------------------------------------------------#
-if st.session_state.pagina != "login":
-    st.markdown("### 📋 MENU DE NAVEGAÇÃO")
-    col_m1, col_m2, col_m3 = st.columns(3)
-    with col_m1:
-        if st.button("🏠 TELA INICIAL", use_container_width=True):
-            st.session_state.pagina = "login"
-            st.rerun()
-    with col_m2:
-        if st.button("📂 MENU PRINCIPAL", use_container_width=True): 
-            st.session_state.pagina = "menu" # Agora redireciona para a nova tela
-            st.rerun()
-    with col_m3:
-        if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
-            st.session_state.pagina = "abastecimento"
-            reset_lancamento()
-            st.rerun()
-    st.markdown("---")
-
-# #-------------------------------------------------------------------------#
-#              BLOCO: MENU PRINCIPAL (HUB DE NAVEGAÇÃO)
-# #-------------------------------------------------------------------------#
-if st.session_state.pagina == "menu":
-    st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL - ZION</h1>', unsafe_allow_html=True)
-    
-    # Botões grandes para as funções que você solicitou
-    c_btn1, c_btn2, c_btn3 = st.columns(3)
-    
-    with c_btn1:
-        if st.button("⛽ ACOMPANHAMENTO DE\nABASTECIMENTO", use_container_width=True):
-            st.session_state.pagina = "abastecimento"
-            st.rerun()
-            
-    with c_btn2:
-        if st.button("📄 DADOS DA\nNOTA FISCAL", use_container_width=True):
-            st.session_state.pagina = "registro_nf"
-            st.rerun()
-            
-    with c_btn3:
         if st.button("📊 TABELA DE\nCONSUMO RECEBIDO", use_container_width=True):
             st.session_state.pagina = "tabela_consumo"
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#              BLOCO: DADOS DA NOTA FISCAL (IPIRANGA)
+#                        TELA DADOS DA NOTA FISCAL
 # #-------------------------------------------------------------------------#
-elif st.session_state.pagina == "registro_nf":
+elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
-    
-    with st.container():
-        chave_nf = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
-        col_nf1, col_nf2 = st.columns(2)
-        with col_nf1:
-            num_nf = st.text_input("NÚMERO DA NF")
-            data_nf = st.date_input("DATA DA NOTA", format="DD/MM/YYYY")
-        with col_nf2:
-            vol_nf = st.number_input("VOLUME TOTAL NF (LTS)", min_value=0)
-            valor_nf = st.number_input("VALOR TOTAL NF (R$)", min_value=0.0)
-            
-        if st.button("SALVAR DADOS DA NOTA", use_container_width=True):
-            st.success("Dados registrados!")
+    st.text_input("CHAVE DE ACESSO (44 DÍGITOS)")
+    st.text_input("NÚMERO DA NOTA FISCAL")
+    st.date_input("DATA DE EMISSÃO")
+    st.number_input("QUANTIDADE TOTAL DA NOTA (LTS)", min_value=0)
+    if st.button("SALVAR DADOS DA NOTA", use_container_width=True):
+        st.success("Dados salvos com sucesso!")
 
 # #-------------------------------------------------------------------------#
-#              BLOCO: TABELA DE CONSUMO RECEBIDO
+#                        TELA TABELA DE CONSUMO
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "tabela_consumo":
-    st.markdown('<div class="banner-interno-verde">CONSUMO RECEBIDO</div>', unsafe_allow_html=True)
-    st.info("Aqui será exibida a tabela com o histórico de consumo.")
-    if st.button("VOLTAR AO MENU"):
-        st.session_state.pagina = "menu"
-        st.rerun()
+    st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO RECEBIDO</div>', unsafe_allow_html=True)
+    st.info("Espaço destinado à tabela de consumo.")
 
 # #-------------------------------------------------------------------------#
-#            BLOCO 4: ABASTECIMENTO (SEU CÓDIGO QUE JÁ FUNCIONA)
+#                   TELA DE ABASTECIMENTO (BLOCO 4)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
-    # Mantenha seu código de capacidades, saldos, cronômetro e PDF aqui...
-
-# #-------------------------------------------------------------------------#
-#                         TELA DE ABASTECIMENTO (BLOCO 4)
-# #-------------------------------------------------------------------------#
-if st.session_state.pagina == "abastecimento":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
@@ -379,5 +262,5 @@ if st.session_state.pagina == "abastecimento":
             
             st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
 
-        st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
+    st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+        ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
