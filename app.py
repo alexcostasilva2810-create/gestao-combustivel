@@ -32,7 +32,7 @@ st.markdown("""
 # #-------------------------------------------------------------------------#
 #               LÓGICA DE NAVEGAÇÃO E ESTADO
 # #-------------------------------------------------------------------------#
-if 'pagina' not in st.session_state: st.session_state.pagina = "abastecimento"
+if 'pagina' not in st.session_state: st.session_state.pagina = "login"
 if 'form_id' not in st.session_state: st.session_state.form_id = 0
 if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
 if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
@@ -41,23 +41,41 @@ def reset_lancamento():
     st.session_state.form_id += 1
     st.session_state.t_rodando = False
     st.session_state.tempo_final_str = "00:00:00"
-    st.rerun()
+
+# #-------------------------------------------------------------------------#
+#                             TELA DE LOGIN
+# #-------------------------------------------------------------------------#
+if st.session_state.pagina == "login":
+    st.markdown('<h1 style="color:white; text-align:center;">ACESSO AO SISTEMA</h1>', unsafe_allow_html=True)
+    with st.form("login_form"):
+        user = st.text_input("Usuário")
+        pw = st.text_input("Senha", type="password")
+        if st.form_submit_button("ENTRAR"):
+            if user == "admin" and pw == "zion123": # Altere aqui suas credenciais
+                st.session_state.pagina = "abastecimento"
+                st.rerun()
+            else:
+                st.error("Usuário ou senha incorretos")
 
 # #-------------------------------------------------------------------------#
 #                             MENU DE NAVEGAÇÃO
 # #-------------------------------------------------------------------------#
-st.markdown("### 📋 MENU DE NAVEGAÇÃO")
-col_m1, col_m2, col_m3 = st.columns(3)
-with col_m1:
-    if st.button("🏠 TELA INICIAL", use_container_width=True): st.session_state.pagina = "inicio"
-with col_m2:
-    if st.button("📂 MENU PRINCIPAL", use_container_width=True): st.session_state.pagina = "menu"
-with col_m3:
-    if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
-        st.session_state.pagina = "abastecimento"
-        reset_lancamento()
-
-st.markdown("---")
+if st.session_state.pagina != "login":
+    st.markdown("### 📋 MENU DE NAVEGAÇÃO")
+    col_m1, col_m2, col_m3 = st.columns(3)
+    with col_m1:
+        # AGORA LEVA PARA O LOGIN
+        if st.button("🏠 TELA INICIAL", use_container_width=True): 
+            st.session_state.pagina = "login"
+            st.rerun()
+    with col_m2:
+        if st.button("📂 MENU PRINCIPAL", use_container_width=True): st.session_state.pagina = "menu"
+    with col_m3:
+        if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
+            st.session_state.pagina = "abastecimento"
+            reset_lancamento()
+            st.rerun()
+    st.markdown("---")
 
 # #-------------------------------------------------------------------------#
 #                         TELA DE ABASTECIMENTO
@@ -66,7 +84,6 @@ if st.session_state.pagina == "abastecimento":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px; margin-bottom: 5px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
-    # Lista de capacidades restaurada conforme a tabela oficial
     CAPACIDADES = {
         "ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700,
         "CANJERANA": 18000, "CUMARU": 64000, "IPE": 29700, "SAMAUMA": 92000,
@@ -75,7 +92,7 @@ if st.session_state.pagina == "abastecimento":
     }
     
     navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), key=f"n_{st.session_state.form_id}")
-    st.markdown(f'<div style="color: #FFFF00; font-weight: bold; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; display: inline-block;">Capacidade do Tanque: {CAPACIDADES[navio]:,} lts</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="color: #FFFF00; font-weight: bold;">Capacidade do Tanque: {CAPACIDADES[navio]:,} lts</div>', unsafe_allow_html=True)
 
     col_a, col_b = st.columns(2)
     with col_a:
@@ -90,7 +107,7 @@ if st.session_state.pagina == "abastecimento":
     transbordou = total_geral > CAPACIDADES[navio]
 
     if transbordou:
-        st.markdown(f'<div style="color:red; background:white; padding:10px; border:2px solid red; font-weight:bold; text-align:center; border-radius:8px;">⚠️ EXCESSO: {total_geral:,} lts / {CAPACIDADES[navio]:,} lts</div>', unsafe_allow_html=True)
+        st.error(f"🚨 BLOQUEIO: {total_geral:,} lts excede o limite!")
     else:
         st.markdown(f'<div class="quadro-seguro">✅ VOLUME SEGURO: {total_geral:,} lts</div>', unsafe_allow_html=True)
 
@@ -102,7 +119,7 @@ if st.session_state.pagina == "abastecimento":
         if st.session_state.t_rodando:
             st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(int(time.time() - st.session_state.t_inicio)))
         
-        st.markdown(f'<div style="background:white; color:red; font-size:24px; text-align:center; border:2px solid blue; padding:5px; font-weight:bold;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background:white; color:red; font-size:24px; text-align:center; border:2px solid blue; padding:5px;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
         bt1, bt2 = st.columns(2)
         if bt1.button("▶️ INICIAR", use_container_width=True):
             st.session_state.t_inicio = time.time()
@@ -112,7 +129,7 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
             st.rerun()
 
-    # ÁREA PISCANTE (FOTOS E ASSINATURA)
+    # ÁREA PISCANTE
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos:
         f1, f2 = st.columns(2)
@@ -123,40 +140,32 @@ if st.session_state.pagina == "abastecimento":
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"c_{st.session_state.form_id}")
     st.markdown('</div>', unsafe_allow_html=True) 
 
-    # BOTÃO GERAR RELATÓRIO - POSIÇÃO FIXA NO FINAL
     st.markdown("---")
     if not transbordou:
+        # BOTÃO GERAR COMUNICADO
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            try:
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", "B", 16)
-                pdf.cell(200, 10, "ZION - Comunicado de Abastecimento", ln=True, align="C")
-                pdf.ln(10)
-                pdf.set_font("Arial", "", 12)
-                
-                # Texto detalhado original restaurado
-                texto = (f"Comunico que o empurrador {navio} está apto a receber o consumo de {qtd_pedida:,} lts, "
-                         f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
-                         f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
-                         f"Portanto, o saldo total após o abastecimento será de {total_geral:,} lts.\n"
-                         f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio]:,} lts.\n\n"
-                         f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.")
-                pdf.multi_cell(0, 8, texto)
-                
-                if foto_a and foto_d:
-                    pdf.image(Image.open(foto_a), x=10, y=100, w=90)
-                    pdf.image(Image.open(foto_d), x=110, y=100, w=90)
-                
-                if canvas_result.image_data is not None:
-                    img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
-                    buf = io.BytesIO(); img_sig.save(buf, format="PNG")
-                    pdf.image(buf, x=70, y=200, w=60)
-                
-                st.session_state.pdf_gerado = pdf.output(dest='S')
-                st.success("PDF gerado com sucesso!")
-                st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(st.session_state.pdf_gerado), file_name=f"Zion_{navio}.pdf", use_container_width=True)
-            except Exception as e:
-                st.error(f"Erro ao processar PDF: {e}")
-    else:
-        st.button("GERAR COMUNICADO FINAL (BLOQUEADO POR TRANSBORDO)", use_container_width=True, disabled=True)
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", "B", 16)
+            pdf.cell(200, 10, "ZION - Comunicado de Abastecimento", ln=True, align="C")
+            pdf.ln(10)
+            pdf.set_font("Arial", "", 12)
+            
+            # TEXTO DETALHADO ORIGINAL
+            texto = (f"Comunico que o empurrador {navio} está apto a receber o consumo de {qtd_pedida:,} lts, "
+                     f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
+                     f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
+                     f"Portanto, o saldo total após o abastecimento será de {total_geral:,} lts.\n"
+                     f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio]:,} lts.\n\n"
+                     f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.")
+            pdf.multi_cell(0, 8, texto)
+            
+            if foto_a and foto_d:
+                pdf.image(Image.open(foto_a), x=10, y=100, w=90)
+                pdf.image(Image.open(foto_d), x=110, y=100, w=90)
+            if canvas_result.image_data is not None:
+                img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
+                buf = io.BytesIO(); img_sig.save(buf, format="PNG")
+                pdf.image(buf, x=70, y=200, w=60)
+            
+            st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
