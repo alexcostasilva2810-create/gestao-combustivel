@@ -31,7 +31,6 @@ CAPACIDADES = {
     "TIMBORANA": 19792, "JATOBA": 84000
 }
 
-# Inicialização de variáveis de estado
 if 'passo' not in st.session_state: st.session_state.passo = 'INICIAL'
 if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
 if 't_inicio' not in st.session_state: st.session_state.t_inicio = 0
@@ -49,12 +48,13 @@ if st.session_state.passo == 'INICIAL':
         st.rerun()
 
 # #-------------------------------------------------------------------------#
-#                             BLOCO 3: INPUT, CRONÔMETRO E FOTOS
+#                             BLOCO 3: INPUT E CRONÔMETRO
 # #-------------------------------------------------------------------------#
 
 elif st.session_state.passo == 'INPUT':
+    # Ajuste visual conforme solicitado: Remove ícone e centraliza texto
     st.markdown('<h1 style="color:#007bff; text-align:center; margin-bottom:0;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<h2 style="color:white; text-align:center; margin-top:0;">⛽ Registro de Abastecimento</h2>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:white; text-align:center; margin-top:5px; margin-bottom:20px;">ACOMPANHAMENTO DE ABASTECIMENTO</h3>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
@@ -75,9 +75,9 @@ elif st.session_state.passo == 'INPUT':
             pedido = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # LÓGICA DO CRONÔMETRO
+            # Cronômetro funcional
             st.markdown("<label>CONTROLE DE TEMPO</label>", unsafe_allow_html=True)
-            placeholder_tempo = st.empty() # Espaço para o relógio atualizar
+            placeholder_tempo = st.empty()
             
             c_t1, c_t2 = st.columns(2)
             if c_t1.button("▶️ INICIAR", use_container_width=True):
@@ -87,7 +87,7 @@ elif st.session_state.passo == 'INPUT':
             if c_t2.button("🛑 PARAR", use_container_width=True):
                 st.session_state.t_rodando = False
             
-            # Atualização visual do tempo
+            # Atualização em tempo real
             while st.session_state.t_rodando:
                 segundos = int(time.time() - st.session_state.t_inicio)
                 st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
@@ -100,13 +100,11 @@ elif st.session_state.passo == 'INPUT':
 
         soma_total = s_bb + s_be + s_rem + pedido
         if soma_total > limite:
-            st.markdown(f'<div class="alerta-erro">⚠️ ATENÇÃO: EXCESSO DE {soma_total-limite:,} LTS!</div>', unsafe_allow_html=True)
-        elif soma_total > 0:
-            st.markdown('<div class="alerta-sucesso">✅ VOLUME DENTRO DA CAPACIDADE PERMITIDA.</div>', unsafe_allow_html=True)
-
+            st.markdown(f'<div class="alerta-erro">⚠️ EXCESSO DE {soma_total-limite:,} LTS!</div>', unsafe_allow_html=True)
+        
         st.markdown("---")
         st.markdown("<label>ASSINATURA DIGITAL (TELA TOUCH)</label>", unsafe_allow_html=True)
-        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_v3")
+        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_v4")
 
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             if canvas_result.image_data is not None:
@@ -134,7 +132,7 @@ elif st.session_state.passo == 'RELATORIO':
     pdf = FPDF()
     pdf.add_page()
     
-    # Cabeçalho ZION
+    # Cabeçalho PDF
     pdf.set_text_color(0, 123, 255)
     pdf.set_font("Helvetica", 'B', 26)
     pdf.cell(0, 20, "ZION", ln=True, align='C')
@@ -143,9 +141,9 @@ elif st.session_state.passo == 'RELATORIO':
     pdf.set_font("Helvetica", 'B', 16)
     pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align='C')
     
-    # Texto com Normas Gramaticais
     pdf.set_font("Helvetica", size=12)
     pdf.ln(10)
+    # Correções gramaticais aplicadas
     texto_corpo = (f"Comunico que o empurrador {d['navio']} está apto a receber o consumo de "
                    f"{d['pedido']:,} lts, visto que possui um saldo de {d['s_bb']:,} lts (BB) "
                    f"e {d['s_be']:,} lts (BE), somados ao saldo remanescente de {d['s_rem']:,} lts.\n\n"
@@ -153,36 +151,31 @@ elif st.session_state.passo == 'RELATORIO':
                    f"Ressaltamos que a capacidade total do empurrador é de {d['limite']:,} lts.")
     pdf.multi_cell(0, 8, texto_corpo)
     
-    # Informação de Tempo e Fotos
+    # Tempo e Fotos no PDF
     h, m, s = d['tempo'].split(':')
     pdf.ln(5)
     pdf.multi_cell(0, 8, f"Informo que o empurrador levou {h} horas, {m} minutos e {s} segundos para abastecer.")
     pdf.ln(5)
     pdf.multi_cell(0, 8, "Segue abaixo as fotos do antes e depois do abastecimento:")
     
-    # Inserção das Fotos
     y_fotos = pdf.get_y() + 5
     if st.session_state.foto_antes:
-        buf1 = io.BytesIO()
-        st.session_state.foto_antes.save(buf1, format='PNG')
+        buf1 = io.BytesIO(); st.session_state.foto_antes.save(buf1, format='PNG')
         pdf.image(buf1, x=10, y=y_fotos, w=85)
     if st.session_state.foto_depois:
-        buf2 = io.BytesIO()
-        st.session_state.foto_depois.save(buf2, format='PNG')
+        buf2 = io.BytesIO(); st.session_state.foto_depois.save(buf2, format='PNG')
         pdf.image(buf2, x=105, y=y_fotos, w=85)
     
-    # Assinatura
     pdf.set_y(y_fotos + 65)
-    buf_sign = io.BytesIO()
-    st.session_state.assinatura.save(buf_sign, format='PNG')
+    buf_sign = io.BytesIO(); st.session_state.assinatura.save(buf_sign, format='PNG')
     pdf.image(buf_sign, x=65, w=80)
     pdf.line(60, pdf.get_y(), 150, pdf.get_y())
     pdf.set_font("Helvetica", 'I', 10)
     pdf.cell(0, 10, f"Assinado digitalmente em: {d['timestamp']}", ln=True, align='C')
 
     pdf_output = pdf.output()
-    st.download_button("📥 BAIXAR COMUNICADO FINAL (PDF)", data=bytes(pdf_output), file_name=f"ZION_{d['navio']}.pdf", use_container_width=True)
-    if st.button("REALIZAR NOVO REGISTRO"): 
+    st.download_button("📥 BAIXAR RELATÓRIO FINAL", data=bytes(pdf_output), file_name=f"ZION_{d['navio']}.pdf", use_container_width=True)
+    if st.button("NOVO REGISTRO"): 
         st.session_state.passo = 'INICIAL'
         st.session_state.tempo_final_str = "00:00:00"
         st.rerun()
