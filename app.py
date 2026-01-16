@@ -11,7 +11,7 @@ st.set_page_config(page_title="ZION - ABASTECIMENTO NAVAL", layout="centered")
 
 st.markdown("""
     <style>
-    /* Fundo Naval que você aprovou */
+    /* Fundo Naval de Navio Cargueiro no Porto */
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1524522173746-f628baad3644?q=80&w=2000&auto=format&fit=crop");
         background-size: cover;
@@ -19,7 +19,7 @@ st.markdown("""
         background-attachment: fixed;
     }
     
-    /* Overlay escuro para dar contraste */
+    /* Overlay escuro para destacar as letras brancas e os campos */
     .stApp::before {
         content: "";
         position: absolute;
@@ -28,32 +28,34 @@ st.markdown("""
         z-index: -1;
     }
 
-    /* Estilo das letras em cima dos blocos (Rótulos) - Agora em Branco */
+    /* Rótulos em BRANCO para contraste total no fundo escuro */
     label, .stMarkdown p { 
-        font-size: 19px !important; /* Tamanho 14pt solicitado */
-        color: #FFFFFF !important;  /* Mudança para Branco conforme pedido */
+        font-size: 19px !important; /* Tamanho 14pt */
+        color: #FFFFFF !important;  
         font-weight: bold !important;
-        text-shadow: 1px 1px 2px #000; /* Sombra para garantir leitura */
+        text-shadow: 1px 1px 3px #000;
     }
 
-    /* Caixa onde os dados são digitados (Branca para destacar o texto interno) */
-    .stSelectbox div, .stNumberInput input, .stDateInput input {
+    /* Estilo dos campos de entrada (Branco internamente) */
+    .stSelectbox div, .stNumberInput input, .stDateInput input, .stFileUploader section {
         background-color: white !important;
         color: black !important;
         font-size: 19px !important;
         border-radius: 8px !important;
     }
 
+    /* Banner Interno Verde centralizado */
     .banner-interno-verde {
         color: #28a745;
         text-align: center;
         font-weight: 900;
         font-size: 28px;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         text-transform: uppercase;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 12px;
         border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
     }
 
     .timer-display { 
@@ -70,19 +72,31 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                             TELA DE ENTRADA
+#                             DADOS E ESTADO
 # #-------------------------------------------------------------------------#
+
+CAPACIDADES = {
+    "ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "CANJERANA": 18000, "JATOBA": 84000
+}
 
 if 'passo' not in st.session_state: st.session_state.passo = 'INPUT'
 
+# #-------------------------------------------------------------------------#
+#                             TELA DE ENTRADA
+# #-------------------------------------------------------------------------#
+
 if st.session_state.passo == 'INPUT':
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 45px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 45px; margin-bottom: 5px;">ZION</h1>', unsafe_allow_html=True)
     
-    # Título verde centralizado sem campo vazio no topo
+    # Banner verde com título
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
     
-    # Campo Empurrador
-    empurrador = st.selectbox("EMPURRADOR", options=["ANGELO", "ANGICO", "AROEIRA", "CANJERANA", "JATOBA"])
+    # Seleção do Empurrador
+    navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
+    
+    # REINTEGRADO: Campo de alerta da capacidade do tanque
+    capacidade = CAPACIDADES[navio_selecionado]
+    st.info(f"Capacidade do Tanque: {capacidade:,} lts")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -90,7 +104,7 @@ if st.session_state.passo == 'INPUT':
         st.number_input("SALDO BB (LTS)", min_value=0)
         st.number_input("SALDO BE (LTS)", min_value=0)
         st.number_input("REMANESCENTE (LTS)", min_value=0)
-        # Campo de foto ANTES
+        # Campos de foto reintegrados
         st.file_uploader("📷 FOTO ANTES DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
         
     with col2:
@@ -102,12 +116,11 @@ if st.session_state.passo == 'INPUT':
         c1.button("▶️ INICIAR", use_container_width=True)
         c2.button("🛑 PARAR", use_container_width=True)
         
-        # Campo de foto DEPOIS
         st.file_uploader("📷 FOTO DEPOIS DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
 
     st.markdown("---")
     st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-    st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_final")
+    st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_rev")
 
     if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-         st.success("Relatório gerado!")
+         st.success("Relatório gerado com sucesso!")
