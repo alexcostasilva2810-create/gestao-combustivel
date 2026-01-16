@@ -133,16 +133,44 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#            TELAS DE APOIO (NF E TABELA) (BLOCO 5)
+#             TELAS DE APOIO (NF E TABELA) (BLOCO 5)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
-    if st.button("⬅️ VOLTAR"): st.session_state.pagina = "menu_central"; st.rerun()
+    # Botão de retorno
+    if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
+        st.session_state.pagina = "menu_central"
+        st.rerun()
+
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
-    st.text_input("CHAVE DE ACESSO")
+    
+    # Campos para preenchimento da NF
+    st.markdown("### 📋 Informações da Nota")
+    st.text_input("CHAVE DE ACESSO (44 DÍGITOS)")
+    st.text_input("NÚMERO DA NOTA FISCAL")
+    st.date_input("DATA DE EMISSÃO", format="DD/MM/YYYY")
+    
+    st.info("💡 Estes dados serão integrados ao relatório final em atualizações futuras.")
 
 elif st.session_state.pagina == "tabela_consumo":
-    if st.button("⬅️ VOLTAR"): st.session_state.pagina = "menu_central"; st.rerun()
-    st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO</div>', unsafe_allow_html=True)
+    # Botão de retorno
+    if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
+        st.session_state.pagina = "menu_central"
+        st.rerun()
+
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO RECEBIDA</div>', unsafe_allow_html=True)
+
+    # Exemplo de Tabela de Referência Rápida
+    st.markdown("### 📊 Referência de Consumo por Horas/Motor")
+    dados_exemplo = {
+        "Motor": ["Principal BB", "Principal BE", "Gerador 01", "Gerador 02"],
+        "Consumo Médio (L/h)": [120, 120, 15, 15],
+        "Capacidade Máx": ["---", "---", "---", "---"]
+    }
+    st.table(dados_exemplo)
+    
+    st.warning("⚠️ Verifique sempre a régua física antes de confirmar os valores no Bloco 6.")
 
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
