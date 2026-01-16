@@ -135,11 +135,23 @@ if st.session_state.pagina == "abastecimento":
     total_geral = saldo_bb + saldo_be + remanescente + qtd_pedida
     transbordou = total_geral > CAPACIDADES[navio]
 
-    # AJUSTE DOS ALERTAS: Tamanho 15 e Negrito
+    # --- AJUSTE DOS ALERTAS: TAMANHO 20 E NEGRITO ---
     if transbordou:
-        st.markdown(f'<div style="color: #FF0000; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; text-align: center; font-size: 15px; font-weight: bold; border: 2px solid red;">🚨 BLOQUEIO: {total_geral:,} lts excede o limite!</div>', unsafe_allow_html=True)
+        st.markdown(f'''
+            <div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; 
+            border-radius: 10px; text-align: center; font-size: 20px; 
+            font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
+            🚨 BLOQUEIO: {total_geral:,} lts excede o limite!
+            </div>
+        ''', unsafe_allow_html=True)
     else:
-        st.markdown(f'<div style="color: #008000; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; text-align: center; font-size: 15px; font-weight: bold; border: 2px solid green;">✅ VOLUME SEGURO: {total_geral:,} lts</div>', unsafe_allow_html=True)
+        st.markdown(f'''
+            <div style="color: #FFFFFF; background-color: #28a745; padding: 15px; 
+            border-radius: 10px; text-align: center; font-size: 20px; 
+            font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
+            ✅ VOLUME SEGURO: {total_geral:,} lts
+            </div>
+        ''', unsafe_allow_html=True)
 
     # CRONÔMETRO
     classe_piscante = "piscando" if st.session_state.t_rodando else ""
@@ -159,10 +171,9 @@ if st.session_state.pagina == "abastecimento":
             st.session_state.t_rodando = False
             st.rerun()
 
-    # --- RETORNO AO CAMPO DE CARREGAR IMAGEM (UPLOAD) ---
+    # --- CAMPO DE UPLOAD DE IMAGEM ---
     st.markdown(f'<div class="{classe_piscante}">', unsafe_allow_html=True)
     with col_fotos_upload:
-        # Volta a ser carregamento de arquivo para evitar erros de permissão de câmera
         foto_a = st.file_uploader("CARREGAR FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
         foto_d = st.file_uploader("CARREGAR FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
 
@@ -188,7 +199,6 @@ if st.session_state.pagina == "abastecimento":
                      f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.")
             pdf.multi_cell(0, 8, texto)
             
-            # Ajuste para carregar as fotos enviadas no PDF
             if foto_a:
                 pdf.image(Image.open(foto_a), x=10, y=100, w=90)
             if foto_d:
