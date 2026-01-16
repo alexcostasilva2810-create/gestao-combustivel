@@ -100,10 +100,10 @@ with col2:
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_final_v2")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_v3")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (POSIÇÃO A e D)
+#                     GERAÇÃO DO PDF (FOTOS LADO A LADO)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -120,7 +120,7 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf.cell(200, 10, "Comunicado de Abastecimento", ln=True, align="C")
         pdf.ln(10)
         
-        # Texto Profissional
+        # Texto Profissional Restaurado
         pdf.set_font("Arial", "", 12)
         total_pos = saldo_bb + saldo_be + remanescente + qtd_pedida
         texto_corpo = (
@@ -134,37 +134,41 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf.multi_cell(0, 8, texto_corpo)
         pdf.ln(5)
 
-        # Posicionamento A e D (Fotos Menores)
-        y_fotos = pdf.get_y()
-        if foto_antes:
-            pdf.image(Image.open(foto_antes), x=25, y=y_fotos, w=60) # Posição A
-        if foto_depois:
-            pdf.image(Image.open(foto_depois), x=115, y=y_fotos, w=60) # Posição D
+        # POSICIONAMENTO DAS FOTOS (Lado a lado, menores)
+        y_inicial_fotos = pdf.get_y()
+        largura_foto = 50  # Tamanho reduzido para caberem bem
         
-        # Ajuste de Y para não sobrepor as fotos
-        pdf.set_y(y_fotos + 65) 
+        if foto_antes:
+            pdf.image(Image.open(foto_antes), x=30, y=y_inicial_fotos, w=largura_foto)
+        if foto_depois:
+            pdf.image(Image.open(foto_depois), x=110, y=y_inicial_fotos, w=largura_foto)
+        
+        # Define posição para a assinatura abaixo das fotos
+        pdf.set_y(y_inicial_fotos + 60)
 
-        # Assinatura
+        # Assinatura Digital
         if canvas_result.image_data is not None:
             sig_img = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
             sig_buf = io.BytesIO()
             sig_img.save(sig_buf, format='PNG')
             pdf.image(sig_buf, x=75, y=pdf.get_y(), w=50)
 
-        pdf.ln(20)
-        pdf.line(60, pdf.get_y(), 150, pdf.get_y()) 
+        # Linha e Data
+        pdf.ln(15)
+        pdf.line(65, pdf.get_y(), 145, pdf.get_y()) 
         pdf.set_font("Arial", "I", 8)
         data_hora = datetime.now().strftime('%d/%m/%Y às %H:%M:%S')
         pdf.cell(0, 10, f"Assinado digitalmente em: {data_hora}", ln=True, align="C")
         
         st.download_button(
-            label="📥 BAIXAR COMUNICADO AJUSTADO",
+            label="📥 BAIXAR COMUNICADO FINAL",
             data=bytes(pdf.output(dest='S')),
             file_name=f"Comunicado_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
+        # Alerta Verde
         st.markdown('<div class="alerta-sucesso-custom">Tudo corrigido! Linha, assinatura e fotos incluídas.</div>', unsafe_allow_html=True)
 
     except Exception as e:
-        st.error(f"Erro: {e}")
+        st.error(f"Erro ao gerar PDF: {e}")
