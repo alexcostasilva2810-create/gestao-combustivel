@@ -96,67 +96,44 @@ st.markdown(""" <style> ... </style> """, unsafe_allow_html=True)
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "inicio"
 
-# #-------------------------------------------------------------------------#
-#                         ESTRUTURA FINAL CORRIGIDA
-# #-------------------------------------------------------------------------#
-
-# 1. MENU DE NAVEGAÇÃO (Fica no topo, fora dos IFs)
+# --- MENU DE NAVEGAÇÃO (Sempre visível no topo) ---
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
 st.markdown("📋 MENU DE NAVEGAÇÃO")
 c1, c2, c3, c4 = st.columns(4)
 with c1:
     if st.button("🏠 TELA INICIAL", use_container_width=True):
-        st.session_state.pagina = "inicio"
-        st.rerun()
+        st.session_state.pagina = "inicio"; st.rerun()
 with c2:
     if st.button("📁 MENU PRINCIPAL", use_container_width=True):
-        st.session_state.pagina = "menu"
-        st.rerun()
+        st.session_state.pagina = "menu"; st.rerun()
 with c3:
     if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
-        st.session_state.pagina = "abastecimento"
-        st.session_state.form_id += 1 
-        st.rerun()
+        st.session_state.pagina = "abastecimento"; st.rerun()
 with c4:
     if st.button("🧾 REGISTRO DE NF", use_container_width=True):
-        st.session_state.pagina = "registro_nf"
-        st.rerun()
+        st.session_state.pagina = "registro_nf"; st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 2. BLOCOS DE CONTEÚDO (Correção do IndentationError)
+# --- LÓGICA DE EXIBIÇÃO DAS PÁGINAS ---
 if st.session_state.pagina == "inicio":
-    st.write("### Bem-vindo ao Sistema ZION")
-    st.info("Selecione uma opção no menu acima para começar.")
+    st.markdown("### Bem-vindo ao Sistema ZION")
+    # Coloque aqui o conteúdo da tela inicial
 
 elif st.session_state.pagina == "menu":
-    st.write("### Menu de Opções")
-    st.write("Gerenciamento de combustível e logística.")
+    st.markdown("### Menu Principal")
+    # Coloque aqui o conteúdo do menu
 
 elif st.session_state.pagina == "abastecimento":
-    # IMPORTANTE: Todo o código do Bloco 4 deve vir aqui, com 4 espaços de recuo
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
-    # [Cole aqui o restante do código do Bloco 4 que salvamos antes]
+    # AQUI VOCÊ DEVE COLAR O RESTANTE DO BLOCO 4 (CUIDADO COM O RECUO!)
 
 elif st.session_state.pagina == "registro_nf":
-    # IMPORTANTE: Todo o código do Bloco 5 deve vir aqui, com 4 espaços de recuo
-    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL - COMBUSTÍVEL</div>', unsafe_allow_html=True)
-    # [Cole aqui o restante do código do Bloco 5 da Ipiranga]
+    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL</div>', unsafe_allow_html=True)
+    # AQUI VOCÊ DEVE COLAR O RESTANTE DO BLOCO 5 (CHAVE DE ACESSO)
 
-# 3. RODAPÉ FIXO (Correção do SyntaxError da linha 224)
-st.markdown(f'''
-<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.
-</div>
-''', unsafe_allow_html=True)
-# ---------------------------------------------------------
-
-# 4. Blocos de Conteúdo (Definição de qual página mostrar)
-if st.session_state.pagina == "inicio":
-    # Bloco 1...
-elif st.session_state.pagina == "abastecimento":
-    # Bloco 4 (O que já salvamos)...
-elif st.session_state.pagina == "registro_nf":
-    # Bloco 5 (O novo bloco de Notas Fiscais)...
+# --- RODAPÉ (LINHA 224 CORRIGIDA) ---
+st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
+    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True) # Parêntese fechado aqui!
 
 # #-------------------------------------------------------------------------#
 #                         TELA DE ABASTECIMENTO (BLOCO 4)
