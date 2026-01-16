@@ -36,7 +36,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                LÓGICA DE NAVEGAÇÃO E ESTADO (MEMÓRIA)
+#                LÓGICA DE NAVEGAÇÃO E ESTADO (MEMÓRIA) (BLOCO 1)
 # #-------------------------------------------------------------------------#
 if 'pagina' not in st.session_state: st.session_state.pagina = "inicio"
 if 'usuario_logado' not in st.session_state: st.session_state.usuario_logado = None
@@ -75,7 +75,7 @@ if st.session_state.usuario_logado:
     st.markdown(f'<div class="user-header">👤 {st.session_state.usuario_logado}</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 1: LOGO ZION E BOTÃO INICIAR
+#            TELA 1: LOGO ZION E BOTÃO INICIAR (BLOCO 2)
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "inicio":
     st.markdown("<br><br><br>", unsafe_allow_html=True)
@@ -87,7 +87,7 @@ if st.session_state.pagina == "inicio":
         st.rerun()
 
 # #-------------------------------------------------------------------------#
-#            TELA 2: LOGIN COM CAMPOS E ALERTAS
+#            TELA 2: LOGIN COM CAMPOS E ALERTAS (BLOCO 3)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "login":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 60px; font-weight: 900;">ZION</h1>', unsafe_allow_html=True)
@@ -110,7 +110,7 @@ elif st.session_state.pagina == "login":
             st.markdown('<div class="msg-erro">👎 SUAS CREDENCIAS ESTÃO INCONSISTENTE ENTRE EM CONTATO PELO ZAP 91-9-9349-7079 E DIGA QUE NÃO ESTA CONSEGUINDO ACESSA O SITEMA .</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 3: MENU CENTRAL (OS 4 BOTÕES)
+#            TELA 3: MENU CENTRAL (OS 4 BOTÕES) (BLOCO 4)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "menu_central":
     st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL</h1>', unsafe_allow_html=True)
@@ -133,7 +133,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#            TELAS DE APOIO (NF E TABELA)
+#            TELAS DE APOIO (NF E TABELA) (BLOCO 5)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR"): st.session_state.pagina = "menu_central"; st.rerun()
@@ -145,7 +145,7 @@ elif st.session_state.pagina == "tabela_consumo":
     st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                           TELA DE ABASTECIMENTO (BLOCO 4)
+#                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "abastecimento":
     # --- ADIÇÃO DOS BOTÕES DE NAVEGAÇÃO ---
