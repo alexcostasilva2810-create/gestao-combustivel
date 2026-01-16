@@ -5,6 +5,8 @@ from streamlit_drawable_canvas import st_canvas
 import time
 from PIL import Image
 import io
+from datetime import datetime, timezone, timedelta
+import time
 
 # #-------------------------------------------------------------------------#
 #                             CONFIGURAÇÕES VISUAIS
@@ -160,7 +162,7 @@ if st.session_state.pagina == "abastecimento":
         foto_a = st.file_uploader("CARREGAR FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
         foto_d = st.file_uploader("CARREGAR FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
 
-    # Texto de assinatura alterado conforme solicitado
+    # Texto de assinatura solicitado
     st.markdown("ASSINATURA DIGITAL :")
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
 
@@ -197,17 +199,18 @@ if st.session_state.pagina == "abastecimento":
             if foto_d:
                 pdf.image(Image.open(foto_d), x=110, y=y_fotos, w=85)
             
-            # Ajuste de Assinatura: Bem em cima da linha
+            # AJUSTE DA ASSINATURA: Rubrica em cima da linha
             if canvas_result.image_data is not None:
                 img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
-                pdf.image(buf, x=75, y=212, w=60) # Posição Y reduzida para aproximar da linha
+                # Coordenada Y=218 deixa a rubrica "tocando" a linha horizontal
+                pdf.image(buf, x=75, y=218, w=60) 
             
             # Rodapé: Linha e Dados Brasília
             pdf.set_y(245)
             pdf.line(30, 245, 180, 245) 
             
-            # Configuração de Hora de Brasília (UTC-3)
+            # HORA DE BRASÍLIA CORRIGIDA (UTC-3)
             fuso_br = timezone(timedelta(hours=-3))
             agora_br = datetime.now(fuso_br).strftime("%d/%m/%Y às %H:%M:%S")
             geo_info = "Belém, Pará - Brasil"
