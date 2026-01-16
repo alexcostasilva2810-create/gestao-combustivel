@@ -26,17 +26,25 @@ st.markdown("""
     label, .stMarkdown p { font-size: 16px !important; color: #FFFFFF !important; font-weight: bold !important; text-shadow: 1px 1px 3px #000; }
     .banner-interno-verde { color: #28a745; text-align: center; font-weight: 900; font-size: 24px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px; }
     
-    /* MENSAGENS DE LOGIN PEDIDAS */
+    /* MENSAGENS DE LOGIN */
     .msg-sucesso { color: #008000 !important; background-color: #FFFFFF !important; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px !important; font-weight: bold !important; border: 3px solid #008000; margin-top: 10px; }
     .msg-erro { color: #FF0000 !important; background-color: #000000 !important; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px !important; font-weight: bold !important; border: 3px solid #FF0000; margin-top: 10px; }
     
-    /* USUÁRIO NO TOPO DIREITO */
-    .user-header { position: fixed; top: 10px; right: 10px; color: #00FF00; font-weight: bold; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 1px solid #00FF00; z-index: 1000; }
+    /* USUÁRIO NO TOPO ESQUERDO - TAMANHO 25 */
+    .user-header-left { position: fixed; top: 10px; left: 10px; color: #00FF00; font-weight: bold; font-size: 25px; z-index: 1000; text-shadow: 2px 2px 4px #000; }
+
+    /* LOGO ZION DOURADA */
+    .logo-zion {
+        text-align: center; font-size: 85px; font-weight: 900;
+        background: linear-gradient(to bottom, #cfac48, #ffecb3, #b8860b);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        filter: drop-shadow(2px 4px 6px black); margin-top: 30px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                LÓGICA DE NAVEGAÇÃO E ESTADO (MEMÓRIA)
+#                LÓGICA DE NAVEGAÇÃO E ESTADO
 # #-------------------------------------------------------------------------#
 if 'pagina' not in st.session_state: st.session_state.pagina = "inicio"
 if 'usuario_logado' not in st.session_state: st.session_state.usuario_logado = None
@@ -70,16 +78,15 @@ def reset_lancamento():
     st.session_state.t_rodando = False
     st.session_state.tempo_final_str = "00:00:00"
 
-# EXIBE USUÁRIO LOGADO SE EXISTIR
+# EXIBE USUÁRIO LOGADO NO CANTO SUPERIOR ESQUERDO
 if st.session_state.usuario_logado:
-    st.markdown(f'<div class="user-header">👤 {st.session_state.usuario_logado}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="user-header-left">👤 ONLINE: {st.session_state.usuario_logado}</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 1: LOGO ZION E BOTÃO INICIAR
+#            TELA 1: LOGO ZION DOURADA E BOTÃO INICIAR
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "inicio":
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 100px; font-weight: 900;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<p style="text-align:center; color:white; font-size: 20px; letter-spacing: 5px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
     st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("🚀 INICIAR SESSÃO", use_container_width=True):
@@ -90,7 +97,7 @@ if st.session_state.pagina == "inicio":
 #            TELA 2: LOGIN COM CAMPOS E ALERTAS
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "login":
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 60px; font-weight: 900;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACESSO AO SISTEMA</div>', unsafe_allow_html=True)
     
     empurrador_login = st.selectbox("EMPURRADOR", options=list(LOGINS_VALIDOS.keys()))
@@ -107,45 +114,54 @@ elif st.session_state.pagina == "login":
             st.session_state.pagina = "menu_central"
             st.rerun()
         else:
-            st.markdown('<div class="msg-erro">👎 SUAS CREDENCIAS ESTÃO INCONSISTENTE ENTRE EM CONTATO PELO ZAP 91-9-9349-7079 E DIGA QUE NÃO ESTA CONSEGUINDO ACESSA O SITEMA .</div>', unsafe_allow_html=True)
+            st.markdown('<div class="msg-erro">👎 SUAS CREDENCIAS ESTÃO INCONSISTENTE ENTRE EM CONTATO PELO ZAP 91-9-9349-7079...</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 3: MENU CENTRAL (OS 4 BOTÕES)
+#            TELA 3: MENU CENTRAL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "menu_central":
-    st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
     
     c1, c2 = st.columns(2)
     with c1:
         if st.button("🏠 TELA INICIAL (SAIR)", use_container_width=True):
-            st.session_state.pagina = "inicio"
-            st.session_state.usuario_logado = None
-            st.rerun()
+            st.session_state.pagina = "inicio"; st.session_state.usuario_logado = None; st.rerun()
         if st.button("⛽ ACOMPANHAMENTO ABASTECIMENTO", use_container_width=True):
-            st.session_state.pagina = "abastecimento"
-            st.rerun()
+            st.session_state.pagina = "abastecimento"; st.rerun()
     with c2:
         if st.button("📄 DADOS DA NOTA FISCAL", use_container_width=True):
-            st.session_state.pagina = "nota_fiscal"
-            st.rerun()
+            st.session_state.pagina = "nota_fiscal"; st.rerun()
         if st.button("📊 TABELA DE CONSUMO RECEBIDA", use_container_width=True):
-            st.session_state.pagina = "tabela_consumo"
-            st.rerun()
+            st.session_state.pagina = "tabela_consumo"; st.rerun()
 
 # #-------------------------------------------------------------------------#
-#            TELAS DE APOIO (NF E TABELA)
+#            TELA: DADOS DA NOTA FISCAL (COM SCANNER E BUSCA)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR"): st.session_state.pagina = "menu_central"; st.rerun()
-    st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
-    st.text_input("CHAVE DE ACESSO")
-
-elif st.session_state.pagina == "tabela_consumo":
-    if st.button("⬅️ VOLTAR"): st.session_state.pagina = "menu_central"; st.rerun()
-    st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO</div>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">📄 DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
+    
+    col_scan, col_manual = st.columns(2)
+    with col_scan:
+        st.markdown("### 📷 SCANNER QR CODE")
+        st.camera_input("APONTE PARA O QR CODE DA NOTA")
+    with col_manual:
+        st.markdown("### ✍️ BUSCA MANUAL")
+        chave = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)")
+        if st.button("🔍 BUSCAR DADOS NF", use_container_width=True):
+            if len(chave) == 44: st.info("Buscando dados...")
+            else: st.warning("A chave deve conter 44 dígitos.")
+    
+    st.markdown("---")
+    st.text_input("Nº DA NOTA FISCAL")
+    st.date_input("DATA DE EMISSÃO", format="DD/MM/YYYY")
+    st.number_input("QUANTIDADE TOTAL (LTS)", min_value=0)
+    
+    if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
+        st.markdown('<div class="msg-sucesso">👍 Dados da Nota Salvos com Sucesso!</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 4: ABASTECIMENTO (SEU CÓDIGO ORIGINAL INTEGRAL)
+#            TELA 4: ABASTECIMENTO (LÓGICA INTEGRAL)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
     col_v1, col_v2 = st.columns(2)
@@ -154,7 +170,7 @@ elif st.session_state.pagina == "abastecimento":
     with col_v2:
         if st.button("➕ NOVO ABASTECIMENTO"): reset_lancamento(); st.rerun()
 
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
     CAPACIDADES = {
@@ -185,11 +201,9 @@ elif st.session_state.pagina == "abastecimento":
     valor_formatado = f"{total_geral:,}".replace(",", ".")
 
     if transbordou:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>''', unsafe_allow_html=True)
+        st.markdown(f'''<div class="msg-erro">🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>''', unsafe_allow_html=True)
     else:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            ✅ VOLUME SEGURO: {valor_formatado} Lts Capacidade permitida!</div>''', unsafe_allow_html=True)
+        st.markdown(f'''<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">✅ VOLUME SEGURO: {valor_formatado} Lts</div>''', unsafe_allow_html=True)
 
     col_timer, col_fotos_upload = st.columns([1, 2])
     with col_timer:
@@ -197,14 +211,12 @@ elif st.session_state.pagina == "abastecimento":
             st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(int(time.time() - st.session_state.t_inicio)))
         st.markdown(f'<div style="background:white; color:red; font-size:24px; text-align:center; border:2px solid blue; padding:5px;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
         bt1, bt2 = st.columns(2)
-        if bt1.button("▶️ INICIAR"):
-            st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True; st.rerun()
-        if bt2.button("🛑 PARAR"):
-            st.session_state.t_rodando = False; st.rerun()
+        if bt1.button("▶️ INICIAR"): st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True; st.rerun()
+        if bt2.button("🛑 PARAR"): st.session_state.t_rodando = False; st.rerun()
 
     with col_fotos_upload:
-        foto_a = st.file_uploader("FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
-        foto_d = st.file_uploader("FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
+        foto_a = st.file_uploader("FOTO ANTES (A)", key=f"up_a_{st.session_state.form_id}")
+        foto_d = st.file_uploader("FOTO DEPOIS (D)", key=f"up_d_{st.session_state.form_id}")
 
     st.markdown("ASSINATURA DIGITAL :")
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
@@ -213,5 +225,6 @@ elif st.session_state.pagina == "abastecimento":
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             st.success("Relatório pronto!")
 
-    st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-        ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
+elif st.session_state.pagina == "tabela_consumo":
+    if st.button("⬅️ VOLTAR"): st.session_state.pagina = "menu_central"; st.rerun()
+    st.markdown('<div class="banner-interno-verde">📊 TABELA DE CONSUMO</div>', unsafe_allow_html=True)
