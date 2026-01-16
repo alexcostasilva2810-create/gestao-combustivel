@@ -39,16 +39,10 @@ st.markdown("""
         font-size: 36px; font-weight: bold; color: #d32f2f; text-align: center; 
         padding: 10px; background: white; border-radius: 10px; border: 3px solid #007bff; 
     }
-    /* Alerta personalizado solicitado */
     .alerta-sucesso-custom {
-        background-color: rgba(0, 128, 0, 0.7); 
-        color: white; 
-        padding: 15px; 
-        border-radius: 5px; 
-        font-size: 14px; 
-        font-weight: bold;
-        text-align: center;
-        margin-top: 10px;
+        background-color: rgba(0, 128, 0, 0.7); color: white; padding: 15px; 
+        border-radius: 5px; font-size: 14px; font-weight: bold;
+        text-align: center; margin-top: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -80,7 +74,7 @@ with col1:
     saldo_bb = st.number_input("SALDO BB (LTS)", min_value=0)
     saldo_be = st.number_input("SALDO BE (LTS)", min_value=0)
     remanescente = st.number_input("REMANESCENTE (LTS)", min_value=0)
-    foto_antes = st.file_uploader("📷 FOTO ANTES DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
+    foto_antes = st.file_uploader("📷 FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'])
 
 with col2:
     qtd_pedida = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
@@ -102,14 +96,14 @@ with col2:
     else:
         placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
     
-    foto_depois = st.file_uploader("📷 FOTO DEPOIS DO ABASTECIMENTO", type=['jpg', 'png', 'jpeg'])
+    foto_depois = st.file_uploader("📷 FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'])
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_final")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_final_v2")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF E ALERTA CUSTOMIZADO
+#                     GERAÇÃO DO PDF (POSIÇÃO A e D)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -117,11 +111,10 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf = FPDF()
         pdf.add_page()
         
-        # Cabeçalho Azul
+        # Cabeçalho
         pdf.set_font("Arial", "B", 20)
         pdf.set_text_color(0, 102, 255)
         pdf.cell(200, 10, "ZION", ln=True, align="C")
-        
         pdf.set_font("Arial", "B", 14)
         pdf.set_text_color(0, 0, 0)
         pdf.cell(200, 10, "Comunicado de Abastecimento", ln=True, align="C")
@@ -130,7 +123,6 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         # Texto Profissional
         pdf.set_font("Arial", "", 12)
         total_pos = saldo_bb + saldo_be + remanescente + qtd_pedida
-        
         texto_corpo = (
             f"Comunico que o empurrador {navio_selecionado} está apto a receber o consumo de {qtd_pedida:,} lts, "
             f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), somados ao saldo remanescente de {remanescente:,} lts.\n\n"
@@ -140,42 +132,39 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
             f"Segue abaixo as fotos do antes e depois do abastecimento:"
         )
         pdf.multi_cell(0, 8, texto_corpo)
-        pdf.ln(10)
+        pdf.ln(5)
 
-        # Inclusão das Fotos
+        # Posicionamento A e D (Fotos Menores)
         y_fotos = pdf.get_y()
         if foto_antes:
-            pdf.image(Image.open(foto_antes), x=10, y=y_fotos, w=80)
+            pdf.image(Image.open(foto_antes), x=25, y=y_fotos, w=60) # Posição A
         if foto_depois:
-            pdf.image(Image.open(foto_depois), x=110, y=y_fotos, w=80)
+            pdf.image(Image.open(foto_depois), x=115, y=y_fotos, w=60) # Posição D
         
-        # Assinatura (Centralizada acima da linha)
-        pdf.set_y(230)
-        if canvas_result.image_data is not None:
-            signature_img = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
-            sig_buf = io.BytesIO()
-            signature_img.save(sig_buf, format='PNG')
-            pdf.image(sig_buf, x=75, y=210, w=60)
+        # Ajuste de Y para não sobrepor as fotos
+        pdf.set_y(y_fotos + 65) 
 
-        # Linha curta e centralizada
-        pdf.line(60, 235, 150, 235) 
-        pdf.set_y(236)
+        # Assinatura
+        if canvas_result.image_data is not None:
+            sig_img = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
+            sig_buf = io.BytesIO()
+            sig_img.save(sig_buf, format='PNG')
+            pdf.image(sig_buf, x=75, y=pdf.get_y(), w=50)
+
+        pdf.ln(20)
+        pdf.line(60, pdf.get_y(), 150, pdf.get_y()) 
         pdf.set_font("Arial", "I", 8)
         data_hora = datetime.now().strftime('%d/%m/%Y às %H:%M:%S')
         pdf.cell(0, 10, f"Assinado digitalmente em: {data_hora}", ln=True, align="C")
         
-        pdf_bytes = pdf.output(dest='S')
-        
         st.download_button(
-            label="📥 BAIXAR COMUNICADO FINAL CORRIGIDO",
-            data=bytes(pdf_bytes),
-            file_name=f"Comunicado_Zion_{navio_selecionado}.pdf",
+            label="📥 BAIXAR COMUNICADO AJUSTADO",
+            data=bytes(pdf.output(dest='S')),
+            file_name=f"Comunicado_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        
-        # Mensagem de alerta customizada conforme sua imagem
         st.markdown('<div class="alerta-sucesso-custom">Tudo corrigido! Linha, assinatura e fotos incluídas.</div>', unsafe_allow_html=True)
 
     except Exception as e:
-        st.error(f"Erro ao gerar: {e}")
+        st.error(f"Erro: {e}")
