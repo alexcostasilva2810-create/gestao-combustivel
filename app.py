@@ -121,7 +121,7 @@ elif st.session_state.passo == 'INPUT':
             st.markdown(f'<div class="alerta-erro">⚠️ EXCESSO DE {soma_total-limite:,} LTS!</div>', unsafe_allow_html=True)
         
         st.markdown("---")
-        st.markdown("<label>ASSINATURA DIGITAL (TELA TOUCH)</label>", unsafe_allow_html=True)
+        st.markdown("<label>ASSINATURA DIGITAL</label>", unsafe_allow_html=True)
         canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_final_v2")
 
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
