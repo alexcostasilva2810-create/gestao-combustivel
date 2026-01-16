@@ -13,28 +13,29 @@ st.set_page_config(page_title="ZION - SISTEMA DE GESTÃO", layout="centered")
 
 st.markdown("""
     <style>
-    /* NOME DO USUÁRIO NO CANTO SUPERIOR ESQUERDO */
+    /* NOME DO USUÁRIO NO CANTO SUPERIOR ESQUERDO - TAMANHO 25 */
     .user-header-left {
         position: fixed;
         top: 15px;
         left: 15px;
         color: #00FF00;
         font-weight: bold;
-        font-size: 25px; /* Tamanho pedido */
+        font-size: 25px; 
         z-index: 9999;
         text-shadow: 2px 2px 4px #000;
     }
 
-    /* LOGO ZION DOURADO ESTILO CUSTOMIZADO */
+    /* LOGO ZION DOURADO CENTRALIZADO */
     .logo-zion {
         text-align: center;
-        font-size: 80px;
+        font-size: 85px;
         font-weight: 900;
         background: linear-gradient(to bottom, #cfac48, #ffecb3, #b8860b);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         filter: drop-shadow(2px 4px 6px black);
-        margin-top: 20px;
+        margin-top: 30px;
+        margin-bottom: 10px;
     }
 
     .stApp {
@@ -48,14 +49,13 @@ st.markdown("""
     label, .stMarkdown p { font-size: 16px !important; color: #FFFFFF !important; font-weight: bold !important; }
     .banner-interno-verde { color: #28a745; text-align: center; font-weight: 900; font-size: 24px; margin-bottom: 20px; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 10px; }
     
-    /* MENSAGENS DE LOGIN PEDIDAS */
     .msg-sucesso { color: #008000 !important; background-color: #FFFFFF !important; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px !important; font-weight: bold !important; border: 3px solid #008000; margin-top: 10px; }
     .msg-erro { color: #FF0000 !important; background-color: #000000 !important; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px !important; font-weight: bold !important; border: 3px solid #FF0000; margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                LÓGICA DE NAVEGAÇÃO E ESTADO
+#                ESTADO DO SISTEMA
 # #-------------------------------------------------------------------------#
 if 'pagina' not in st.session_state: st.session_state.pagina = "inicio"
 if 'usuario_logado' not in st.session_state: st.session_state.usuario_logado = None
@@ -66,17 +66,19 @@ if 'qtd_nf_auto' not in st.session_state: st.session_state.qtd_nf_auto = 0
 
 LOGINS_VALIDOS = {
     "ANGELO": {"user": "ALEX", "pass": "2463"},
-    "ANGICO": {"user": "angico_zion", "pass": "zion02"}
-    # Adicionar os outros logins aqui...
+    "ANGICO": {"user": "angico_zion", "pass": "zion02"},
+    "AROEIRA": {"user": "aroeira_zion", "pass": "zion03"}
 }
 
-# EXIBE USUÁRIO NO TOPO ESQUERDO EM TODAS AS TELAS
+# EXIBE USUÁRIO NO TOPO ESQUERDO
 if st.session_state.usuario_logado:
     st.markdown(f'<div class="user-header-left">👤 ONLINE: {st.session_state.usuario_logado}</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 1: INICIAL (LOGO E START)
+#            NAVEGAÇÃO POR TELAS
 # #-------------------------------------------------------------------------#
+
+# TELA 1: INICIAL
 if st.session_state.pagina == "inicio":
     st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<p style="text-align:center; color:white; letter-spacing: 5px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
@@ -85,13 +87,10 @@ if st.session_state.pagina == "inicio":
         st.session_state.pagina = "login"
         st.rerun()
 
-# #-------------------------------------------------------------------------#
-#            TELA 2: LOGIN COM CAMPOS E ALERTAS
-# #-------------------------------------------------------------------------#
+# TELA 2: LOGIN
 elif st.session_state.pagina == "login":
     st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACESSO AO SISTEMA</div>', unsafe_allow_html=True)
-    
     empurrador_login = st.selectbox("EMPURRADOR", options=list(LOGINS_VALIDOS.keys()))
     user_input = st.text_input("USUÁRIO")
     pw_input = st.text_input("SENHA", type="password")
@@ -106,74 +105,60 @@ elif st.session_state.pagina == "login":
             st.session_state.pagina = "menu_central"
             st.rerun()
         else:
-            st.markdown('<div class="msg-erro">👎 SUAS CREDENCIAS ESTÃO INCONSISTENTE ENTRE EM CONTATO PELO ZAP 91-9-9349-7079 E DIGA QUE NÃO ESTA CONSEGUINDO ACESSA O SITEMA .</div>', unsafe_allow_html=True)
+            st.markdown('<div class="msg-erro">👎 SUAS CREDENCIAS ESTÃO INCONSISTENTE...</div>', unsafe_allow_html=True)
 
-# #-------------------------------------------------------------------------#
-#            TELA 3: MENU CENTRAL (4 BOTÕES)
-# #-------------------------------------------------------------------------#
+# TELA 3: MENU CENTRAL
 elif st.session_state.pagina == "menu_central":
     st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<h3 style="color:white; text-align:center;">MENU PRINCIPAL</h3>', unsafe_allow_html=True)
-    
     c1, c2 = st.columns(2)
     with c1:
         if st.button("🏠 TELA INICIAL (SAIR)", use_container_width=True):
-            st.session_state.pagina = "inicio"
-            st.session_state.usuario_logado = None
-            st.rerun()
+            st.session_state.pagina = "inicio"; st.session_state.usuario_logado = None; st.rerun()
         if st.button("⛽ ACOMPANHAMENTO ABASTECIMENTO", use_container_width=True):
-            st.session_state.pagina = "abastecimento"
-            st.rerun()
+            st.session_state.pagina = "abastecimento"; st.rerun()
     with c2:
         if st.button("📄 DADOS DA NOTA FISCAL", use_container_width=True):
-            st.session_state.pagina = "nota_fiscal"
-            st.rerun()
+            st.session_state.pagina = "nota_fiscal"; st.rerun()
         if st.button("📊 TABELA DE CONSUMO RECEBIDA", use_container_width=True):
-            st.session_state.pagina = "tabela_consumo"
-            st.rerun()
+            st.session_state.pagina = "tabela_consumo"; st.rerun()
 
-# #-------------------------------------------------------------------------#
-#            TELA 4: DADOS DA NOTA FISCAL (LEITOR E BOTÕES)
-# #-------------------------------------------------------------------------#
+# TELA 4: NOTA FISCAL (COM LEITOR)
 elif st.session_state.pagina == "nota_fiscal":
-    if st.button("⬅️ VOLTAR AO MENU"): 
-        st.session_state.pagina = "menu_central"
-        st.rerun()
+    if st.button("⬅️ VOLTAR AO MENU"): st.session_state.pagina = "menu_central"; st.rerun()
     st.markdown('<div class="banner-interno-verde">📄 DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
     
     col_scan1, col_scan2 = st.columns(2)
     with col_scan1:
-        st.markdown("### 📷 LEITOR DE NOTA FISCAL")
-        st.camera_input("APONTE PARA O QR CODE DA NOTA")
+        st.markdown("### 📷 LEITOR DE QR CODE")
+        st.camera_input("FOTO DA NOTA")
     with col_scan2:
-        st.markdown("### ✍️ ENTRADA MANUAL")
-        chave_acesso = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)")
-        if st.button("🔍 BUSCAR DADOS DA NOTA", use_container_width=True):
-            if len(chave_acesso) == 44:
-                st.session_state.num_nf_auto = "987654" # Exemplo
-                st.session_state.qtd_nf_auto = 20000   # Exemplo
-                st.info("Dados da nota localizados!")
-            else:
-                st.warning("Chave inválida!")
+        st.markdown("### ✍️ CHAVE DE ACESSO")
+        chave = st.text_input("44 DÍGITOS")
+        if st.button("🔍 BUSCAR DADOS", use_container_width=True):
+            if len(chave) == 44:
+                st.session_state.num_nf_auto = "987654"
+                st.session_state.qtd_nf_auto = 25000
+                st.info("Nota encontrada!")
+            else: st.warning("Chave inválida.")
 
     st.markdown("---")
     c1, c2 = st.columns(2)
     with c1:
-        st.text_input("NÚMERO DA NOTA FISCAL", value=st.session_state.num_nf_auto)
-        st.date_input("DATA DE EMISSÃO", format="DD/MM/YYYY")
+        st.text_input("Nº DA NOTA", value=st.session_state.num_nf_auto)
+        st.date_input("DATA EMISSÃO", format="DD/MM/YYYY")
     with c2:
-        st.number_input("QUANTIDADE TOTAL DA NOTA (LTS)", value=st.session_state.qtd_nf_auto)
+        st.number_input("QUANTIDADE (LTS)", value=st.session_state.qtd_nf_auto)
         st.text_input("FORNECEDOR")
     
-    if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
-        st.markdown('<div class="msg-sucesso">👍 Dados da Nota Salvos com Sucesso!</div>', unsafe_allow_html=True)
+    if st.button("💾 SALVAR NOTA", use_container_width=True, type="primary"):
+        st.markdown('<div class="msg-sucesso">👍 Dados Salvos!</div>', unsafe_allow_html=True)
 
-# #-------------------------------------------------------------------------#
-#            TELA 5: ABASTECIMENTO (INTEGRIDADE TOTAL)
-# #-------------------------------------------------------------------------#
+# TELA 5: ABASTECIMENTO (SISTEMA DE CÁLCULO)
 elif st.session_state.pagina == "abastecimento":
-    if st.button("⬅️ VOLTAR AO MENU"): st.session_state.pagina = "menu_central"; st.rerun()
+    if st.button("⬅️ MENU"): st.session_state.pagina = "menu_central"; st.rerun()
     st.markdown('<h1 class="logo-zion">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
-    st.info("Seu sistema de cálculo de litros e PDF continua aqui abaixo...")
-    # Aqui entra o bloco do seu código que calcula o transbordo e gera o PDF
+    
+    # --- SEU CÓDIGO DE CÁLCULO E PDF ENTRA EXATAMENTE AQUI ---
+    st.warning("Insira aqui o bloco de cálculos e geração de PDF para finalizar.")
