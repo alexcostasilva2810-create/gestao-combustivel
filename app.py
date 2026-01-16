@@ -17,12 +17,24 @@ st.markdown("""
     .stApp { background-image: url("app/static/plataforma.jpg"); background-size: cover; }
     .stApp::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: -1; }
     .box-branco { background-color: white; padding: 25px; border-radius: 15px; border: 1px solid #ddd; }
+    
+    /* Estilo para o texto verde DENTRO da caixa branca */
+    .banner-interno-verde {
+        background-color: white;
+        color: #28a745;
+        text-align: center;
+        font-weight: bold;
+        font-size: 22px;
+        padding: 10px;
+        border: 2px solid #eee;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+    
     .alerta-erro { background-color: #ff4b4b; color: white; padding: 15px; border-radius: 10px; font-weight: bold; text-align: center; }
-    .alerta-sucesso { background-color: #28a745; color: white; padding: 15px; border-radius: 10px; font-weight: bold; text-align: center; }
     label { color: #007bff !important; font-weight: bold; }
     .timer-display { font-size: 28px; font-weight: bold; color: #d32f2f; text-align: center; padding: 10px; background: #f0f0f0; border-radius: 10px; border: 2px solid #007bff; }
-    /* Estilo para o cabeçalho verde solicitado */
-    .cabecalho-verde { color: #28a745; text-align: center; font-weight: bold; font-size: 24px; margin-top: 10px; margin-bottom: 20px; text-transform: uppercase; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -55,13 +67,13 @@ if st.session_state.passo == 'INICIAL':
 
 elif st.session_state.passo == 'INPUT':
     # Título ZION no topo
-    st.markdown('<h1 style="color:#007bff; text-align:center; margin-bottom:0;">ZION</h1>', unsafe_allow_html=True)
-    
-    # Cabeçalho Verde centralizado no campo indicado
-    st.markdown('<div class="cabecalho-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:#007bff; text-align:center; margin-bottom:10px;">ZION</h1>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
+        
+        # O Nome verde posicionado DENTRO da área de conteúdo
+        st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
         
         navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
         limite = CAPACIDADES[navio]
@@ -79,7 +91,6 @@ elif st.session_state.passo == 'INPUT':
             pedido = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Controle de Tempo (Relógio)
             st.markdown("<label>CONTROLE DE TEMPO</label>", unsafe_allow_html=True)
             placeholder_tempo = st.empty()
             
@@ -101,14 +112,13 @@ elif st.session_state.passo == 'INPUT':
 
             foto_depois = st.file_uploader("📷 Foto DEPOIS do Abastecimento", type=['jpg', 'png', 'jpeg'])
 
-        # Validação de capacidade
         soma_total = s_bb + s_be + s_rem + pedido
         if soma_total > limite:
             st.markdown(f'<div class="alerta-erro">⚠️ EXCESSO DE {soma_total-limite:,} LTS!</div>', unsafe_allow_html=True)
         
         st.markdown("---")
         st.markdown("<label>ASSINATURA DIGITAL (TELA TOUCH)</label>", unsafe_allow_html=True)
-        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_v5")
+        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_v_final")
 
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             if canvas_result.image_data is not None:
@@ -126,7 +136,7 @@ elif st.session_state.passo == 'INPUT':
         st.markdown('</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#                             BLOCO 4: RELATÓRIO E PDF
+#                             BLOCO 4: RELATÓRIO FINAL
 # #-------------------------------------------------------------------------#
 
 elif st.session_state.passo == 'RELATORIO':
@@ -136,7 +146,6 @@ elif st.session_state.passo == 'RELATORIO':
     pdf = FPDF()
     pdf.add_page()
     
-    # Cabeçalho PDF ZION
     pdf.set_text_color(0, 123, 255)
     pdf.set_font("Helvetica", 'B', 26)
     pdf.cell(0, 20, "ZION", ln=True, align='C')
@@ -147,7 +156,6 @@ elif st.session_state.passo == 'RELATORIO':
     
     pdf.set_font("Helvetica", size=12)
     pdf.ln(10)
-    # Texto com regras gramaticais aplicadas
     texto_corpo = (f"Comunico que o empurrador {d['navio']} está apto a receber o consumo de "
                    f"{d['pedido']:,} lts, visto que possui um saldo de {d['s_bb']:,} lts (BB) "
                    f"e {d['s_be']:,} lts (BE), somados ao saldo remanescente de {d['s_rem']:,} lts.\n\n"
@@ -155,12 +163,10 @@ elif st.session_state.passo == 'RELATORIO':
                    f"Ressaltamos que a capacidade total do empurrador é de {d['limite']:,} lts.")
     pdf.multi_cell(0, 8, texto_corpo)
     
-    # Registro de tempo
     h, m, s = d['tempo'].split(':')
     pdf.ln(5)
     pdf.multi_cell(0, 8, f"Informo que o empurrador levou {h} horas, {m} minutos e {s} segundos para abastecer.")
     
-    # Fotos Antes/Depois no relatório
     pdf.ln(5)
     pdf.multi_cell(0, 8, "Segue abaixo as fotos do antes e depois do abastecimento:")
     y_fotos = pdf.get_y() + 5
@@ -171,7 +177,6 @@ elif st.session_state.passo == 'RELATORIO':
         buf2 = io.BytesIO(); st.session_state.foto_depois.save(buf2, format='PNG')
         pdf.image(buf2, x=105, y=y_fotos, w=85)
     
-    # Área de Assinatura
     pdf.set_y(y_fotos + 65)
     buf_sign = io.BytesIO(); st.session_state.assinatura.save(buf_sign, format='PNG')
     pdf.image(buf_sign, x=65, w=80)
