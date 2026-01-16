@@ -16,11 +16,11 @@ st.markdown("""
     <style>
     .stApp { background-image: url("app/static/plataforma.jpg"); background-size: cover; }
     .stApp::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: -1; }
-    .box-branco { background-color: white; padding: 25px; border-radius: 15px; }
+    .box-branco { background-color: white; padding: 25px; border-radius: 15px; border: 1px solid #ddd; }
     .alerta-erro { background-color: #ff4b4b; color: white; padding: 15px; border-radius: 10px; font-weight: bold; text-align: center; }
     .alerta-sucesso { background-color: #28a745; color: white; padding: 15px; border-radius: 10px; font-weight: bold; text-align: center; }
     label { color: #007bff !important; font-weight: bold; }
-    .timer-display { font-size: 24px; font-weight: bold; color: #333; text-align: center; padding: 10px; background: #eee; border-radius: 10px; }
+    .timer-display { font-size: 28px; font-weight: bold; color: #d32f2f; text-align: center; padding: 10px; background: #f0f0f0; border-radius: 10px; border: 2px solid #007bff; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -31,9 +31,11 @@ CAPACIDADES = {
     "TIMBORANA": 19792, "JATOBA": 84000
 }
 
+# Inicialização de variáveis de estado
 if 'passo' not in st.session_state: st.session_state.passo = 'INICIAL'
-if 't_inicio' not in st.session_state: st.session_state.t_inicio = None
-if 'tempo_total' not in st.session_state: st.session_state.tempo_total = "00:00:00"
+if 't_rodando' not in st.session_state: st.session_state.t_rodando = False
+if 't_inicio' not in st.session_state: st.session_state.t_inicio = 0
+if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str = "00:00:00"
 
 # #-------------------------------------------------------------------------#
 #                             BLOCO 2: TELA INICIAL
@@ -51,14 +53,12 @@ if st.session_state.passo == 'INICIAL':
 # #-------------------------------------------------------------------------#
 
 elif st.session_state.passo == 'INPUT':
-    # Nome ZION no topo acima do cabeçalho
     st.markdown('<h1 style="color:#007bff; text-align:center; margin-bottom:0;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<h2 style="color:white; text-align:center; margin-top:0;">⛽ Registro de Abastecimento</h2>', unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
         
-        # Dados do Navio
         navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
         limite = CAPACIDADES[navio]
         st.info(f"Capacidade do Tanque: {limite:,} lts")
@@ -67,41 +67,46 @@ elif st.session_state.passo == 'INPUT':
         with col1:
             dt_input = st.date_input("DATA", format="DD/MM/YYYY")
             s_bb = st.number_input("SALDO BB (LTS)", min_value=0)
+            s_be = st.number_input("SALDO BE (LTS)", min_value=0)
             s_rem = st.number_input("REMANESCENTE (LTS)", min_value=0)
-            
-            # Campo de Foto Antes
-            foto_antes = st.file_uploader("Foto Antes do Abastecimento", type=['jpg', 'png', 'jpeg'])
+            foto_antes = st.file_uploader("📷 Foto ANTES do Abastecimento", type=['jpg', 'png', 'jpeg'])
             
         with col2:
             pedido = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
-            s_be = st.number_input("SALDO BE (LTS)", min_value=0)
+            st.markdown("<br>", unsafe_allow_html=True)
             
-            # CRONÔMETRO PROGRESSIVO
+            # LÓGICA DO CRONÔMETRO
             st.markdown("<label>CONTROLE DE TEMPO</label>", unsafe_allow_html=True)
-            c_timer1, c_timer2 = st.columns(2)
-            if c_timer1.button("INICIAR", use_container_width=True, type="primary"): # Cor verde simulada pelo type
-                st.session_state.t_inicio = time.time()
-            if c_timer2.button("PARAR", use_container_width=True): # Cor vermelha no estilo CSS se necessário
-                if st.session_state.t_inicio:
-                    segundos = int(time.time() - st.session_state.t_inicio)
-                    st.session_state.tempo_total = time.strftime('%H:%M:%S', time.gmtime(segundos))
-                    st.session_state.t_inicio = None
+            placeholder_tempo = st.empty() # Espaço para o relógio atualizar
             
-            st.markdown(f'<div class="timer-display">⏱️ {st.session_state.tempo_total}</div>', unsafe_allow_html=True)
-            st.caption(f"Tempo total decorrido: {st.session_state.tempo_total}")
+            c_t1, c_t2 = st.columns(2)
+            if c_t1.button("▶️ INICIAR", use_container_width=True):
+                st.session_state.t_inicio = time.time()
+                st.session_state.t_rodando = True
+            
+            if c_t2.button("🛑 PARAR", use_container_width=True):
+                st.session_state.t_rodando = False
+            
+            # Atualização visual do tempo
+            while st.session_state.t_rodando:
+                segundos = int(time.time() - st.session_state.t_inicio)
+                st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
+                placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
+                time.sleep(1)
+            else:
+                placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
 
-            # Campo de Foto Depois
-            foto_depois = st.file_uploader("Foto Depois do Abastecimento", type=['jpg', 'png', 'jpeg'])
+            foto_depois = st.file_uploader("📷 Foto DEPOIS do Abastecimento", type=['jpg', 'png', 'jpeg'])
 
-        # Lógica de Soma
         soma_total = s_bb + s_be + s_rem + pedido
         if soma_total > limite:
-            st.markdown(f'<div class="alerta-erro">⚠️ EXCESSO: {soma_total-limite:,} lts</div>', unsafe_allow_html=True)
-        
-        # ASSINATURA DIGITAL
+            st.markdown(f'<div class="alerta-erro">⚠️ ATENÇÃO: EXCESSO DE {soma_total-limite:,} LTS!</div>', unsafe_allow_html=True)
+        elif soma_total > 0:
+            st.markdown('<div class="alerta-sucesso">✅ VOLUME DENTRO DA CAPACIDADE PERMITIDA.</div>', unsafe_allow_html=True)
+
         st.markdown("---")
         st.markdown("<label>ASSINATURA DIGITAL (TELA TOUCH)</label>", unsafe_allow_html=True)
-        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas")
+        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_v3")
 
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             if canvas_result.image_data is not None:
@@ -111,7 +116,7 @@ elif st.session_state.passo == 'INPUT':
                 st.session_state.dados_pdf = {
                     "navio": navio, "pedido": pedido, "s_bb": s_bb, "s_be": s_be, 
                     "s_rem": s_rem, "total": soma_total, "limite": limite,
-                    "tempo": st.session_state.tempo_total,
+                    "tempo": st.session_state.tempo_final_str,
                     "timestamp": datetime.now().strftime("%d/%m/%Y às %H:%M:%S")
                 }
                 st.session_state.passo = 'RELATORIO'
@@ -126,11 +131,10 @@ elif st.session_state.passo == 'RELATORIO':
     d = st.session_state.dados_pdf
     st.markdown('<div class="box-branco">', unsafe_allow_html=True)
     
-    # Geração do PDF
     pdf = FPDF()
     pdf.add_page()
     
-    # ZION em Azul
+    # Cabeçalho ZION
     pdf.set_text_color(0, 123, 255)
     pdf.set_font("Helvetica", 'B', 26)
     pdf.cell(0, 20, "ZION", ln=True, align='C')
@@ -139,7 +143,7 @@ elif st.session_state.passo == 'RELATORIO':
     pdf.set_font("Helvetica", 'B', 16)
     pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align='C')
     
-    # Texto Principal com Gramática Corrigida
+    # Texto com Normas Gramaticais
     pdf.set_font("Helvetica", size=12)
     pdf.ln(10)
     texto_corpo = (f"Comunico que o empurrador {d['navio']} está apto a receber o consumo de "
@@ -149,30 +153,26 @@ elif st.session_state.passo == 'RELATORIO':
                    f"Ressaltamos que a capacidade total do empurrador é de {d['limite']:,} lts.")
     pdf.multi_cell(0, 8, texto_corpo)
     
-    # Nova Frase do Tempo
+    # Informação de Tempo e Fotos
     h, m, s = d['tempo'].split(':')
     pdf.ln(5)
     pdf.multi_cell(0, 8, f"Informo que o empurrador levou {h} horas, {m} minutos e {s} segundos para abastecer.")
-    
-    # Fotos Antes e Depois
     pdf.ln(5)
     pdf.multi_cell(0, 8, "Segue abaixo as fotos do antes e depois do abastecimento:")
     
-    col_img_x = 10
+    # Inserção das Fotos
+    y_fotos = pdf.get_y() + 5
     if st.session_state.foto_antes:
-        buf = io.BytesIO()
-        st.session_state.foto_antes.save(buf, format='PNG')
-        pdf.image(buf, x=10, y=pdf.get_y()+5, w=90)
+        buf1 = io.BytesIO()
+        st.session_state.foto_antes.save(buf1, format='PNG')
+        pdf.image(buf1, x=10, y=y_fotos, w=85)
     if st.session_state.foto_depois:
         buf2 = io.BytesIO()
         st.session_state.foto_depois.save(buf2, format='PNG')
-        pdf.image(buf2, x=110, y=pdf.get_y()+5, w=90)
+        pdf.image(buf2, x=105, y=y_fotos, w=85)
     
-    # Ajusta posição para assinatura não sobrepor as fotos
-    pdf.set_y(pdf.get_y() + 75)
-    
-    # Assinatura e Linha
-    pdf.ln(10)
+    # Assinatura
+    pdf.set_y(y_fotos + 65)
     buf_sign = io.BytesIO()
     st.session_state.assinatura.save(buf_sign, format='PNG')
     pdf.image(buf_sign, x=65, w=80)
@@ -182,5 +182,8 @@ elif st.session_state.passo == 'RELATORIO':
 
     pdf_output = pdf.output()
     st.download_button("📥 BAIXAR COMUNICADO FINAL (PDF)", data=bytes(pdf_output), file_name=f"ZION_{d['navio']}.pdf", use_container_width=True)
-    if st.button("NOVO REGISTRO"): st.session_state.passo = 'INICIAL'; st.rerun()
+    if st.button("REALIZAR NOVO REGISTRO"): 
+        st.session_state.passo = 'INICIAL'
+        st.session_state.tempo_final_str = "00:00:00"
+        st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
