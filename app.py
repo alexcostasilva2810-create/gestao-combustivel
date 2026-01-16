@@ -12,6 +12,7 @@ st.set_page_config(page_title="ZION - ABASTECIMENTO NAVAL", layout="centered")
 
 st.markdown("""
     <style>
+    /* Plano de fundo aprovado: Navio Cargueiro e Mar */
     .stApp {
         background-image: url("https://images.unsplash.com/photo-1524522173746-f628baad3644?q=80&w=2000&auto=format&fit=crop");
         background-size: cover;
@@ -23,6 +24,7 @@ st.markdown("""
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.75); z-index: -1;
     }
+    /* Letras brancas para contraste conforme solicitado */
     label, .stMarkdown p { 
         font-size: 19px !important; 
         color: #FFFFFF !important;  
@@ -65,6 +67,7 @@ st.markdown('<h1 style="color:white; text-align:center; font-size: 45px; margin-
 st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
 navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
+# Alerta de capacidade restituído
 st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts")
 
 col1, col2 = st.columns(2)
@@ -89,6 +92,7 @@ with col2:
     if c2.button("🛑 PARAR", use_container_width=True):
         st.session_state.t_rodando = False
     
+    # Cronômetro funcionando segundo a segundo
     if st.session_state.t_rodando:
         segundos = int(time.time() - st.session_state.t_inicio)
         st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
@@ -102,10 +106,10 @@ with col2:
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_ok")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (CORREÇÃO DEFINITIVA)
+#                     GERAÇÃO DO PDF (LÓGICA BLINDADA)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -122,16 +126,16 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf.cell(200, 10, f"Tempo Total: {st.session_state.tempo_final_str}", ln=True)
         pdf.cell(200, 10, f"Quantidade Pedida: {qtd_pedida} LTS", ln=True)
         
-        # A correção aqui: removemos o .encode('latin-1') pois o fpdf já entrega bytes
-        pdf_bytes = pdf.output(dest='S')
+        # Correção para evitar erro de 'bytearray'
+        pdf_bytes = bytes(pdf.output(dest='S'))
         
         st.download_button(
             label="📥 BAIXAR RELATÓRIO PDF",
             data=pdf_bytes,
-            file_name=f"Zion_{navio_selecionado}.pdf",
+            file_name=f"Relatorio_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        st.success("PDF gerado com sucesso!")
+        st.success("PDF gerado com sucesso! Clique acima para baixar.")
     except Exception as e:
         st.error(f"Erro ao gerar PDF: {e}")
