@@ -96,7 +96,9 @@ st.markdown(""" <style> ... </style> """, unsafe_allow_html=True)
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "inicio"
 
-# --- MENU DE NAVEGAÇÃO (Sempre visível no topo) ---
+# #-------------------------------------------------------------------------#
+#                         MENU DE NAVEGAÇÃO FIXO
+# #-------------------------------------------------------------------------#
 st.markdown('<div class="main-nav">', unsafe_allow_html=True)
 st.markdown("📋 MENU DE NAVEGAÇÃO")
 c1, c2, c3, c4 = st.columns(4)
@@ -108,33 +110,65 @@ with c2:
         st.session_state.pagina = "menu"; st.rerun()
 with c3:
     if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
-        st.session_state.pagina = "abastecimento"; st.rerun()
+        st.session_state.pagina = "abastecimento"; st.session_state.form_id += 1; st.rerun()
 with c4:
     if st.button("🧾 REGISTRO DE NF", use_container_width=True):
         st.session_state.pagina = "registro_nf"; st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- LÓGICA DE EXIBIÇÃO DAS PÁGINAS ---
+# #-------------------------------------------------------------------------#
+#                    LÓGICA DE PÁGINAS (BLOCOS 4 E 5)
+# #-------------------------------------------------------------------------#
+
 if st.session_state.pagina == "inicio":
-    st.markdown("### Bem-vindo ao Sistema ZION")
-    # Coloque aqui o conteúdo da tela inicial
+    st.markdown('<h1 style="color:white; text-align:center;">ZION - TELA INICIAL</h1>', unsafe_allow_html=True)
+    st.info("Selecione uma opção no menu acima.")
 
 elif st.session_state.pagina == "menu":
-    st.markdown("### Menu Principal")
-    # Coloque aqui o conteúdo do menu
+    st.markdown('<h1 style="color:white; text-align:center;">MENU PRINCIPAL</h1>', unsafe_allow_html=True)
 
 elif st.session_state.pagina == "abastecimento":
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
-    # AQUI VOCÊ DEVE COLAR O RESTANTE DO BLOCO 4 (CUIDADO COM O RECUO!)
+    
+    # Lista de capacidades conforme imagens anteriores
+    CAPACIDADES = {"ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700, "JATOBA": 84000, "CEDRO": 22000}
+    navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), key="nav_sel")
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        s_bb = st.number_input("SALDO BB (LTS)", min_value=0, key="sbb")
+        s_be = st.number_input("SALDO BE (LTS)", min_value=0, key="sbe")
+    with col_b:
+        q_p = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0, key="qp")
+        rem = st.number_input("REMANESCENTE (LTS)", min_value=0, key="rm")
+    
+    total = s_bb + s_be + q_p + rem
+    if total > CAPACIDADES.get(navio, 0):
+        st.error(f"🚨 BLOQUEIO: {total:,} lts excede o limite!")
+    else:
+        st.success(f"✅ VOLUME SEGURO: {total:,} lts")
 
 elif st.session_state.pagina == "registro_nf":
-    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL</div>', unsafe_allow_html=True)
-    # AQUI VOCÊ DEVE COLAR O RESTANTE DO BLOCO 5 (CHAVE DE ACESSO)
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">REGISTRO DE NOTA FISCAL (IPIRANGA)</div>', unsafe_allow_html=True)
+    
+    chave = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
+    if st.button("🔍 PUXAR DADOS DA NOTA"):
+        # Simulação com dados da imagem image_3c0190
+        st.session_state.nf_data = {"num": "000.125.893", "emit": "IPIRANGA PRODUTOS DE PETROLEO S.A.", "val": 26704.50}
+        st.success("Dados carregados com sucesso!")
 
-# --- RODAPÉ (LINHA 224 CORRIGIDA) ---
+    if 'nf_data' in st.session_state:
+        st.text_input("NÚMERO DA NF", value=st.session_state.nf_data["num"])
+        st.text_input("EMITENTE", value=st.session_state.nf_data["emit"])
+        st.number_input("VALOR TOTAL (R$)", value=st.session_state.nf_data["val"])
+
+# #-------------------------------------------------------------------------#
+#             RODAPÉ FINAL (CORREÇÃO DO ERRO DA LINHA 255)
+# #-------------------------------------------------------------------------#
 st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True) # Parêntese fechado aqui!
-
+    ⚠️ Sistema Zion v1.0 - Transdourada Navegação.</div>''', unsafe_allow_html=True)
 # #-------------------------------------------------------------------------#
 #                         TELA DE ABASTECIMENTO (BLOCO 4)
 # #-------------------------------------------------------------------------#
