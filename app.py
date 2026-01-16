@@ -40,7 +40,7 @@ st.markdown("""
         padding: 10px; background: white; border-radius: 10px; border: 3px solid #007bff; 
     }
     .alerta-sucesso-custom {
-        background-color: rgba(0, 128, 0, 0.7); color: white; padding: 15px; 
+        background-color: rgba(0, 128, 0, 0.8); color: white; padding: 15px; 
         border-radius: 5px; font-size: 14px; font-weight: bold;
         text-align: center; margin-top: 10px;
     }
@@ -65,7 +65,6 @@ st.markdown('<h1 style="color:white; text-align:center; font-size: 45px; margin-
 st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
 
 navio_selecionado = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
-st.info(f"Capacidade do Tanque: {CAPACIDADES[navio_selecionado]:,} lts")
 
 col1, col2 = st.columns(2)
 
@@ -100,10 +99,10 @@ with col2:
 
 st.markdown("---")
 st.markdown("<p>ASSINATURA DIGITAL</p>", unsafe_allow_html=True)
-canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_zion_v3")
+canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key="canvas_final_v4")
 
 # #-------------------------------------------------------------------------#
-#                     GERAÇÃO DO PDF (FOTOS LADO A LADO)
+#                     GERAÇÃO DO PDF (LAYOUT TRAVADO)
 # #-------------------------------------------------------------------------#
 
 if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
@@ -120,7 +119,7 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
         pdf.cell(200, 10, "Comunicado de Abastecimento", ln=True, align="C")
         pdf.ln(10)
         
-        # Texto Profissional Restaurado
+        # Texto Profissional
         pdf.set_font("Arial", "", 12)
         total_pos = saldo_bb + saldo_be + remanescente + qtd_pedida
         texto_corpo = (
@@ -132,43 +131,40 @@ if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary")
             f"Segue abaixo as fotos do antes e depois do abastecimento:"
         )
         pdf.multi_cell(0, 8, texto_corpo)
-        pdf.ln(5)
-
-        # POSICIONAMENTO DAS FOTOS (Lado a lado, menores)
-        y_inicial_fotos = pdf.get_y()
-        largura_foto = 50  # Tamanho reduzido para caberem bem
+        
+        # POSICIONAMENTO FIXO DAS FOTOS (Lado a lado, menores)
+        y_fotos = pdf.get_y() + 5
+        largura_foto = 45 # Tamanho reduzido para apresentação limpa
         
         if foto_antes:
-            pdf.image(Image.open(foto_antes), x=30, y=y_inicial_fotos, w=largura_foto)
+            pdf.image(Image.open(foto_antes), x=40, y=y_fotos, w=largura_foto) # Posição A
         if foto_depois:
-            pdf.image(Image.open(foto_depois), x=110, y=y_inicial_fotos, w=largura_foto)
+            pdf.image(Image.open(foto_depois), x=115, y=y_fotos, w=largura_foto) # Posição D
         
-        # Define posição para a assinatura abaixo das fotos
-        pdf.set_y(y_inicial_fotos + 60)
-
-        # Assinatura Digital
+        # ÁREA DE ASSINATURA (Sempre abaixo das fotos)
+        pdf.set_y(y_fotos + 55) 
         if canvas_result.image_data is not None:
             sig_img = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
             sig_buf = io.BytesIO()
             sig_img.save(sig_buf, format='PNG')
-            pdf.image(sig_buf, x=75, y=pdf.get_y(), w=50)
+            pdf.image(sig_buf, x=80, y=pdf.get_y(), w=40)
 
-        # Linha e Data
-        pdf.ln(15)
-        pdf.line(65, pdf.get_y(), 145, pdf.get_y()) 
+        # Linha Curta e Centralizada
+        pdf.ln(12)
+        pdf.line(70, pdf.get_y(), 140, pdf.get_y()) 
         pdf.set_font("Arial", "I", 8)
         data_hora = datetime.now().strftime('%d/%m/%Y às %H:%M:%S')
-        pdf.cell(0, 10, f"Assinado digitalmente em: {data_hora}", ln=True, align="C")
+        pdf.cell(0, 8, f"Assinado digitalmente em: {data_hora}", ln=True, align="C")
         
+        pdf_bytes = pdf.output(dest='S')
         st.download_button(
             label="📥 BAIXAR COMUNICADO FINAL",
-            data=bytes(pdf.output(dest='S')),
+            data=bytes(pdf_bytes),
             file_name=f"Comunicado_{navio_selecionado}.pdf",
             mime="application/pdf",
             use_container_width=True
         )
-        # Alerta Verde
-        st.markdown('<div class="alerta-sucesso-custom">Tudo corrigido! Linha, assinatura e fotos incluídas.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="alerta-sucesso-custom">SEU PDF ESTA PRONTO PEGUE-O E ENVIE PARA O CIOP.</div>', unsafe_allow_html=True)
 
     except Exception as e:
-        st.error(f"Erro ao gerar PDF: {e}")
+        st.error(f"Erro ao gerar: {e}")
