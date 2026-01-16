@@ -72,7 +72,7 @@ elif st.session_state.passo == 'INPUT':
     with st.container():
         st.markdown('<div class="box-branco">', unsafe_allow_html=True)
         
-        # O Nome verde posicionado DENTRO da área de conteúdo
+        # Banner verde centralizado (campo superior removido conforme solicitado)
         st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
         
         navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()))
@@ -91,6 +91,7 @@ elif st.session_state.passo == 'INPUT':
             pedido = st.number_input("QUANTIDADE PEDIDA (LTS)", min_value=0)
             st.markdown("<br>", unsafe_allow_html=True)
             
+            # Controle de Tempo (Relógio)
             st.markdown("<label>CONTROLE DE TEMPO</label>", unsafe_allow_html=True)
             placeholder_tempo = st.empty()
             
@@ -102,26 +103,30 @@ elif st.session_state.passo == 'INPUT':
             if c_t2.button("🛑 PARAR", use_container_width=True):
                 st.session_state.t_rodando = False
             
-            while st.session_state.t_rodando:
+            # Lógica para manter o relógio atualizando
+            if st.session_state.t_rodando:
                 segundos = int(time.time() - st.session_state.t_inicio)
                 st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(segundos))
                 placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
-                time.sleep(1)
+                time.sleep(0.1)
+                st.rerun()
             else:
                 placeholder_tempo.markdown(f'<div class="timer-display">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
 
             foto_depois = st.file_uploader("📷 Foto DEPOIS do Abastecimento", type=['jpg', 'png', 'jpeg'])
 
+        # Validação de volume
         soma_total = s_bb + s_be + s_rem + pedido
         if soma_total > limite:
             st.markdown(f'<div class="alerta-erro">⚠️ EXCESSO DE {soma_total-limite:,} LTS!</div>', unsafe_allow_html=True)
         
         st.markdown("---")
         st.markdown("<label>ASSINATURA DIGITAL (TELA TOUCH)</label>", unsafe_allow_html=True)
-        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_v_final")
+        canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#f8f9fa", height=150, key="canvas_final_v2")
 
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
             if canvas_result.image_data is not None:
+                # Salva dados para o PDF
                 st.session_state.assinatura = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 st.session_state.foto_antes = Image.open(foto_antes) if foto_antes else None
                 st.session_state.foto_depois = Image.open(foto_depois) if foto_depois else None
@@ -134,7 +139,6 @@ elif st.session_state.passo == 'INPUT':
                 st.session_state.passo = 'RELATORIO'
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
-
 # #-------------------------------------------------------------------------#
 #                             BLOCO 4: RELATÓRIO FINAL
 # #-------------------------------------------------------------------------#
