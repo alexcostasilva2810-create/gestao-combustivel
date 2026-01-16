@@ -85,24 +85,50 @@ if st.session_state.pagina == "login":
             else:
                 st.error("Credenciais incorretas para este empurrador.")
 
-# #-------------------------------------------------------------------------#
-#                             MENU DE NAVEGAÇÃO
-# #-------------------------------------------------------------------------#
-if st.session_state.pagina != "login":
-    st.markdown("### 📋 MENU DE NAVEGAÇÃO")
-    col_m1, col_m2, col_m3 = st.columns(3)
-    with col_m1:
-        if st.button("🏠 TELA INICIAL", use_container_width=True): # Redireciona para Login
-            st.session_state.pagina = "login"
-            st.rerun()
-    with col_m2:
-        if st.button("📂 MENU PRINCIPAL", use_container_width=True): st.session_state.pagina = "menu"
-    with col_m3:
-        if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
-            st.session_state.pagina = "abastecimento"
-            reset_lancamento()
-            st.rerun()
-    st.markdown("---")
+# 1. Importações e Configurações Iniciais
+import streamlit as st
+# ... suas outras importações ...
+
+# 2. Definição dos Estilos CSS (Banner verde, botões, etc.)
+st.markdown(""" <style> ... </style> """, unsafe_allow_html=True)
+
+# 3. Inicialização do Session State (Página atual)
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = "inicio"
+
+# ---------------------------------------------------------
+# COLOCAR O BLOCO DE MENU AQUI (LOGO ABAIXO DO CSS)
+# ---------------------------------------------------------
+st.markdown('<div class="main-nav">', unsafe_allow_html=True)
+st.markdown("📋 MENU DE NAVEGAÇÃO")
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    if st.button("🏠 TELA INICIAL", use_container_width=True):
+        st.session_state.pagina = "inicio"
+        st.rerun()
+with c2:
+    if st.button("📁 MENU PRINCIPAL", use_container_width=True):
+        st.session_state.pagina = "menu"
+        st.rerun()
+with c3:
+    if st.button("⛽ NOVO ABASTECIMENTO", use_container_width=True):
+        st.session_state.pagina = "abastecimento"
+        st.session_state.form_id += 1 
+        st.rerun()
+with c4:
+    if st.button("🧾 REGISTRO DE NF", use_container_width=True):
+        st.session_state.pagina = "registro_nf"
+        st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
+# ---------------------------------------------------------
+
+# 4. Blocos de Conteúdo (Definição de qual página mostrar)
+if st.session_state.pagina == "inicio":
+    # Bloco 1...
+elif st.session_state.pagina == "abastecimento":
+    # Bloco 4 (O que já salvamos)...
+elif st.session_state.pagina == "registro_nf":
+    # Bloco 5 (O novo bloco de Notas Fiscais)...
 
 # #-------------------------------------------------------------------------#
 #                         TELA DE ABASTECIMENTO (BLOCO 4)
