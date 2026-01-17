@@ -90,7 +90,7 @@ if 'tempo_final_str' not in st.session_state: st.session_state.tempo_final_str =
 
 LOGINS_VALIDOS = {
     "ANGELO": {"user": "ALEX", "pass": "2463"},
-    "ANGICO": {"user": "angico_zion", "pass": "zion02"},
+    "ANGICO": {"user": "MANOEL BARATA", "pass": "12345"},
     "AROEIRA": {"user": "aroeira_zion", "pass": "zion03"},
     "BRENO": {"user": "breno_zion", "pass": "zion04"},
     "CANJERANA": {"user": "canjerana_zion", "pass": "zion05"},
