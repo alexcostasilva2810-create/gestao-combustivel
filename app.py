@@ -239,9 +239,10 @@ elif st.session_state.pagina == "nota_fiscal":
             st.error(f"Erro ao processar PDF da Nota: {e}")
         # O BLOCO AGORA ESTÁ FECHADO CORRETAMENTE. O BLOCO 6 NÃO VAI MAIS DAR ERRO.
 # #-------------------------------------------------------------------------#
-#             TELA DE ABASTECIMENTO (BLOCO 6) - RESOLUÇÃO FINAL
+#             TELA DE ABASTECIMENTO (BLOCO 6) - COM GATILHO ERP ZION
 # #-------------------------------------------------------------------------#
-elif st.session_state.pagina == "abastecimento":
+if st.session_state.pagina == "abastecimento":
+    # ADIÇÃO DOS BOTÕES DE NAVEGAÇÃO
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
         if st.button("⬅️ MENU CENTRAL", use_container_width=True):
@@ -249,7 +250,7 @@ elif st.session_state.pagina == "abastecimento":
             st.rerun()
     with col_nav2:
         if st.button("➕ NOVO ABASTECIMENTO", use_container_width=True):
-            st.session_state.form_id += 1
+            reset_lancamento()
             st.rerun()
 
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
@@ -287,10 +288,12 @@ elif st.session_state.pagina == "abastecimento":
     else:
         st.markdown(f'<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px;">✅ VOLUME SEGURO: {valor_formatado} lts Capacidade permitida!</div>', unsafe_allow_html=True)
 
-    # CRONÔMETRO E ÁREA DE PDF
+    # ... (CÓDIGO DO CRÔNOMETRO E ASSINATURA CONFORME SEU VÍDEO) ...
+
     if not transbordou:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            # 1. GATILHO ERP ZION - SALVA NA MEMÓRIA
+            
+            # --- GATILHO ERP ZION ACRESCENTADO AQUI ---
             st.session_state.dados_abastecimento = {
                 'empurrador': navio,
                 'data': data_abast.strftime("%d/%m/%Y"),
@@ -299,27 +302,13 @@ elif st.session_state.pagina == "abastecimento":
                 'saldo_be': saldo_be,
                 'remanescente': remanescente
             }
-            # 2. CHAMA A FUNÇÃO DE SALVAMENTO
-            salvar_os_automatica()
+            salvar_os_automatica() # Chama a função que você colocou no topo do código
+            # -----------------------------------------
 
-            # 3. LÓGICA DO PDF (SEM O COMANDO 'TRY' PARA NÃO DAR ERRO NA LINHA 265)
-            from fpdf import FPDF
             pdf = FPDF()
             pdf.add_page()
-            # ... (coloque aqui o seu código que monta as linhas do PDF) ...
-            
-            # 4. GERAÇÃO DO ARQUIVO
-            pdf_data = pdf.output(dest='S')
-            pdf_bytes = bytes(pdf_data) if isinstance(pdf_data, (bytearray, bytes)) else pdf_data.encode('latin-1')
-
-            st.download_button(
-                label="📥 BAIXAR RELATÓRIO PDF",
-                data=pdf_bytes,
-                file_name=f"Relatorio_{navio}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-            st.success("✅ Tudo pronto! O.S. enviada para a Tabela de Consumo.")
+            # ... (RESTANTE DO SEU CÓDIGO DE PDF IGUAL AO VÍDEO) ...
+            st.success("O.S. Registrada na Tabela de Consumo!")
 # #-------------------------------------------------------------------------#
 #             TABELA DE CONSUMO (BLOCO 7) - CORREÇÃO DE EXIBIÇÃO
 # #-------------------------------------------------------------------------#
