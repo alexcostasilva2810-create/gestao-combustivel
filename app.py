@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - DECOMPOSIÇÃO E PDF
+#             TELA DE APOIO (NF) (BLOCO 5) - AJUSTADO E LEGÍVEL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -145,69 +145,85 @@ elif st.session_state.pagina == "nota_fiscal":
         st.rerun()
 
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">DECOMPOSIÇÃO DE CHAVE NF-e</div>', unsafe_allow_html=True)
+    st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DECOMPOSIÇÃO DE CHAVE NF-e</div>', unsafe_allow_html=True)
 
-    # Campo de entrada para os 44 dígitos
+    # Estilo para os cards de informação (Fundo Cinza Claro, Letra 25px)
+    estilo_card = """
+    <style>
+    .card-info {
+        background-color: #f0f2f6;
+        color: #1f1f1f;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        font-size: 25px;
+        font-weight: bold;
+        border-left: 8px solid #2e7d32;
+    }
+    </style>
+    """
+    st.markdown(estilo_card, unsafe_allow_html=True)
+
+    # Entrada da Chave
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
-    chave_input = st.text_input("Cole ou digite os 44 números:", max_chars=55, placeholder="Ex: 3523...")
+    chave_input = st.text_input("Cole os 44 números:", max_chars=60, placeholder="Ex: 1525...")
     
-    # Limpar espaços caso o usuário cole com formatação
-    chave = chave_input.replace(" ", "").replace("-", "")
+    # Limpeza da chave (remove espaços e hífens)
+    chave = "".join(filter(str.isdigit, chave_input))
 
-    if len(chave) == 44 and chave.isdigit():
+    if len(chave) == 44:
         st.success("✅ Chave Identificada com Sucesso!")
         
-        # LÓGICA DE FATIAMENTO (SLICING)
-        dados_nf = {
-            "UF": chave[0:2],
-            "AAMM": chave[2:6],
-            "CNPJ": chave[6:20],
-            "Modelo": chave[20:22],
-            "Série": chave[22:25],
-            "Número NF": chave[25:34],
-            "Tipo Emissão": chave[34:35],
-            "Cód. Numérico": chave[35:43],
-            "DV": chave[43:44]
+        # Decomposição exata conforme sua solicitação
+        dados = {
+            "📍 UF": chave[0:2],
+            "📅 AAMM": chave[2:6],
+            "🏢 CNPJ": chave[6:20],
+            "📦 Mod": chave[20:22],
+            "🔢 Série": chave[22:25],
+            "📑 nNF": chave[25:34],
+            "📡 tpEmis": chave[34:35],
+            "🔑 cNF": chave[35:43],
+            "🏁 cDV": chave[43:44]
         }
 
-        # Exibição organizada para conferência
+        # Exibição com fundo cinza e letras grandes (25px)
         st.markdown("---")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write(f"**📍 UF:** {dados_nf['UF']}")
-            st.write(f"**📅 AAMM:** {dados_nf['AAMM']}")
-            st.write(f"**🏢 CNPJ:** {dados_nf['CNPJ']}")
-            st.write(f"**📦 Modelo:** {dados_nf['Modelo']}")
-        with col2:
-            st.write(f"**🔢 Série:** {dados_nf['Série']}")
-            st.write(f"**📑 nNF:** {dados_nf['Número NF']}")
-            st.write(f"**📡 tpEmis:** {dados_nf['Tipo Emissão']}")
-            st.write(f"**🔑 cNF/cDV:** {dados_nf['Cód. Numérico']}-{dados_nf['DV']}")
+        for campo, valor in dados.items():
+            st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
         st.markdown("---")
 
-        # Botão para Gerar PDF
+        # Botão para Gerar PDF (Correção do Erro de Atributo)
         if st.button("📄 GERAR PDF DA NOTA", use_container_width=True, type="primary"):
             from fpdf import FPDF
+            import base64
+
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Arial", 'B', 16)
-            pdf.cell(200, 10, "ZION - GESTÃO NAVAL", ln=True, align='C')
-            pdf.set_font("Arial", '', 10)
+            pdf.cell(200, 10, "ZION - SISTEMA DE GESTÃO NAVAL", ln=True, align='C')
+            pdf.set_font("Arial", 'B', 11)
             pdf.cell(200, 10, f"CHAVE: {chave}", ln=True, align='C')
             pdf.ln(10)
             
-            # Tabela no PDF
-            pdf.set_fill_color(200, 220, 255)
-            pdf.cell(100, 10, "Campo", border=1, fill=True)
-            pdf.cell(90, 10, "Valor", border=1, fill=True, ln=True)
+            # Tabela organizada no PDF
+            pdf.set_fill_color(240, 240, 240)
+            for campo, valor in dados.items():
+                pdf.set_font("Arial", 'B', 12)
+                pdf.cell(60, 10, campo.split()[-1] + ":", border=1, fill=True)
+                pdf.set_font("Arial", '', 12)
+                pdf.cell(130, 10, str(valor), border=1, ln=True)
             
-            for campo, valor in dados_nf.items():
-                pdf.cell(100, 10, campo, border=1)
-                pdf.cell(90, 10, str(valor), border=1, ln=True)
-            
-            pdf_output = pdf.output(dest='S').encode('latin-1')
-            st.download_button("📥 BAIXAR RELATÓRIO PDF", data=pdf_output, file_name=f"NF_{dados_nf['Número NF']}.pdf", mime="application/pdf")
+            # Código corrigido para saída de PDF no Streamlit
+            pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='ignore')
+            st.download_button(
+                label="📥 BAIXAR RELATÓRIO PDF",
+                data=pdf_bytes,
+                file_name=f"Relatorio_NF_{dados['📑 nNF']}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
 
     elif len(chave) > 0:
         st.warning(f"Aguardando 44 dígitos... (Digitado: {len(chave)})")
