@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - AJUSTE FINAL DE LAYOUT
+#             TELA DE APOIO (NF) (BLOCO 5) - RESOLUÇÃO DEFINITIVA
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,21 +147,16 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # AJUSTE DE LARGURA E ALTURA DO CAMPO
+    # CSS AJUSTADO: Fonte menor (18px) e altura maior para caber os 44 números com espaços
     st.markdown("""
         <style>
-        div[data-baseweb="input"] { 
-            background-color: white !important; 
-            border: 3px solid #2e7d32 !important; 
-            border-radius: 10px !important; 
-            width: 100% !important;
-        }
+        div[data-baseweb="input"] { background-color: white !important; border: 3px solid #2e7d32 !important; border-radius: 10px !important; }
         div[data-baseweb="input"] input {
             background-color: white !important;
             color: #FF0000 !important;
             font-weight: 900 !important;
-            font-size: 20px !important; /* Tamanho reduzido para caber os 44 números com espaços */
-            height: 70px !important;   /* Altura ajustada */
+            font-size: 18px !important; 
+            height: 60px !important;
             text-align: center !important;
             font-family: 'Courier New', Courier, monospace !important;
         }
@@ -169,28 +164,28 @@ elif st.session_state.pagina == "nota_fiscal":
         </style>
     """, unsafe_allow_html=True)
 
-    # Estado da chave
+    # Estado da chave para a máscara
     if 'chave_limpa' not in st.session_state: st.session_state.chave_limpa = ""
 
-    # FUNÇÃO PARA LIMPAR TUDO
-    def limpar_consulta():
+    # FUNÇÃO DE LIMPEZA AUTOMÁTICA
+    def limpar_sistema_apos_pdf():
         st.session_state.chave_limpa = ""
         if 'dados_nf_validos' in st.session_state:
             del st.session_state.dados_nf_validos
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
     
-    # MÁSCARA EM TEMPO REAL (4 em 4)
+    # MÁSCARA 4x4: Gera a visualização com espaços
     exibicao = " ".join([st.session_state.chave_limpa[i:i+4] for i in range(0, len(st.session_state.chave_limpa), 4)])
     
-    # Campo de entrada com o valor formatado
-    chave_digitada = st.text_input("DIGITE", value=exibicao, key="campo_nf_ajustado", label_visibility="collapsed")
+    # Entrada de dados
+    chave_input = st.text_input("CHAVE", value=exibicao, key="campo_nf_final", label_visibility="collapsed")
     
-    # Processa apenas os números para a memória
-    nova_chave_limpa = "".join(filter(str.isdigit, chave_digitada))[:44]
+    # Mantém apenas números na memória
+    numeros_puros = "".join(filter(str.isdigit, chave_input))[:44]
     
-    if nova_chave_limpa != st.session_state.chave_limpa:
-        st.session_state.chave_limpa = nova_chave_limpa
+    if numeros_puros != st.session_state.chave_limpa:
+        st.session_state.chave_limpa = numeros_puros
         st.rerun()
 
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
@@ -205,14 +200,13 @@ elif st.session_state.pagina == "nota_fiscal":
         else:
             st.error(f"Faltam números: {len(st.session_state.chave_limpa)}/44")
 
-    # Exibe os cards se houver dados
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # BOTÃO DE PDF COM CORREÇÃO DE ERRO E LIMPEZA
-        if st.button("📄 GERAR RELATÓRIO PDF", use_container_width=True, type="primary"):
+        # GERAÇÃO DE PDF SEM ERROS
+        if st.button("📄 PREPARAR RELATÓRIO PDF", use_container_width=True, type="primary"):
             from fpdf import FPDF
             try:
                 pdf = FPDF()
@@ -225,21 +219,22 @@ elif st.session_state.pagina == "nota_fiscal":
                     pdf.cell(90, 10, f" {k}:", border=1)
                     pdf.cell(100, 10, f" {v}", border=1, ln=True)
                 
-                # CORREÇÃO DO ERRO 'BYTEARRAY': pegamos o output e garantimos que é binário puro
+                # SOLUÇÃO DO ERRO: O output 'S' já é tratado como binário pelo Streamlit
                 pdf_output = pdf.output(dest='S')
-                # No Streamlit moderno, bytes ou bytearray funcionam direto sem .encode()
-                pdf_final = bytes(pdf_output)
+                
+                # Convertemos para bytes de forma segura para evitar o erro 'bytearray'
+                pdf_bytes = bytes(pdf_output)
 
                 st.download_button(
-                    label="📥 BAIXAR E LIMPAR CAMPOS",
-                    data=pdf_final,
+                    label="📥 CLIQUE PARA BAIXAR E LIMPAR CAMPOS",
+                    data=pdf_bytes,
                     file_name=f"Relatorio_NF_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
                     mime="application/pdf",
                     use_container_width=True,
-                    on_click=limpar_consulta # Limpa quando o usuário clica para baixar
+                    on_click=limpar_sistema_apos_pdf
                 )
             except Exception as e:
-                st.error(f"Erro técnico no PDF: {e}")
+                st.error(f"Erro ao processar PDF: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
