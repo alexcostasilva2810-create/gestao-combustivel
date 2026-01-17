@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - FINAL COM VERIFICAÇÃO
+#             TELA DE APOIO (NF) (BLOCO 5) - RESOLUÇÃO FINAL PDF
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,7 +147,7 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # Estilo dos cards (Letra 25px e fundo cinza)
+    # Estilo dos cards (Letra 25px, Fundo Cinza, Texto Preto)
     st.markdown("""
         <style>
         .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; 
@@ -156,20 +156,18 @@ elif st.session_state.pagina == "nota_fiscal":
     """, unsafe_allow_html=True)
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
-    chave_input = st.text_input("Cole a chave aqui:", max_chars=60)
+    chave_input = st.text_input("Cole a chave de 44 dígitos aqui:", max_chars=60)
     chave = "".join(filter(str.isdigit, chave_input))
 
-    # Botão de Verificação solicitado
-    btn_verificar = st.button("🔍 VERIFICAÇÃO", use_container_width=True, type="secondary")
-
-    if btn_verificar:
+    # Botão de Verificação
+    if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
         if len(chave) == 44:
-            # Lógica do Estado (UF)
-            nome_estado = "MANAUS / AM" if chave[0:2] == "15" else f"CÓDIGO UF: {chave[0:2]}"
+            # Lógica UF: 15 = Manaus/AM
+            nome_uf = "MANAUS / AM" if chave[0:2] == "15" else f"CÓDIGO {chave[0:2]}"
             
-            # Dicionário com os novos nomes solicitados
-            dados_formatados = {
-                "UF": nome_estado,
+            # Mapeamento conforme solicitado
+            st.session_state.dados_nf = {
+                "UF": nome_uf,
                 "COMPETÊNCIA": chave[2:6],
                 "CNPJ": chave[6:20],
                 "MOD": chave[20:22],
@@ -178,20 +176,18 @@ elif st.session_state.pagina == "nota_fiscal":
                 "TPEMIS": chave[34:35],
                 "CDV": chave[43:44]
             }
-            
-            st.session_state.dados_nf_validos = dados_formatados
-            st.session_state.chave_nf_valida = chave
-            st.success("✅ Verificação Concluída!")
+            st.session_state.chave_ativa = chave
+            st.success("✅ Dados verificados!")
         else:
-            st.error(f"A chave deve ter 44 dígitos. (Digitado: {len(chave)})")
+            st.error(f"Chave inválida. Faltam números. (Digitados: {len(chave)})")
 
-    # Se os dados foram verificados, mostra na tela e libera o PDF
-    if 'dados_nf_validos' in st.session_state:
+    # Exibição e Gerador de PDF
+    if 'dados_nf' in st.session_state:
         st.markdown("---")
-        for campo, valor in st.session_state.dados_nf_validos.items():
+        for campo, valor in st.session_state.dados_nf.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # Botão Gerar PDF com correção definitiva de erro
+        # Botão Gerar PDF com Correção de Formato Binário
         if st.button("📄 GERAR PDF DA NOTA", use_container_width=True, type="primary"):
             from fpdf import FPDF
             try:
@@ -200,26 +196,24 @@ elif st.session_state.pagina == "nota_fiscal":
                 pdf.set_font("Helvetica", 'B', 16)
                 pdf.cell(0, 10, "ZION - SISTEMA DE GESTÃO NAVAL", ln=True, align='C')
                 pdf.set_font("Helvetica", 'B', 10)
-                pdf.cell(0, 10, f"CHAVE: {st.session_state.chave_nf_valida}", ln=True, align='C')
+                pdf.cell(0, 10, f"CHAVE: {st.session_state.chave_ativa}", ln=True, align='C')
                 pdf.ln(10)
                 
-                # Tabela no PDF
-                pdf.set_fill_color(230, 230, 230)
-                for c, v in st.session_state.dados_nf_validos.items():
+                pdf.set_fill_color(240, 240, 240)
+                for c, v in st.session_state.dados_nf.items():
                     pdf.set_font("Helvetica", 'B', 11)
-                    pdf.cell(80, 10, f" {c}", border=1, fill=True)
+                    pdf.cell(85, 10, f" {c}", border=1, fill=True)
                     pdf.set_font("Helvetica", '', 11)
-                    pdf.cell(110, 10, f" {v}", border=1, ln=True)
+                    pdf.cell(105, 10, f" {v}", border=1, ln=True)
                 
-                # Saída do PDF corrigida para evitar AttributeError
+                # SOLUÇÃO DO ERRO: Forçar saída como bytes puros
                 pdf_output = pdf.output(dest='S')
-                if isinstance(pdf_output, str): # Ajuste para versões diferentes da FPDF
-                    pdf_output = pdf_output.encode('latin-1')
+                pdf_final = bytes(pdf_output) # Converte bytearray para bytes
                 
                 st.download_button(
                     label="📥 BAIXAR RELATÓRIO PDF",
-                    data=pdf_output,
-                    file_name=f"Relatorio_NF_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
+                    data=pdf_final,
+                    file_name=f"Nota_{st.session_state.dados_nf['NÚMERO DA NOTA FISCAL']}.pdf",
                     mime="application/pdf",
                     use_container_width=True
                 )
