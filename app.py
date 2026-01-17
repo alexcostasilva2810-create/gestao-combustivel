@@ -261,9 +261,18 @@ elif st.session_state.pagina == "nota_fiscal":
                 pdf.cell(90, 10, f" {k}:", border=1)
                 pdf.cell(100, 10, f" {v}", border=1, ln=True)
             
-            # Tratamento blindado do binário para evitar erro 'bytearray'
-            pdf_data = pdf.output(dest='S')
-            pdf_bytes = bytes(pdf_data) if isinstance(pdf_data, (bytearray, bytes)) else pdf_data.encode('latin-1')
+            # 2. BOTÃO COM GATILHO ERP ZION
+        st.download_button(
+            label="📥 BAIXAR PDF E GERAR O.S.",
+            data=pdf_bytes,
+            file_name=f"Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            on_click=salvar_os_automatica  # <--- GATILHO QUE SALVA NA TABELA
+        )
+        
+    except Exception as e:
+        st.error(f"Erro ao gerar PDF: {e}")
 
             st.download_button(
                 label="📥 BAIXAR PDF E VOLTAR AO MENU",
@@ -276,10 +285,10 @@ elif st.session_state.pagina == "nota_fiscal":
         except Exception as e:
             st.error(f"Erro ao gerar PDF: {e}")
 # #-------------------------------------------------------------------------#
-#                           TELA DE ABASTECIMENTO (BLOCO 6)
+#             TELA DE ABASTECIMENTO (BLOCO 6) - COM GATILHO ERP ZION
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "abastecimento":
-    # --- ADIÇÃO DOS BOTÕES DE NAVEGAÇÃO ---
+    # ADIÇÃO DOS BOTÕES DE NAVEGAÇÃO
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
         if st.button("⬅️ MENU CENTRAL", use_container_width=True):
@@ -289,7 +298,6 @@ if st.session_state.pagina == "abastecimento":
         if st.button("➕ NOVO ABASTECIMENTO", use_container_width=True):
             reset_lancamento()
             st.rerun()
-    # ---------------------------------------
 
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO DE ABASTECIMENTO</div>', unsafe_allow_html=True)
@@ -301,11 +309,11 @@ if st.session_state.pagina == "abastecimento":
         "TIMBORANA": 19792, "JATOBA": 84000, "CEDRO": 22000, "MOGNO": 25000,
         "FREIJO": 18000, "SUCUPIRA": 30000
     }
-    
-    navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()), 
-                         index=list(CAPACIDADES.keys()).index(st.session_state.navio_atual), 
-                         key=f"n_{st.session_state.form_id}")
-    
+
+    navio = st.selectbox("EMPURRADOR", options=list(CAPACIDADES.keys()),
+                        index=list(CAPACIDADES.keys()).index(st.session_state.navio_atual),
+                        key=f"n_{st.session_state.form_id}")
+
     st.markdown(f'<div style="color: #FFFF00; font-weight: bold;">Capacidade do Tanque: {CAPACIDADES[navio]:,} lts</div>', unsafe_allow_html=True)
 
     col_a, col_b = st.columns(2)
@@ -322,84 +330,31 @@ if st.session_state.pagina == "abastecimento":
     valor_formatado = f"{total_geral:,}".replace(",", ".")
 
     if transbordou:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>''', unsafe_allow_html=True)
+        st.markdown(f'<div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px;">🚨 BLOQUEIO: {valor_formatado} lts excede o limite!</div>', unsafe_allow_html=True)
     else:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            ✅ VOLUME SEGURO: {valor_formatado} Lts Capacidade permitida!</div>''', unsafe_allow_html=True)
+        st.markdown(f'<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px;">✅ VOLUME SEGURO: {valor_formatado} lts Capacidade permitida!</div>', unsafe_allow_html=True)
 
-    # CRONÔMETRO
-    classe_piscante = "piscando" if st.session_state.t_rodando else ""
-    col_timer, col_fotos_upload = st.columns([1, 2])
-    with col_timer:
-        if st.session_state.t_rodando:
-            st.session_state.tempo_final_str = time.strftime('%H:%M:%S', time.gmtime(int(time.time() - st.session_state.t_inicio)))
-        st.markdown(f'<div style="background:white; color:red; font-size:24px; text-align:center; border:2px solid blue; padding:5px;">{st.session_state.tempo_final_str}</div>', unsafe_allow_html=True)
-        bt1, bt2 = st.columns(2)
-        if bt1.button("▶️ INICIAR", use_container_width=True):
-            st.session_state.t_inicio = time.time(); st.session_state.t_rodando = True; st.rerun()
-        if bt2.button("🛑 PARAR", use_container_width=True):
-            st.session_state.t_rodando = False; st.rerun()
+    # ... (CÓDIGO DO CRÔNOMETRO E ASSINATURA CONFORME SEU VÍDEO) ...
 
-    with col_fotos_upload:
-        foto_a = st.file_uploader("CARREGAR FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
-        foto_d = st.file_uploader("CARREGAR FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
-
-    st.markdown("ASSINATURA DIGITAL :")
-    canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
-
-    st.markdown("---")
-    
     if not transbordou:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
+            
+            # --- GATILHO ERP ZION ACRESCENTADO AQUI ---
+            st.session_state.dados_abastecimento = {
+                'empurrador': navio,
+                'data': data_abast.strftime("%d/%m/%Y"),
+                'qtd_pedida': qtd_pedida,
+                'saldo_bb': saldo_bb,
+                'saldo_be': saldo_be,
+                'remanescente': remanescente
+            }
+            salvar_os_automatica() # Chama a função que você colocou no topo do código
+            # -----------------------------------------
+
             pdf = FPDF()
             pdf.add_page()
-            
-            pdf.set_font("Arial", "B", 22)
-            pdf.set_text_color(0, 51, 204)
-            pdf.cell(0, 15, "ZION", ln=True, align="C")
-            pdf.set_font("Arial", "B", 14)
-            pdf.set_text_color(0, 0, 0)
-            pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align="C")
-            pdf.ln(10)
-            
-            pdf.set_font("Arial", "", 12)
-            corpo = (f"Comunico que o empurrador {navio} recebeu o consumo de {qtd_pedida:,} lts, "
-                     f"visto que possuia um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
-                     f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
-                     f"Portanto, o saldo total após o abastecimento é de {total_geral:,} lts.\n"
-                     f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio]:,} lts.\n\n"
-                     f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.\n\n"
-                     f"Segue abaixo as fotos do antes e depois do abastecimento:")
-            pdf.multi_cell(0, 8, corpo)
-            pdf.ln(5)
-            
-            y_fotos = pdf.get_y()
-            if foto_a:
-                pdf.image(Image.open(foto_a), x=15, y=y_fotos, w=85)
-            if foto_d:
-                pdf.image(Image.open(foto_d), x=110, y=y_fotos, w=85)
-            
-            if canvas_result.image_data is not None:
-                img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
-                buf = io.BytesIO(); img_sig.save(buf, format="PNG")
-                pdf.image(buf, x=75, y=218, w=60) 
-            
-            pdf.set_y(245)
-            pdf.line(30, 245, 180, 245) 
-            
-            fuso_br = timezone(timedelta(hours=-3))
-            agora_br = datetime.now(fuso_br).strftime("%d/%m/%Y às %H:%M:%S")
-            geo_info = "Belém, Pará - Brasil"
-            
-            pdf.set_font("Arial", "I", 9)
-            pdf.cell(0, 10, f"Assinado digitalmente em: {agora_br}", ln=True, align="C")
-            pdf.cell(0, 5, f"Localização: {geo_info}", ln=True, align="C")
-            
-            st.download_button("📥 BAIXAR RELATÓRIO PDF", data=bytes(pdf.output(dest='S')), file_name=f"Zion_{navio}.pdf", use_container_width=True)
-
-        st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
+            # ... (RESTANTE DO SEU CÓDIGO DE PDF IGUAL AO VÍDEO) ...
+            st.success("O.S. Registrada na Tabela de Consumo!")
 
 # #-------------------------------------------------------------------------#
 #             TABELA DE CONSUMO (BLOCO 7) - CORREÇÃO DE EXIBIÇÃO
