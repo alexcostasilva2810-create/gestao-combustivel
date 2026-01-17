@@ -5,9 +5,9 @@ from streamlit_drawable_canvas import st_canvas
 import time
 from PIL import Image
 import io
-import cv2
+
 import numpy as np
-from pyzbar.pyzbar import decode
+
 
 # #-------------------------------------------------------------------------#
 #                                CONFIGURAÇÕES VISUAIS
