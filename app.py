@@ -79,17 +79,20 @@ if st.session_state.usuario_logado:
 # #-------------------------------------------------------------------------#
 #             TELA 1: LOGIN (BLOCO 2)
 # #-------------------------------------------------------------------------#
-# Garantindo que o sistema comece na tela de login
+
+# ESSA LINHA É A CHAVE: Se a variável não existe, nós criamos ela aqui
 if 'pagina' not in st.session_state:
     st.session_state.pagina = "login"
 
+# Se a página for login, mostramos os botões
 if st.session_state.pagina == "login":
     st.markdown('<h1 style="color:white; text-align:center; font-size: 60px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<p style="color:white; text-align:center; font-size: 20px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
     
-    st.markdown('<br>', unsafe_allow_html=True)
+    st.markdown('<br><br>', unsafe_allow_html=True)
 
-    if st.button("🚀 INICIAR SESSÃO", key="btn_login", use_container_width=True):
+    # Botão para entrar
+    if st.button("🚀 INICIAR SESSÃO", use_container_width=True):
         st.session_state.pagina = "menu_central"
         st.rerun()
 
