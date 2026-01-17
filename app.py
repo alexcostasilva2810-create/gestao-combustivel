@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - LARGURA E ALTURA MÁXIMA
+#             TELA DE APOIO (NF) (BLOCO 5) - VISUAL FINAL SOLICITADO
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,7 +147,7 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # ESTILO COM LARGURA AMPLIADA E CENTRALIZAÇÃO
+    # AJUSTE VISUAL: Fundo Branco, Letra Vermelha, Negrito e 24px
     st.markdown("""
         <style>
         @keyframes blinker { 50% { opacity: 0; } }
@@ -155,25 +155,26 @@ elif st.session_state.pagina == "nota_fiscal":
         .aviso-base { background-color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 25px; margin-bottom: 15px; border: 2px solid #ccc; color: black; }
         .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 25px; font-weight: bold; border-left: 8px solid #2e7d32; }
         
-        /* Expansão do container e do input para 44 dígitos */
+        /* Configuração do Campo de Digitação */
         div[data-baseweb="input"] {
             width: 100% !important;
-            max-width: 100% !important;
-            background-color: white !important;
-            border: 2px solid #2e7d32 !important;
+            background-color: white !important; /* Fundo Branco */
+            border: 3px solid #2e7d32 !important;
             border-radius: 10px !important;
         }
         div[data-baseweb="input"] input {
-            font-size: 24px !important; /* Tamanho calculado para caber 44 números na largura do celular */
-            height: 90px !important;    /* Altura ampliada para não cortar o topo/fundo */
+            font-size: 24px !important; 
+            height: 90px !important;    
             text-align: center !important;
-            letter-spacing: 1px !important; /* Espaço entre números para nitidez */
-            color: #000000 !important;
+            color: #FF0000 !important;   /* Letra Vermelha */
+            font-weight: 900 !important; /* Letra em Negrito */
             font-family: 'Courier New', Courier, monospace !important;
+            background-color: white !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
+    # Dicionário de UFs
     ufs_brasil = {
         "11": "RONDÔNIA - RO", "12": "ACRE - AC", "13": "AMAZONAS - AM", "14": "RORAIMA - RR",
         "15": "PARÁ - PA", "16": "AMAPÁ - AP", "17": "TOCANTINS - TO", "21": "MARANHÃO - MA",
@@ -187,15 +188,14 @@ elif st.session_state.pagina == "nota_fiscal":
     if 'chave_input' not in st.session_state: st.session_state.chave_input = ""
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
-    # Label oculta para o input focar no retângulo
     chave_raw = st.text_input("CHAVE", value=st.session_state.chave_input, max_chars=44, key="input_chave_nf", label_visibility="collapsed")
     chave = "".join(filter(str.isdigit, chave_raw))
 
-    # Alerta visual com fonte 30px conforme solicitado anteriormente
+    # Alertas dinâmicos
     if 0 < len(chave) < 44:
-        st.markdown(f'<div class="aviso-base">Digitado: {len(chave)} / 44 números</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="aviso-base">Faltam números: {len(chave)} / 44</div>', unsafe_allow_html=True)
     elif len(chave) == 44:
-        st.markdown('<div class="aviso-base" style="color: green; border: 3px solid green; font-weight: bold;">✅ TUDO PRONTO!</div>', unsafe_allow_html=True)
+        st.markdown('<div class="aviso-base" style="color: green; border: 3px solid green;">✅ CHAVE COMPLETA!</div>', unsafe_allow_html=True)
 
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
         if len(chave) == 44:
@@ -211,7 +211,6 @@ elif st.session_state.pagina == "nota_fiscal":
 
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
-        # Exibição com fundo cinza e letra 25px
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
@@ -232,7 +231,7 @@ elif st.session_state.pagina == "nota_fiscal":
                 pdf_output = bytes(pdf.output(dest='S'))
                 st.download_button(
                     label="📥 BAIXAR RELATÓRIO PDF", data=pdf_output, 
-                    file_name=f"Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
+                    file_name=f"Relatorio_Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
                     mime="application/pdf", use_container_width=True,
                     on_click=lambda: (st.session_state.pop('dados_nf_validos', None), st.session_state.update({"chave_input": ""}))
                 )
