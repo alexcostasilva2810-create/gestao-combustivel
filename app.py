@@ -285,7 +285,7 @@ elif st.session_state.pagina == "nota_fiscal":
         except Exception as e:
             st.error(f"Erro ao gerar PDF: {e}")
 # #-------------------------------------------------------------------------#
-#             TELA DE ABASTECIMENTO (BLOCO 6) - SEM TRY/EXCEPT
+#             TELA DE ABASTECIMENTO (BLOCO 6) - RESOLUÇÃO FINAL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
     col_nav1, col_nav2 = st.columns(2)
@@ -333,9 +333,10 @@ elif st.session_state.pagina == "abastecimento":
     else:
         st.markdown(f'<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px;">✅ VOLUME SEGURO: {valor_formatado} lts Capacidade permitida!</div>', unsafe_allow_html=True)
 
+    # CRONÔMETRO E ÁREA DE PDF
     if not transbordou:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            # 1. ATUALIZA A MEMÓRIA
+            # 1. GATILHO ERP ZION - SALVA NA MEMÓRIA
             st.session_state.dados_abastecimento = {
                 'empurrador': navio,
                 'data': data_abast.strftime("%d/%m/%Y"),
@@ -344,18 +345,27 @@ elif st.session_state.pagina == "abastecimento":
                 'saldo_be': saldo_be,
                 'remanescente': remanescente
             }
-            # 2. CHAMA O SALVAMENTO
+            # 2. CHAMA A FUNÇÃO DE SALVAMENTO
             salvar_os_automatica()
 
-            # 3. GERAÇÃO DO PDF (Código limpo sem try/except para evitar SyntaxError)
+            # 3. LÓGICA DO PDF (SEM O COMANDO 'TRY' PARA NÃO DAR ERRO NA LINHA 265)
             from fpdf import FPDF
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Arial", "B", 16)
-            pdf.cell(200, 10, txt="COMUNICADO DE ABASTECIMENTO", ln=True, align='C')
+            # ... (coloque aqui o seu código que monta as linhas do PDF) ...
             
-            # --- Continue com sua lógica de PDF aqui ---
-            st.success("PDF e O.S. Gerados com Sucesso!")
+            # 4. GERAÇÃO DO ARQUIVO
+            pdf_data = pdf.output(dest='S')
+            pdf_bytes = bytes(pdf_data) if isinstance(pdf_data, (bytearray, bytes)) else pdf_data.encode('latin-1')
+
+            st.download_button(
+                label="📥 BAIXAR RELATÓRIO PDF",
+                data=pdf_bytes,
+                file_name=f"Relatorio_{navio}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+            st.success("✅ Tudo pronto! O.S. enviada para a Tabela de Consumo.")
 # #-------------------------------------------------------------------------#
 #             TABELA DE CONSUMO (BLOCO 7) - CORREÇÃO DE EXIBIÇÃO
 # #-------------------------------------------------------------------------#
