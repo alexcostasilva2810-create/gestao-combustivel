@@ -7,6 +7,47 @@ from PIL import Image
 import io
 import numpy as np
 
+# #-------------------------------------------------------------------------#
+#                          ERP ZION - LÓGICA CENTRAL
+# #-------------------------------------------------------------------------#
+def salvar_os_automatica():
+    """
+    Consolida dados do Abastecimento (Bloco 6) e NF (Bloco 5)
+    e gera uma Ordem de Serviço (O.S.) automática.
+    """
+    # Puxa os dados exatos salvos na memória (Session State)
+    abast = st.session_state.get('dados_abastecimento', {})
+    nf_dados = st.session_state.get('dados_nf_validos', {})
+    chave_pura = st.session_state.get('chave_limpa', '')
+
+    # Verifica se há algo para salvar
+    if abast or nf_dados:
+        if 'historico_os' not in st.session_state:
+            st.session_state.historico_os = []
+
+        # Gerador de O.S. 0001 em diante
+        proxima_os = f"{len(st.session_state.historico_os) + 1:04d}"
+        
+        # Mapeamento fiel aos campos das suas telas
+        novo_registro = {
+            "ID_OS": proxima_os,
+            "USUARIO": st.session_state.get('usuario_logado', 'Admin'),
+            "EMPURRADOR": abast.get('empurrador', 'N/A'),
+            "DATA": abast.get('data', ''),
+            "QTD PEDIDA": abast.get('qtd_pedida', 0),
+            "SALDO BB": abast.get('saldo_bb', 0),
+            "SALDO BE": abast.get('saldo_be', 0),
+            "REMANESCENTE": abast.get('remanescente', 0),
+            "NUMERO NF": nf_dados.get('NÚMERO DA NOTA FISCAL', 'N/A'),
+            "UF": nf_dados.get('UF', 'N/A'),
+            "CHAVE ACESSO": chave_pura
+        }
+
+        # Evita duplicar a mesma O.S. se o usuário clicar várias vezes no PDF
+        if not any(d.get('CHAVE ACESSO') == chave_pura and d.get('NUMERO NF') == novo_registro['NUMERO NF'] for d in st.session_state.historico_os):
+            st.session_state.historico_os.insert(0, novo_registro)
+            # DICA: Quando configurarmos o Notion, a chamada da API entrará aqui.
+
 
 # #-------------------------------------------------------------------------#
 #                                CONFIGURAÇÕES VISUAIS
