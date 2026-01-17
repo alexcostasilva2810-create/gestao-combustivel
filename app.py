@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - VERSÃO FINAL CORRIGIDA
+#             TELA DE APOIO (NF) (BLOCO 5) - AJUSTE FINAL DE LAYOUT
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,93 +147,99 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # CSS: FUNDO BRANCO, LETRA VERMELHA E ESPAÇO AMPLIADO
+    # AJUSTE DE LARGURA E ALTURA DO CAMPO
     st.markdown("""
         <style>
-        div[data-baseweb="input"] { background-color: white !important; border: 3px solid #2e7d32 !important; border-radius: 10px !important; }
+        div[data-baseweb="input"] { 
+            background-color: white !important; 
+            border: 3px solid #2e7d32 !important; 
+            border-radius: 10px !important; 
+            width: 100% !important;
+        }
         div[data-baseweb="input"] input {
             background-color: white !important;
             color: #FF0000 !important;
             font-weight: 900 !important;
-            font-size: 24px !important;
-            height: 80px !important;
+            font-size: 20px !important; /* Tamanho reduzido para caber os 44 números com espaços */
+            height: 70px !important;   /* Altura ajustada */
             text-align: center !important;
             font-family: 'Courier New', Courier, monospace !important;
         }
-        .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 22px; font-weight: bold; border-left: 8px solid #2e7d32; }
+        .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 12px; border-radius: 10px; margin-bottom: 8px; font-size: 20px; font-weight: bold; border-left: 8px solid #2e7d32; }
         </style>
     """, unsafe_allow_html=True)
 
-    # Inicialização do estado
-    if 'chave_formatada' not in st.session_state:
-        st.session_state.chave_formatada = ""
+    # Estado da chave
+    if 'chave_limpa' not in st.session_state: st.session_state.chave_limpa = ""
 
-    # Função de limpeza para o botão de download
-    def limpar_apos_download():
-        st.session_state.chave_formatada = ""
+    # FUNÇÃO PARA LIMPAR TUDO
+    def limpar_consulta():
+        st.session_state.chave_limpa = ""
         if 'dados_nf_validos' in st.session_state:
             del st.session_state.dados_nf_validos
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
     
-    # Campo de entrada com máscara automática 4x4
-    chave_raw = st.text_input("CHAVE", value=st.session_state.chave_formatada, key="campo_nf_final", label_visibility="collapsed")
+    # MÁSCARA EM TEMPO REAL (4 em 4)
+    exibicao = " ".join([st.session_state.chave_limpa[i:i+4] for i in range(0, len(st.session_state.chave_limpa), 4)])
     
-    # Lógica da Máscara: 1525 0817 ...
-    apenas_numeros = "".join(filter(str.isdigit, chave_raw))[:44]
-    nova_formatacao = " ".join([apenas_numeros[i:i+4] for i in range(0, len(apenas_numeros), 4)])
-
-    if chave_raw != nova_formatacao:
-        st.session_state.chave_formatada = nova_formatacao
+    # Campo de entrada com o valor formatado
+    chave_digitada = st.text_input("DIGITE", value=exibicao, key="campo_nf_ajustado", label_visibility="collapsed")
+    
+    # Processa apenas os números para a memória
+    nova_chave_limpa = "".join(filter(str.isdigit, chave_digitada))[:44]
+    
+    if nova_chave_limpa != st.session_state.chave_limpa:
+        st.session_state.chave_limpa = nova_chave_limpa
         st.rerun()
 
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
-        if len(apenas_numeros) == 44:
-            # Identificação da UF e extração de dados
-            cod_uf = apenas_numeros[0:2]
-            nome_uf = "PARÁ - PA" if cod_uf == "15" else "AMAZONAS - AM" if cod_uf == "13" else f"UF: {cod_uf}"
-            
+        if len(st.session_state.chave_limpa) == 44:
+            c = st.session_state.chave_limpa
             st.session_state.dados_nf_validos = {
-                "UF": nome_uf, "COMPETÊNCIA": apenas_numeros[2:6], "CNPJ": apenas_numeros[6:20], "MOD": apenas_numeros[20:22],
-                "SÉRIE": apenas_numeros[22:25], "NÚMERO DA NOTA FISCAL": apenas_numeros[25:34], "TPEMIS": apenas_numeros[34:35], "CDV": apenas_numeros[43:44]
+                "UF": "PARÁ - PA" if c[:2] == "15" else "AMAZONAS - AM",
+                "COMPETÊNCIA": c[2:6], "CNPJ": c[6:20], "MOD": c[20:22],
+                "SÉRIE": c[22:25], "NÚMERO DA NOTA FISCAL": c[25:34],
+                "TPEMIS": c[34:35], "CDV": c[43:44]
             }
         else:
-            st.error("A chave precisa ter 44 números.")
+            st.error(f"Faltam números: {len(st.session_state.chave_limpa)}/44")
 
+    # Exibe os cards se houver dados
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # GERAÇÃO DO PDF - CORREÇÃO DO ERRO DE BINÁRIO
-        if st.button("📄 PREPARAR PDF", use_container_width=True, type="primary"):
+        # BOTÃO DE PDF COM CORREÇÃO DE ERRO E LIMPEZA
+        if st.button("📄 GERAR RELATÓRIO PDF", use_container_width=True, type="primary"):
             from fpdf import FPDF
             try:
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_font("Arial", 'B', 14)
-                pdf.cell(0, 10, "RELATORIO DE NOTA FISCAL - ZION", ln=True, align='C')
+                pdf.cell(0, 10, "ZION - DADOS DA NOTA FISCAL", ln=True, align='C')
                 pdf.ln(5)
                 pdf.set_font("Arial", '', 12)
-                for c, v in st.session_state.dados_nf_validos.items():
-                    pdf.cell(0, 10, f"{c}: {v}", border=1, ln=True)
+                for k, v in st.session_state.dados_nf_validos.items():
+                    pdf.cell(90, 10, f" {k}:", border=1)
+                    pdf.cell(100, 10, f" {v}", border=1, ln=True)
                 
-                # CORREÇÃO AQUI: output(dest='S') já retorna os dados prontos no FPDF moderno
+                # CORREÇÃO DO ERRO 'BYTEARRAY': pegamos o output e garantimos que é binário puro
                 pdf_output = pdf.output(dest='S')
-                
-                # Garantimos que seja um objeto de bytes puro para o download_button
-                pdf_bytes = bytes(pdf_output) if not isinstance(pdf_output, bytes) else pdf_output
+                # No Streamlit moderno, bytes ou bytearray funcionam direto sem .encode()
+                pdf_final = bytes(pdf_output)
 
                 st.download_button(
-                    label="📥 BAIXAR RELATÓRIO E LIMPAR", 
-                    data=pdf_bytes, 
-                    file_name=f"Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf", 
-                    mime="application/pdf", 
+                    label="📥 BAIXAR E LIMPAR CAMPOS",
+                    data=pdf_final,
+                    file_name=f"Relatorio_NF_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
+                    mime="application/pdf",
                     use_container_width=True,
-                    on_click=limpar_apos_download
+                    on_click=limpar_consulta # Limpa quando o usuário clica para baixar
                 )
             except Exception as e:
-                st.error(f"Erro ao gerar PDF: {e}")
+                st.error(f"Erro técnico no PDF: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
