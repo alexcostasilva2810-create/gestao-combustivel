@@ -137,30 +137,48 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5)
+#             TELA DE APOIO (NF) (BLOCO 5) - COM LEITURA AUTOMÁTICA
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
+    import cv2
+    import numpy as np
+    from PIL import Image
+
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
         st.session_state.pagina = "menu_central"
         st.rerun()
 
-    st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">LEITOR AUTOMÁTICO DE NF</div>', unsafe_allow_html=True)
     
-    # O Leitor de QR Code fica EXCLUSIVAMENTE aqui
-    st.markdown('### 📷 ESCANEAR QR CODE')
-    foto_qr = st.camera_input("Aponte para o QR Code da NF")
-    
+    foto_qr = st.camera_input("Aponte para o QR Code")
+
+    chave_detectada = ""
+
     if foto_qr:
-        st.success("Foto registrada com sucesso!")
+        # Converter a foto para um formato que o Python entenda
+        img = Image.open(foto_qr)
+        img_array = np.array(img)
+        
+        # Usar o detector do OpenCV (não precisa de zbar)
+        detector = cv2.QRCodeDetector()
+        valor, pontos, qrcode_fixo = detector.detectAndIdentify(img_array)
+
+        if valor:
+            # Extrair os 44 números do link da NF-e
+            import re
+            numeros = re.findall(r'\d{44}', valor)
+            if numeros:
+                chave_detectada = numeros[0]
+                st.success(f"✅ CHAVE IDENTIFICADA: {chave_detectada}")
+            else:
+                st.warning("QR Code lido, mas a chave de 44 dígitos não foi encontrada.")
+        else:
+            st.error("Não foi possível ler o QR Code. Tente aproximar mais a câmera.")
 
     st.markdown("---")
     
-    chave_nf = st.text_input("CONFIRME A CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
-    num_nf = st.text_input("NÚMERO DA NOTA FISCAL")
-    
-    if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
-        st.success("Dados da Nota Fiscal salvos!")
+    # O campo já aparece preenchido se a leitura funcionar
+    chave_nf = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", value=chave_detectada, max_chars=44)
 
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
