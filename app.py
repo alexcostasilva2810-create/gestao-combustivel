@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - VERSÃO FUNCIONAL FINAL
+#             TELA DE APOIO (NF) (BLOCO 5) - LIMPEZA TOTAL E PDF
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,7 +147,7 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # CSS AJUSTADO: Fonte 16px para não cortar os números na caixa branca
+    # CSS para garantir fundo branco e texto visível
     st.markdown("""
         <style>
         div[data-baseweb="input"] { background-color: white !important; border: 3px solid #2e7d32 !important; border-radius: 10px !important; }
@@ -158,28 +158,33 @@ elif st.session_state.pagina == "nota_fiscal":
             font-size: 16px !important;
             height: 55px !important;
             text-align: center !important;
-            font-family: 'Courier New', Courier, monospace !important;
         }
         .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 10px; border-radius: 10px; margin-bottom: 5px; font-size: 18px; font-weight: bold; border-left: 8px solid #2e7d32; }
         </style>
     """, unsafe_allow_html=True)
 
-    if 'chave_limpa' not in st.session_state: st.session_state.chave_limpa = ""
-
-    # Botão de Nova Pesquisa para zerar o campo
-    if st.button("🔄 NOVA PESQUISA", use_container_width=True):
+    # Inicializa a chave no estado da sessão
+    if 'chave_limpa' not in st.session_state: 
         st.session_state.chave_limpa = ""
+
+    # --- BOTÃO NOVA PESQUISA (LIMPA TUDO) ---
+    if st.button("🔄 NOVA PESQUISA", use_container_width=True):
+        st.session_state.chave_limpa = "" # Limpa o campo de entrada
         if 'dados_nf_validos' in st.session_state:
-            del st.session_state.dados_nf_validos
-        st.rerun()
+            del st.session_state.dados_nf_validos # Limpa os resultados da tela
+        st.rerun() # Recarrega para aplicar a limpeza no widget input
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
     
-    # Máscara 4x4 estável
+    # Formatação visual (4 em 4)
     exibicao = " ".join([st.session_state.chave_limpa[i:i+4] for i in range(0, len(st.session_state.chave_limpa), 4)])
-    chave_input = st.text_input("CHAVE", value=exibicao, key="campo_nf_funcional", label_visibility="collapsed")
     
+    # O segredo da limpeza está no value=exibicao
+    chave_input = st.text_input("CHAVE", value=exibicao, key="campo_nf_final", label_visibility="collapsed")
+    
+    # Filtra apenas os números digitados
     numeros_puros = "".join(filter(str.isdigit, chave_input))[:44]
+    
     if numeros_puros != st.session_state.chave_limpa:
         st.session_state.chave_limpa = numeros_puros
         st.rerun()
@@ -196,31 +201,28 @@ elif st.session_state.pagina == "nota_fiscal":
         else:
             st.error(f"Faltam números: {len(st.session_state.chave_limpa)}/44")
 
+    # Mostra os dados se a verificação for feita
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # CORREÇÃO DEFINITIVA DO PDF
+        # GERAÇÃO DO PDF
         try:
             from fpdf import FPDF
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Arial", 'B', 14)
-            pdf.cell(0, 10, "RELATORIO DE NOTA FISCAL - ZION", ln=True, align='C')
+            pdf.cell(0, 10, "ZION - RELATORIO DE NOTA FISCAL", ln=True, align='C')
             pdf.ln(5)
             pdf.set_font("Arial", '', 12)
             for k, v in st.session_state.dados_nf_validos.items():
                 pdf.cell(90, 10, f" {k}:", border=1)
                 pdf.cell(100, 10, f" {v}", border=1, ln=True)
             
-            # Blindagem: pegamos o output e convertemos direto para bytes, sem usar .encode()
+            # Tratamento blindado do binário para evitar erro 'bytearray'
             pdf_data = pdf.output(dest='S')
             pdf_bytes = bytes(pdf_data) if isinstance(pdf_data, (bytearray, bytes)) else pdf_data.encode('latin-1')
-
-            # Função para voltar ao menu após o download
-            def finalizar_e_voltar():
-                st.session_state.pagina = "menu_central"
 
             st.download_button(
                 label="📥 BAIXAR PDF E VOLTAR AO MENU",
@@ -228,10 +230,10 @@ elif st.session_state.pagina == "nota_fiscal":
                 file_name=f"Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
-                on_click=finalizar_e_voltar # Volta ao menu após clicar
+                on_click=lambda: setattr(st.session_state, 'pagina', 'menu_central')
             )
         except Exception as e:
-            st.error(f"Erro ao gerar arquivo: {e}")
+            st.error(f"Erro ao gerar PDF: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
