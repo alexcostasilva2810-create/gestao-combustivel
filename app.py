@@ -81,22 +81,14 @@ if st.session_state.usuario_logado:
 # #-------------------------------------------------------------------------#
 
 if st.session_state.pagina == "inicio":
-
     st.markdown("<br><br><br>", unsafe_allow_html=True)
-
     st.markdown('<h1 style="color:white; text-align:center; font-size: 100px; font-weight: 900;">ZION</h1>', unsafe_allow_html=True)
-
     st.markdown('<p style="text-align:center; color:white; font-size: 20px; letter-spacing: 5px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
-
     st.markdown("<br><br>", unsafe_allow_html=True)
-
     if st.button("🚀 INICIAR SESSÃO", use_container_width=True):
-
         st.session_state.pagina = "login"
 
         st.rerun()
-
-
 
 # #-------------------------------------------------------------------------#
 #            TELA 2: LOGIN COM CAMPOS E ALERTAS (BLOCO 3)
