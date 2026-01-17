@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - BLINDAGEM E LIMPEZA REAL
+#             TELA DE APOIO (NF) (BLOCO 5) - VERSÃO FUNCIONAL FINAL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,7 +147,7 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # CSS: Ajuste de fonte para 16px para caber os 44 números + espaços sem cortar
+    # CSS AJUSTADO: Fonte 16px para não cortar os números na caixa branca
     st.markdown("""
         <style>
         div[data-baseweb="input"] { background-color: white !important; border: 3px solid #2e7d32 !important; border-radius: 10px !important; }
@@ -164,28 +164,22 @@ elif st.session_state.pagina == "nota_fiscal":
         </style>
     """, unsafe_allow_html=True)
 
-    # Inicialização do estado
     if 'chave_limpa' not in st.session_state: st.session_state.chave_limpa = ""
 
-    # FUNÇÃO DE LIMPEZA REAL: Apaga os dados e força o recarregamento
-    def limpar_e_reiniciar():
+    # Botão de Nova Pesquisa para zerar o campo
+    if st.button("🔄 NOVA PESQUISA", use_container_width=True):
         st.session_state.chave_limpa = ""
         if 'dados_nf_validos' in st.session_state:
             del st.session_state.dados_nf_validos
-        # O rerun aqui garante que o campo de texto volte a ficar vazio
         st.rerun()
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
     
-    # Máscara 4x4: Gera a visualização com espaços
+    # Máscara 4x4 estável
     exibicao = " ".join([st.session_state.chave_limpa[i:i+4] for i in range(0, len(st.session_state.chave_limpa), 4)])
+    chave_input = st.text_input("CHAVE", value=exibicao, key="campo_nf_funcional", label_visibility="collapsed")
     
-    # Entrada de dados
-    chave_input = st.text_input("CHAVE", value=exibicao, key="campo_nf_blindado", label_visibility="collapsed")
-    
-    # Filtro: Apenas números
     numeros_puros = "".join(filter(str.isdigit, chave_input))[:44]
-    
     if numeros_puros != st.session_state.chave_limpa:
         st.session_state.chave_limpa = numeros_puros
         st.rerun()
@@ -207,35 +201,37 @@ elif st.session_state.pagina == "nota_fiscal":
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # GERAÇÃO DE PDF E BOTÃO DE DOWNLOAD COM LIMPEZA
-        from fpdf import FPDF
+        # CORREÇÃO DEFINITIVA DO PDF
         try:
+            from fpdf import FPDF
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Arial", 'B', 14)
-            pdf.cell(0, 10, "ZION - DADOS DA NOTA FISCAL", ln=True, align='C')
+            pdf.cell(0, 10, "RELATORIO DE NOTA FISCAL - ZION", ln=True, align='C')
             pdf.ln(5)
             pdf.set_font("Arial", '', 12)
             for k, v in st.session_state.dados_nf_validos.items():
                 pdf.cell(90, 10, f" {k}:", border=1)
                 pdf.cell(100, 10, f" {v}", border=1, ln=True)
             
-            # Blindagem do binário: convertemos o output diretamente para bytes
-            pdf_output = pdf.output(dest='S')
-            # Verifica se o output é string ou bytes e trata corretamente para evitar o erro de 'encode'
-            pdf_final = pdf_output if isinstance(pdf_output, bytes) else pdf_output.encode('latin-1')
+            # Blindagem: pegamos o output e convertemos direto para bytes, sem usar .encode()
+            pdf_data = pdf.output(dest='S')
+            pdf_bytes = bytes(pdf_data) if isinstance(pdf_data, (bytearray, bytes)) else pdf_data.encode('latin-1')
 
-            # O download_button agora limpa a sessão ao ser clicado
+            # Função para voltar ao menu após o download
+            def finalizar_e_voltar():
+                st.session_state.pagina = "menu_central"
+
             st.download_button(
-                label="📥 BAIXAR RELATÓRIO E LIMPAR TUDO",
-                data=pdf_final,
-                file_name=f"Relatorio_NF_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
+                label="📥 BAIXAR PDF E VOLTAR AO MENU",
+                data=pdf_bytes,
+                file_name=f"Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
-                on_click=limpar_e_reiniciar  # Esta função limpa o campo e força o rerun
+                on_click=finalizar_e_voltar # Volta ao menu após clicar
             )
         except Exception as e:
-            st.error(f"Erro técnico no PDF: {e}")
+            st.error(f"Erro ao gerar arquivo: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
