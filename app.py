@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - RESOLUÇÃO FINAL PDF
+#             TELA DE APOIO (NF) (BLOCO 5) - MONITORAMENTO EM TEMPO REAL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,47 +147,57 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # Estilo dos cards (Letra 25px, Fundo Cinza, Texto Preto)
+    # Estilos: Cards, Avisos e Efeito Piscante
     st.markdown("""
         <style>
-        .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; 
-                    margin-bottom: 10px; font-size: 25px; font-weight: bold; border-left: 8px solid #2e7d32; }
+        @keyframes blinker { 50% { opacity: 0; } }
+        .piscante { animation: blinker 1s linear infinite; color: red; font-weight: bold; }
+        .aviso-base { background-color: white; padding: 20px; border-radius: 10px; text-align: center; font-size: 30px; margin-bottom: 20px; border: 2px solid #ccc; }
+        .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 25px; font-weight: bold; border-left: 8px solid #2e7d32; }
         </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
-    chave_input = st.text_input("Cole a chave de 44 dígitos aqui:", max_chars=60)
-    chave = "".join(filter(str.isdigit, chave_input))
+    ufs_brasil = {
+        "11": "RONDÔNIA - RO", "12": "ACRE - AC", "13": "AMAZONAS - AM", "14": "RORAIMA - RR",
+        "15": "PARÁ - PA", "16": "AMAPÁ - AP", "17": "TOCANTINS - TO", "21": "MARANHÃO - MA",
+        "22": "PIAUÍ - PI", "23": "CEARÁ - CE", "24": "RIO GRANDE DO NORTE - RN", "25": "PARAÍBA - PB",
+        "26": "PERNAMBUCO - PE", "27": "ALAGOAS - AL", "28": "SERGIPE - SE", "29": "BAHIA - BA",
+        "31": "MINAS GERAIS - MG", "32": "ESPÍRITO SANTO - ES", "33": "RIO DE JANEIRO - RJ",
+        "35": "SÃO PAULO - SP", "41": "PARANÁ - PR", "42": "SANTA CATARINA - SC", "43": "RIO GRANDE DO SUL - RS",
+        "50": "MATO GROSSO DO SUL - MS", "51": "MATO GROSSO - MT", "52": "GOIÁS - GO", "53": "DISTRITO FEDERAL - DF"
+    }
 
-    # Botão de Verificação
+    if 'chave_input' not in st.session_state: st.session_state.chave_input = ""
+
+    st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
+    chave_raw = st.text_input("Cole a chave aqui:", value=st.session_state.chave_input, max_chars=60, key="input_chave_nf")
+    chave = "".join(filter(str.isdigit, chave_raw))
+
+    # Lógica de Monitoramento em Tempo Real
+    if len(chave) > 0 and len(chave) < 44:
+        st.markdown(f'<div class="aviso-base">Falta pouco... Digite os 44 números. <br>(Total: {len(chave)})</div>', unsafe_allow_html=True)
+    elif len(chave) > 44:
+        st.markdown('<div class="aviso-base piscante">⚠️ SEQUÊNCIA ERRADA! CORRIJA OS NÚMEROS.</div>', unsafe_allow_html=True)
+    elif len(chave) == 44:
+        st.markdown('<div class="aviso-base" style="color: green; border: 3px solid green;">✅ CHAVE COMPLETA! CLIQUE EM VERIFICAÇÃO.</div>', unsafe_allow_html=True)
+
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
         if len(chave) == 44:
-            # Lógica UF: 15 = Manaus/AM
-            nome_uf = "MANAUS / AM" if chave[0:2] == "15" else f"CÓDIGO {chave[0:2]}"
-            
-            # Mapeamento conforme solicitado
-            st.session_state.dados_nf = {
-                "UF": nome_uf,
-                "COMPETÊNCIA": chave[2:6],
-                "CNPJ": chave[6:20],
-                "MOD": chave[20:22],
-                "SÉRIE": chave[22:25],
-                "NÚMERO DA NOTA FISCAL": chave[25:34],
-                "TPEMIS": chave[34:35],
-                "CDV": chave[43:44]
+            codigo_uf = chave[0:2]
+            nome_uf = ufs_brasil.get(codigo_uf, f"UF DESCONHECIDA ({codigo_uf})")
+            st.session_state.dados_nf_validos = {
+                "UF": nome_uf, "COMPETÊNCIA": chave[2:6], "CNPJ": chave[6:20], "MOD": chave[20:22],
+                "SÉRIE": chave[22:25], "NÚMERO DA NOTA FISCAL": chave[25:34], "TPEMIS": chave[34:35], "CDV": chave[43:44]
             }
-            st.session_state.chave_ativa = chave
-            st.success("✅ Dados verificados!")
+            st.session_state.chave_nf_valida = chave
         else:
-            st.error(f"Chave inválida. Faltam números. (Digitados: {len(chave)})")
+            st.error("A chave precisa ter exatamente 44 dígitos.")
 
-    # Exibição e Gerador de PDF
-    if 'dados_nf' in st.session_state:
+    if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
-        for campo, valor in st.session_state.dados_nf.items():
+        for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # Botão Gerar PDF com Correção de Formato Binário
         if st.button("📄 GERAR PDF DA NOTA", use_container_width=True, type="primary"):
             from fpdf import FPDF
             try:
@@ -196,29 +206,22 @@ elif st.session_state.pagina == "nota_fiscal":
                 pdf.set_font("Helvetica", 'B', 16)
                 pdf.cell(0, 10, "ZION - SISTEMA DE GESTÃO NAVAL", ln=True, align='C')
                 pdf.set_font("Helvetica", 'B', 10)
-                pdf.cell(0, 10, f"CHAVE: {st.session_state.chave_ativa}", ln=True, align='C')
+                pdf.cell(0, 10, f"CHAVE: {st.session_state.chave_nf_valida}", ln=True, align='C')
                 pdf.ln(10)
                 
-                pdf.set_fill_color(240, 240, 240)
-                for c, v in st.session_state.dados_nf.items():
-                    pdf.set_font("Helvetica", 'B', 11)
-                    pdf.cell(85, 10, f" {c}", border=1, fill=True)
-                    pdf.set_font("Helvetica", '', 11)
-                    pdf.cell(105, 10, f" {v}", border=1, ln=True)
+                pdf.set_fill_color(230, 230, 230)
+                for c, v in st.session_state.dados_nf_validos.items():
+                    pdf.set_font("Helvetica", 'B', 11); pdf.cell(80, 10, f" {c}", border=1, fill=True)
+                    pdf.set_font("Helvetica", ''); pdf.cell(110, 10, f" {v}", border=1, ln=True)
                 
-                # SOLUÇÃO DO ERRO: Forçar saída como bytes puros
-                pdf_output = pdf.output(dest='S')
-                pdf_final = bytes(pdf_output) # Converte bytearray para bytes
-                
+                pdf_output = bytes(pdf.output(dest='S'))
                 st.download_button(
-                    label="📥 BAIXAR RELATÓRIO PDF",
-                    data=pdf_final,
-                    file_name=f"Nota_{st.session_state.dados_nf['NÚMERO DA NOTA FISCAL']}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
+                    label="📥 BAIXAR RELATÓRIO PDF", data=pdf_output, 
+                    file_name=f"Relatorio_NF_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
+                    mime="application/pdf", use_container_width=True,
+                    on_click=lambda: (st.session_state.pop('dados_nf_validos', None), st.session_state.update({"chave_input": ""}))
                 )
-            except Exception as e:
-                st.error(f"Erro ao gerar PDF: {e}")
+            except Exception as e: st.error(f"Erro: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
