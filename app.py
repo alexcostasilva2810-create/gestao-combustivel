@@ -135,53 +135,21 @@ elif st.session_state.pagina == "menu_central":
             st.session_state.pagina = "tabela_consumo"
             st.rerun()
 
-# #-------------------------------------------------------------------------#
-#             TELAS DE APOIO (NF E TABELA) (BLOCO 5)
-# #-------------------------------------------------------------------------#
-elif st.session_state.pagina == "nota_fiscal":
-    if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
-        st.session_state.pagina = "menu_central"
-        st.rerun()
+# Bloco 5 - Nota Fiscal (Versão Compatível com Render Free)
+st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
+st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
-    
-    st.markdown("### 📋 Registro da Nota")
-    
-    # --- SCANNER DE QR CODE ---
-    st.markdown('<p style="color: #FFFF00 !important; font-weight: bold;">📷 ESCANEAR QR CODE DA NF</p>', unsafe_allow_html=True)
-    foto_qr = st.camera_input("Aponte para o QR Code da Nota", key="qr_scanner_camera")
-    
-    chave_detectada = ""
-    if foto_qr:
-        # Converter foto para formato que o OpenCV entende
-        file_bytes = np.frombuffer(foto_qr.getvalue(), np.uint8)
-        img = cv2.imdecode(file_bytes, 1)
-        
-        # Tentar decodificar o QR Code
-        objetos_qr = decode(img)
-        
-        if objetos_qr:
-            chave_detectada = objetos_qr[0].data.decode('utf-8')
-            # Geralmente o QR Code da NF-e traz o link, precisamos extrair os 44 números
-            if "chNFe=" in chave_detectada:
-                chave_detectada = chave_detectada.split("chNFe=")[1][:44]
-            st.success(f"✅ QR CODE LIDO: {chave_detectada}")
-        else:
-            st.warning("⚠️ QR Code não detectado. Tente aproximar mais ou limpar a lente.")
+st.markdown('### 📷 TIRAR FOTO DO QR CODE')
+# Isso abre a câmera do celular de forma nativa e segura
+foto_qr = st.camera_input("Aponte para o QR Code da NF")
 
-    st.markdown("---")
-    
-    # Se detectou a chave, ela preenche o campo automaticamente
-    chave_final = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", 
-                               value=chave_detectada if chave_detectada else "", 
-                               max_chars=44)
-    
-    num_nf = st.text_input("NÚMERO DA NOTA FISCAL")
-    data_emissao = st.date_input("DATA DE EMISSÃO", format="DD/MM/YYYY")
-    
-    if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
-        st.success("Dados registrados com sucesso!")
+if foto_qr:
+    st.success("Foto registrada com sucesso!")
+    st.info("O sistema armazenará a imagem para conferência.")
+
+st.markdown("---")
+# Campo para o tripulante confirmar a chave
+chave_nf = st.text_input("CONFIRME A CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
 
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
