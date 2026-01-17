@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - BLOCOS DE 4 DÍGITOS
+#             TELA DE APOIO (NF) (BLOCO 5) - VISUAL BRANCO + MÁSCARA 4x4
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,7 +147,7 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # ESTILO: Fundo Branco, Letra Vermelha, Negrito e Espaçamento
+    # CSS REFORÇADO PARA FUNDO BRANCO E LETRA VERMELHA
     st.markdown("""
         <style>
         @keyframes blinker { 50% { opacity: 0; } }
@@ -155,47 +155,57 @@ elif st.session_state.pagina == "nota_fiscal":
         .aviso-base { background-color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 25px; margin-bottom: 15px; border: 2px solid #ccc; color: black; }
         .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 25px; font-weight: bold; border-left: 8px solid #2e7d32; }
         
-        div[data-baseweb="input"] { width: 100% !important; background-color: white !important; border: 3px solid #2e7d32 !important; border-radius: 10px !important; }
+        /* Força fundo branco e letra vermelha no input */
+        div[data-baseweb="input"], div[data-baseweb="input"] > div {
+            background-color: white !important;
+            border: 3px solid #2e7d32 !important;
+            border-radius: 10px !important;
+        }
         div[data-baseweb="input"] input {
-            font-size: 22px !important; /* Ajustado levemente para caber os espaços */
-            height: 90px !important;    
+            background-color: white !important;
+            color: #FF0000 !important;
+            font-weight: 900 !important;
+            font-size: 22px !important;
+            height: 90px !important;
             text-align: center !important;
-            color: #FF0000 !important;   
-            font-weight: 900 !important; 
             font-family: 'Courier New', Courier, monospace !important;
+            -webkit-text-fill-color: #FF0000 !important; /* Garante cor no iOS/Safari */
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # 1. PEGAR A ENTRADA BRUTA (COM OU SEM ESPAÇOS)
+    # Lógica de UFs
+    ufs_brasil = {"11":"RO","12":"AC","13":"AM","14":"RR","15":"PA","16":"AP","17":"TO","21":"MA","22":"PI","23":"CE","24":"RN","25":"PB","26":"PE","27":"AL","28":"SE","29":"BA","31":"MG","32":"ES","33":"RJ","35":"SP","41":"PR","42":"SC","43":"RS","50":"MS","51":"MT","52":"GO","53":"DF"}
+
     if 'chave_input' not in st.session_state: st.session_state.chave_input = ""
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
+    
+    # Campo de Entrada
     chave_raw = st.text_input("CHAVE", value=st.session_state.chave_input, key="input_chave_nf", label_visibility="collapsed")
     
-    # 2. LIMPAR TUDO QUE NÃO FOR NÚMERO
+    # Processamento da Máscara (4 em 4)
     chave_limpa = "".join(filter(str.isdigit, chave_raw))[:44]
-
-    # 3. CRIAR A FORMATAÇÃO EM BLOCOS DE 4
     chave_formatada = " ".join([chave_limpa[i:i+4] for i in range(0, len(chave_limpa), 4)])
 
-    # 4. ATUALIZAR O CAMPO SE A FORMATAÇÃO MUDAR (O segredo da máscara)
+    # Atualiza a tela para mostrar os blocos de 4
     if chave_raw != chave_formatada:
         st.session_state.chave_input = chave_formatada
         st.rerun()
 
-    # Alertas dinâmicos baseados na chave limpa
+    # Aviso de status
     if 0 < len(chave_limpa) < 44:
-        st.markdown(f'<div class="aviso-base">Faltam números: {len(chave_limpa)} / 44</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="aviso-base">Digitando: {len(chave_limpa)} / 44</div>', unsafe_allow_html=True)
     elif len(chave_limpa) == 44:
-        st.markdown('<div class="aviso-base" style="color: green; border: 3px solid green;">✅ CHAVE COMPLETA!</div>', unsafe_allow_html=True)
+        st.markdown('<div class="aviso-base" style="color: green; border: 3px solid green; font-weight: bold;">✅ CHAVE COMPLETA!</div>', unsafe_allow_html=True)
 
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
         if len(chave_limpa) == 44:
-            # Dicionário de UFs (integrado)
-            ufs = {"11":"RO","12":"AC","13":"AM","14":"RR","15":"PA","16":"AP","17":"TO","21":"MA","22":"PI","23":"CE","24":"RN","25":"PB","26":"PE","27":"AL","28":"SE","29":"BA","31":"MG","32":"ES","33":"RJ","35":"SP","41":"PR","42":"SC","43":"RS","50":"MS","51":"MT","52":"GO","53":"DF"}
             cod_uf = chave_limpa[0:2]
-            nome_uf = "PARÁ - PA" if cod_uf == "15" else "AMAZONAS - AM" if cod_uf == "13" else ufs.get(cod_uf, f"UF {cod_uf}")
+            # Lógica específica para Pará e Amazonas, ou busca no dicionário
+            if cod_uf == "15": nome_uf = "PARÁ - PA"
+            elif cod_uf == "13": nome_uf = "AMAZONAS - AM"
+            else: nome_uf = f"ESTADO - {ufs_brasil.get(cod_uf, cod_uf)}"
             
             st.session_state.dados_nf_validos = {
                 "UF": nome_uf, "COMPETÊNCIA": chave_limpa[2:6], "CNPJ": chave_limpa[6:20], "MOD": chave_limpa[20:22],
@@ -203,9 +213,8 @@ elif st.session_state.pagina == "nota_fiscal":
             }
             st.session_state.chave_nf_valida = chave_formatada
         else:
-            st.error("A chave precisa ter 44 números.")
+            st.error("A chave deve conter 44 números.")
 
-    # Exibição dos cards e PDF (Mesma lógica anterior, mas usando chave_limpa)
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
         for campo, valor in st.session_state.dados_nf_validos.items():
@@ -221,6 +230,8 @@ elif st.session_state.pagina == "nota_fiscal":
                 pdf.set_font("Helvetica", 'B', 10)
                 pdf.cell(0, 10, f"CHAVE: {st.session_state.chave_nf_valida}", ln=True, align='C')
                 pdf.ln(10)
+                
+                pdf.set_fill_color(230, 230, 230)
                 for c, v in st.session_state.dados_nf_validos.items():
                     pdf.set_font("Helvetica", 'B', 11); pdf.cell(80, 10, f" {c}", border=1, fill=True)
                     pdf.set_font("Helvetica", ''); pdf.cell(110, 10, f" {v}", border=1, ln=True)
@@ -232,7 +243,7 @@ elif st.session_state.pagina == "nota_fiscal":
                     mime="application/pdf", use_container_width=True,
                     on_click=lambda: (st.session_state.pop('dados_nf_validos', None), st.session_state.update({"chave_input": ""}))
                 )
-            except Exception as e: st.error(f"Erro: {e}")
+            except Exception as e: st.error(f"Erro no PDF: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
