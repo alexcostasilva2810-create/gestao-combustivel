@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - LIMPEZA PÓS-DOWNLOAD
+#             TELA DE APOIO (NF) (BLOCO 5) - CÓDIGO FINAL ESTÁVEL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,7 +147,7 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # ESTILIZAÇÃO MANTIDA
+    # ESTILIZAÇÃO PARA FUNDO BRANCO E LETRA VERMELHA
     st.markdown("""
         <style>
         div[data-baseweb="input"] { background-color: white !important; border: 3px solid #2e7d32 !important; border-radius: 10px !important; }
@@ -164,40 +164,40 @@ elif st.session_state.pagina == "nota_fiscal":
         </style>
     """, unsafe_allow_html=True)
 
-    # Inicialização das variáveis de controle
-    if 'chave_formatada' not in st.session_state:
-        st.session_state.chave_formatada = ""
-    
-    # Função para limpar os campos
-    def limpar_para_nova_consulta():
-        st.session_state.chave_formatada = ""
+    # Inicialização segura do estado
+    if 'chave_digitada' not in st.session_state: st.session_state.chave_digitada = ""
+
+    # Função para limpar tudo após o download
+    def concluir_e_limpar():
+        st.session_state.chave_digitada = ""
         if 'dados_nf_validos' in st.session_state:
             del st.session_state.dados_nf_validos
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
     
-    # Campo de entrada
-    chave_input = st.text_input("CHAVE", value=st.session_state.chave_formatada, key="campo_nf", label_visibility="collapsed")
+    # ENTRADA COM MÁSCARA EM TEMPO REAL
+    raw_input = st.text_input("CHAVE", value=st.session_state.chave_digitada, key="campo_nf_fix", label_visibility="collapsed")
+    
+    # Processa apenas números e aplica a máscara de 4 em 4
+    numeros = "".join(filter(str.isdigit, raw_input))[:44]
+    formato_4x4 = " ".join([numeros[i:i+4] for i in range(0, len(numeros), 4)])
 
-    # Lógica da Máscara 4x4
-    apenas_numeros = "".join(filter(str.isdigit, chave_input))[:44]
-    nova_formatacao = " ".join([apenas_numeros[i:i+4] for i in range(0, len(apenas_numeros), 4)])
-
-    if st.session_state.chave_formatada != nova_formatacao:
-        st.session_state.chave_formatada = nova_formatacao
+    if raw_input != formato_4x4:
+        st.session_state.chave_digitada = formato_4x4
         st.rerun()
 
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
-        if len(apenas_numeros) == 44:
+        if len(numeros) == 44:
+            # Decomposição da chave
             st.session_state.dados_nf_validos = {
-                "UF": "PARÁ - PA" if apenas_numeros[:2] == "15" else "AMAZONAS - AM",
-                "COMPETÊNCIA": apenas_numeros[2:6],
-                "CNPJ": apenas_numeros[6:20],
-                "MOD": apenas_numeros[20:22],
-                "SÉRIE": apenas_numeros[22:25],
-                "NÚMERO DA NOTA FISCAL": apenas_numeros[25:34],
-                "TPEMIS": apenas_numeros[34:35],
-                "CDV": apenas_numeros[43:44]
+                "UF": "PARÁ - PA" if numeros[:2] == "15" else "AMAZONAS - AM",
+                "COMPETÊNCIA": numeros[2:6],
+                "CNPJ": numeros[6:20],
+                "MOD": numeros[20:22],
+                "SÉRIE": numeros[22:25],
+                "NÚMERO DA NOTA FISCAL": numeros[25:34],
+                "TPEMIS": numeros[34:35],
+                "CDV": numeros[43:44]
             }
         else:
             st.error("A chave precisa ter 44 dígitos.")
@@ -207,32 +207,35 @@ elif st.session_state.pagina == "nota_fiscal":
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # GERAÇÃO DE PDF COM LIMPEZA AUTOMÁTICA
-        if st.button("📄 PREPARAR PDF", use_container_width=True, type="primary"):
+        # CORREÇÃO DEFINITIVA DO PDF
+        try:
             from fpdf import FPDF
-            try:
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", 'B', 14)
-                pdf.cell(0, 10, "RELATORIO DE NOTA FISCAL - ZION", ln=True, align='C')
-                pdf.ln(5)
-                pdf.set_font("Arial", '', 12)
-                for c, v in st.session_state.dados_nf_validos.items():
-                    pdf.cell(0, 10, f"{c}: {v}", border=1, ln=True)
-                
-                pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='ignore')
-                
-                # O segredo está no on_click para resetar a página após o download
-                st.download_button(
-                    label="📥 CLIQUE AQUI PARA BAIXAR E LIMPAR", 
-                    data=pdf_bytes, 
-                    file_name=f"Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf", 
-                    mime="application/pdf", 
-                    use_container_width=True,
-                    on_click=limpar_para_nova_consulta
-                )
-            except Exception as e:
-                st.error(f"Erro ao gerar PDF: {e}")
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", 'B', 14)
+            pdf.cell(0, 10, "RELATORIO DE NOTA FISCAL - ZION", ln=True, align='C')
+            pdf.ln(5)
+            pdf.set_font("Arial", '', 12)
+            for c, v in st.session_state.dados_nf_validos.items():
+                pdf.cell(0, 10, f"{c}: {v}", border=1, ln=True)
+            
+            # Gerar o PDF como string de bytes binários pura
+            pdf_output = pdf.output(dest='S')
+            if isinstance(pdf_output, str):
+                pdf_bytes = pdf_output.encode('latin-1')
+            else:
+                pdf_bytes = bytes(pdf_output)
+
+            st.download_button(
+                label="📥 BAIXAR RELATÓRIO E LIMPAR CAMPOS", 
+                data=pdf_bytes, 
+                file_name=f"Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf", 
+                mime="application/pdf", 
+                use_container_width=True,
+                on_click=concluir_e_limpar
+            )
+        except Exception as e:
+            st.error(f"Erro ao preparar PDF: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
