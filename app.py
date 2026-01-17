@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - MONITORAMENTO EM TEMPO REAL
+#             TELA DE APOIO (NF) (BLOCO 5) - FONTE AUMENTADA E MONITORAMENTO
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,16 +147,23 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # Estilos: Cards, Avisos e Efeito Piscante
+    # Estilos Personalizados: Letra 40px no Input e 30px no Alerta
     st.markdown("""
         <style>
         @keyframes blinker { 50% { opacity: 0; } }
         .piscante { animation: blinker 1s linear infinite; color: red; font-weight: bold; }
-        .aviso-base { background-color: white; padding: 20px; border-radius: 10px; text-align: center; font-size: 30px; margin-bottom: 20px; border: 2px solid #ccc; }
+        .aviso-base { background-color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 30px; margin-bottom: 15px; border: 2px solid #ccc; }
         .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 25px; font-weight: bold; border-left: 8px solid #2e7d32; }
+        
+        /* Aumentando o tamanho da letra dentro do campo de digitação para 40px */
+        div[data-baseweb="input"] input {
+            font-size: 40px !important;
+            height: 70px !important;
+        }
         </style>
     """, unsafe_allow_html=True)
 
+    # Tabela de Estados (UF)
     ufs_brasil = {
         "11": "RONDÔNIA - RO", "12": "ACRE - AC", "13": "AMAZONAS - AM", "14": "RORAIMA - RR",
         "15": "PARÁ - PA", "16": "AMAPÁ - AP", "17": "TOCANTINS - TO", "21": "MARANHÃO - MA",
@@ -170,12 +177,12 @@ elif st.session_state.pagina == "nota_fiscal":
     if 'chave_input' not in st.session_state: st.session_state.chave_input = ""
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
-    chave_raw = st.text_input("Cole a chave aqui:", value=st.session_state.chave_input, max_chars=60, key="input_chave_nf")
+    chave_raw = st.text_input("Digite os 44 números:", value=st.session_state.chave_input, max_chars=60, key="input_chave_nf")
     chave = "".join(filter(str.isdigit, chave_raw))
 
-    # Lógica de Monitoramento em Tempo Real
-    if len(chave) > 0 and len(chave) < 44:
-        st.markdown(f'<div class="aviso-base">Falta pouco... Digite os 44 números. <br>(Total: {len(chave)})</div>', unsafe_allow_html=True)
+    # Alertas Dinâmicos (Letra 30px com fundo branco)
+    if 0 < len(chave) < 44:
+        st.markdown(f'<div class="aviso-base">Faltam números... <br>(Digitado: {len(chave)})</div>', unsafe_allow_html=True)
     elif len(chave) > 44:
         st.markdown('<div class="aviso-base piscante">⚠️ SEQUÊNCIA ERRADA! CORRIJA OS NÚMEROS.</div>', unsafe_allow_html=True)
     elif len(chave) == 44:
@@ -184,14 +191,14 @@ elif st.session_state.pagina == "nota_fiscal":
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
         if len(chave) == 44:
             codigo_uf = chave[0:2]
-            nome_uf = ufs_brasil.get(codigo_uf, f"UF DESCONHECIDA ({codigo_uf})")
+            nome_uf = ufs_brasil.get(codigo_uf, f"UF {codigo_uf}")
             st.session_state.dados_nf_validos = {
                 "UF": nome_uf, "COMPETÊNCIA": chave[2:6], "CNPJ": chave[6:20], "MOD": chave[20:22],
                 "SÉRIE": chave[22:25], "NÚMERO DA NOTA FISCAL": chave[25:34], "TPEMIS": chave[34:35], "CDV": chave[43:44]
             }
             st.session_state.chave_nf_valida = chave
         else:
-            st.error("A chave precisa ter exatamente 44 dígitos.")
+            st.error("Digite exatamente 44 números.")
 
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
@@ -221,7 +228,7 @@ elif st.session_state.pagina == "nota_fiscal":
                     mime="application/pdf", use_container_width=True,
                     on_click=lambda: (st.session_state.pop('dados_nf_validos', None), st.session_state.update({"chave_input": ""}))
                 )
-            except Exception as e: st.error(f"Erro: {e}")
+            except Exception as e: st.error(f"Erro ao gerar PDF: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
