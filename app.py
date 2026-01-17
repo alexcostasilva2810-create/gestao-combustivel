@@ -361,7 +361,7 @@ if st.session_state.pagina == "abastecimento":
             ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#             TABELA DE CONSUMO (BLOCO 7) - DADOS REAIS 5 E 6
+#             TABELA DE CONSUMO (BLOCO 7) - CORREÇÃO DE EXIBIÇÃO
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "tabela_consumo":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True):
@@ -371,43 +371,48 @@ elif st.session_state.pagina == "tabela_consumo":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">TABELA DE CONSUMO (O.S.)</div>', unsafe_allow_html=True)
 
-    # 1. Recuperação blindada dos dados reais dos blocos anteriores
-    # Dados do Bloco 6 (Conforme imagem image_f47dc5.jpg)
-    abast = st.session_state.get('dados_abastecimento', {})
-    
-    # Dados do Bloco 5 (Conforme imagem image_f48125.png)
-    nf_dados = st.session_state.get('dados_nf_validos', {})
-    chave_nf = st.session_state.get('chave_limpa', '')
+    # Inicializa o histórico se não existir
+    if 'historico_os' not in st.session_state: 
+        st.session_state.historico_os = []
 
+    # --- BOTÃO DE SALVAR ---
     if st.button("💾 SALVAR LANÇAMENTO E GERAR O.S.", use_container_width=True, type="primary"):
+        abast = st.session_state.get('dados_abastecimento', {})
+        nf_dados = st.session_state.get('dados_nf_validos', {})
+        
         if abast and nf_dados:
-            # Gerador de ID O.S. (0001 em diante)
-            if 'historico_os' not in st.session_state: st.session_state.historico_os = []
             proxima_os = f"{len(st.session_state.historico_os) + 1:04d}"
             
-            # MONTAGEM DO REGISTRO FIEL ÀS IMAGENS
+            # Dados exatos das suas telas
             registro_os = {
                 "ID_OS": proxima_os,
                 "USUARIO": st.session_state.get('usuario_logado', 'Admin'),
                 "EMPURRADOR": abast.get('empurrador', 'N/A'),
-                "DATA_ABAST": abast.get('data', ''),
-                "QTD_PEDIDA": abast.get('qtd_pedida', 0),
-                "SALDO_BB": abast.get('saldo_bb', 0),
-                "SALDO_BE": abast.get('saldo_be', 0),
+                "DATA": abast.get('data', ''),
+                "QTD PEDIDA": abast.get('qtd_pedida', 0),
+                "SALDO BB": abast.get('saldo_bb', 0),
+                "SALDO BE": abast.get('saldo_be', 0),
                 "REMANESCENTE": abast.get('remanescente', 0),
-                "NUMERO_NF": nf_dados.get('NÚMERO DA NOTA FISCAL', 'N/A'),
-                "UF_NF": nf_dados.get('UF', 'N/A'),
-                "CHAVE_ACESSO": chave_nf
+                "NUMERO NF": nf_dados.get('NÚMERO DA NOTA FISCAL', 'N/A'),
+                "UF": nf_dados.get('UF', 'N/A'),
+                "CHAVE ACESSO": st.session_state.get('chave_limpa', '')
             }
-
-            # Aqui você deve configurar as colunas no Notion com estes exatos nomes acima
-            # INTEGRAÇÃO NOTION (Requests aqui...)
-
             st.session_state.historico_os.insert(0, registro_os)
-            st.success(f"✅ O.S. {proxima_os} gerada com os dados dos Blocos 5 e 6!")
+            st.success(f"✅ O.S. {proxima_os} Gerada!")
         else:
-            st.warning("⚠️ Dados incompletos. Verifique o Abastecimento e a Nota Fiscal primeiro.")
+            st.error("⚠️ Erro: Você precisa preencher os Blocos 5 e 6 antes de salvar!")
 
-    # Exibição da Tabela na tela
-    if st.session_state.get('historico_os'):
+    # --- EXIBIÇÃO DA TABELA (FORA DO IF PARA APARECER SEMPRE) ---
+    st.write("---")
+    st.markdown("### 📋 Registros de Consumo")
+    
+    if st.session_state.historico_os:
+        # Se tem dados, mostra a tabela preenchida
         st.dataframe(st.session_state.historico_os, use_container_width=True)
+    else:
+        # Se está vazia, cria uma tabela de exemplo apenas com os cabeçalhos corretos
+        import pandas as pd
+        colunas = ["ID_OS", "USUARIO", "EMPURRADOR", "DATA", "QTD PEDIDA", "SALDO BB", "SALDO BE", "REMANESCENTE", "NUMERO NF", "UF", "CHAVE ACESSO"]
+        df_vazio = pd.DataFrame(columns=colunas)
+        st.dataframe(df_vazio, use_container_width=True)
+        st.info("A tabela está vazia. Realize um lançamento para gerar a primeira O.S.")
