@@ -359,3 +359,55 @@ if st.session_state.pagina == "abastecimento":
 
         st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
             ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
+
+# #-------------------------------------------------------------------------#
+#             TABELA DE CONSUMO (BLOCO 7) - DADOS REAIS 5 E 6
+# #-------------------------------------------------------------------------#
+elif st.session_state.pagina == "tabela_consumo":
+    if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True):
+        st.session_state.pagina = "menu_central"
+        st.rerun()
+
+    st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">TABELA DE CONSUMO (O.S.)</div>', unsafe_allow_html=True)
+
+    # 1. Recuperação blindada dos dados reais dos blocos anteriores
+    # Dados do Bloco 6 (Conforme imagem image_f47dc5.jpg)
+    abast = st.session_state.get('dados_abastecimento', {})
+    
+    # Dados do Bloco 5 (Conforme imagem image_f48125.png)
+    nf_dados = st.session_state.get('dados_nf_validos', {})
+    chave_nf = st.session_state.get('chave_limpa', '')
+
+    if st.button("💾 SALVAR LANÇAMENTO E GERAR O.S.", use_container_width=True, type="primary"):
+        if abast and nf_dados:
+            # Gerador de ID O.S. (0001 em diante)
+            if 'historico_os' not in st.session_state: st.session_state.historico_os = []
+            proxima_os = f"{len(st.session_state.historico_os) + 1:04d}"
+            
+            # MONTAGEM DO REGISTRO FIEL ÀS IMAGENS
+            registro_os = {
+                "ID_OS": proxima_os,
+                "USUARIO": st.session_state.get('usuario_logado', 'Admin'),
+                "EMPURRADOR": abast.get('empurrador', 'N/A'),
+                "DATA_ABAST": abast.get('data', ''),
+                "QTD_PEDIDA": abast.get('qtd_pedida', 0),
+                "SALDO_BB": abast.get('saldo_bb', 0),
+                "SALDO_BE": abast.get('saldo_be', 0),
+                "REMANESCENTE": abast.get('remanescente', 0),
+                "NUMERO_NF": nf_dados.get('NÚMERO DA NOTA FISCAL', 'N/A'),
+                "UF_NF": nf_dados.get('UF', 'N/A'),
+                "CHAVE_ACESSO": chave_nf
+            }
+
+            # Aqui você deve configurar as colunas no Notion com estes exatos nomes acima
+            # INTEGRAÇÃO NOTION (Requests aqui...)
+
+            st.session_state.historico_os.insert(0, registro_os)
+            st.success(f"✅ O.S. {proxima_os} gerada com os dados dos Blocos 5 e 6!")
+        else:
+            st.warning("⚠️ Dados incompletos. Verifique o Abastecimento e a Nota Fiscal primeiro.")
+
+    # Exibição da Tabela na tela
+    if st.session_state.get('historico_os'):
+        st.dataframe(st.session_state.historico_os, use_container_width=True)
