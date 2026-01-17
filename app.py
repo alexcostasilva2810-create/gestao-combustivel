@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - FONTE AUMENTADA E MONITORAMENTO
+#             TELA DE APOIO (NF) (BLOCO 5) - AJUSTE DE PROPORÇÃO
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,23 +147,23 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # Estilos Personalizados: Letra 40px no Input e 30px no Alerta
+    # Estilos com proporção ajustada (Fonte 28px no input)
     st.markdown("""
         <style>
         @keyframes blinker { 50% { opacity: 0; } }
         .piscante { animation: blinker 1s linear infinite; color: red; font-weight: bold; }
-        .aviso-base { background-color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 30px; margin-bottom: 15px; border: 2px solid #ccc; }
+        .aviso-base { background-color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 25px; margin-bottom: 15px; border: 2px solid #ccc; }
         .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 25px; font-weight: bold; border-left: 8px solid #2e7d32; }
         
-        /* Aumentando o tamanho da letra dentro do campo de digitação para 40px */
+        /* Ajuste Proporcional: Fonte 28px para não cortar no celular */
         div[data-baseweb="input"] input {
-            font-size: 40px !important;
-            height: 70px !important;
+            font-size: 28px !important;
+            height: 60px !important;
+            padding: 10px !important;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Tabela de Estados (UF)
     ufs_brasil = {
         "11": "RONDÔNIA - RO", "12": "ACRE - AC", "13": "AMAZONAS - AM", "14": "RORAIMA - RR",
         "15": "PARÁ - PA", "16": "AMAPÁ - AP", "17": "TOCANTINS - TO", "21": "MARANHÃO - MA",
@@ -180,9 +180,9 @@ elif st.session_state.pagina == "nota_fiscal":
     chave_raw = st.text_input("Digite os 44 números:", value=st.session_state.chave_input, max_chars=60, key="input_chave_nf")
     chave = "".join(filter(str.isdigit, chave_raw))
 
-    # Alertas Dinâmicos (Letra 30px com fundo branco)
+    # Monitoramento visual em tempo real
     if 0 < len(chave) < 44:
-        st.markdown(f'<div class="aviso-base">Faltam números... <br>(Digitado: {len(chave)})</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="aviso-base">Faltam números... (Total: {len(chave)})</div>', unsafe_allow_html=True)
     elif len(chave) > 44:
         st.markdown('<div class="aviso-base piscante">⚠️ SEQUÊNCIA ERRADA! CORRIJA OS NÚMEROS.</div>', unsafe_allow_html=True)
     elif len(chave) == 44:
@@ -198,7 +198,7 @@ elif st.session_state.pagina == "nota_fiscal":
             }
             st.session_state.chave_nf_valida = chave
         else:
-            st.error("Digite exatamente 44 números.")
+            st.error("A chave precisa ter 44 dígitos.")
 
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
