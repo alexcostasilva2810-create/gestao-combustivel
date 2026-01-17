@@ -137,47 +137,80 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - REGISTRO E DIGITAÇÃO
+#             TELA DE APOIO (NF) (BLOCO 5) - DECOMPOSIÇÃO E PDF
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
-    # Botão de voltar ao Menu Central
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
         st.session_state.pagina = "menu_central"
         st.rerun()
 
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">DECOMPOSIÇÃO DE CHAVE NF-e</div>', unsafe_allow_html=True)
 
-    # 1. Registro da Foto (Prova Documental)
-    st.markdown('### 📷 REGISTRAR NOTA FISCAL')
-    foto_nf = st.camera_input("Tire foto da Nota ou do Código de Barras")
+    # Campo de entrada para os 44 dígitos
+    st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
+    chave_input = st.text_input("Cole ou digite os 44 números:", max_chars=55, placeholder="Ex: 3523...")
     
-    if foto_nf:
-        st.success("✅ Imagem registrada com sucesso!")
+    # Limpar espaços caso o usuário cole com formatação
+    chave = chave_input.replace(" ", "").replace("-", "")
 
-    st.markdown("---")
-
-    # 2. Digitação da Chave (44 Números)
-    # Usamos HTML para deixar o rótulo bem visível
-    st.markdown('<p style="color: yellow; font-weight: bold; font-size: 18px;">DIGITE A CHAVE DE ACESSO (44 DÍGITOS)</p>', unsafe_allow_html=True)
-    
-    chave_nf = st.text_input(
-        "Confira os números abaixo do código de barras da nota:", 
-        max_chars=44, 
-        placeholder="1525 1233 3371 2200 ...",
-        help="A chave possui exatamente 44 números."
-    )
-
-    # 3. Validação e Salva
-    if st.button("💾 CONFIRMAR E SALVAR NOTA", use_container_width=True, type="primary"):
-        # Remove espaços caso o tripulante tenha digitado com espaços
-        chave_limpa = chave_nf.replace(" ", "")
+    if len(chave) == 44 and chave.isdigit():
+        st.success("✅ Chave Identificada com Sucesso!")
         
-        if len(chave_limpa) == 44 and chave_limpa.isdigit():
-            st.success(f"Nota Fiscal {chave_limpa} salva com sucesso!")
-            # Aqui você pode adicionar a lógica para salvar no seu banco de dados
-        else:
-            st.error("⚠️ Erro: A chave deve conter exatamente 44 números. Verifique a digitação.")
+        # LÓGICA DE FATIAMENTO (SLICING)
+        dados_nf = {
+            "UF": chave[0:2],
+            "AAMM": chave[2:6],
+            "CNPJ": chave[6:20],
+            "Modelo": chave[20:22],
+            "Série": chave[22:25],
+            "Número NF": chave[25:34],
+            "Tipo Emissão": chave[34:35],
+            "Cód. Numérico": chave[35:43],
+            "DV": chave[43:44]
+        }
+
+        # Exibição organizada para conferência
+        st.markdown("---")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write(f"**📍 UF:** {dados_nf['UF']}")
+            st.write(f"**📅 AAMM:** {dados_nf['AAMM']}")
+            st.write(f"**🏢 CNPJ:** {dados_nf['CNPJ']}")
+            st.write(f"**📦 Modelo:** {dados_nf['Modelo']}")
+        with col2:
+            st.write(f"**🔢 Série:** {dados_nf['Série']}")
+            st.write(f"**📑 nNF:** {dados_nf['Número NF']}")
+            st.write(f"**📡 tpEmis:** {dados_nf['Tipo Emissão']}")
+            st.write(f"**🔑 cNF/cDV:** {dados_nf['Cód. Numérico']}-{dados_nf['DV']}")
+
+        st.markdown("---")
+
+        # Botão para Gerar PDF
+        if st.button("📄 GERAR PDF DA NOTA", use_container_width=True, type="primary"):
+            from fpdf import FPDF
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", 'B', 16)
+            pdf.cell(200, 10, "ZION - GESTÃO NAVAL", ln=True, align='C')
+            pdf.set_font("Arial", '', 10)
+            pdf.cell(200, 10, f"CHAVE: {chave}", ln=True, align='C')
+            pdf.ln(10)
+            
+            # Tabela no PDF
+            pdf.set_fill_color(200, 220, 255)
+            pdf.cell(100, 10, "Campo", border=1, fill=True)
+            pdf.cell(90, 10, "Valor", border=1, fill=True, ln=True)
+            
+            for campo, valor in dados_nf.items():
+                pdf.cell(100, 10, campo, border=1)
+                pdf.cell(90, 10, str(valor), border=1, ln=True)
+            
+            pdf_output = pdf.output(dest='S').encode('latin-1')
+            st.download_button("📥 BAIXAR RELATÓRIO PDF", data=pdf_output, file_name=f"NF_{dados_nf['Número NF']}.pdf", mime="application/pdf")
+
+    elif len(chave) > 0:
+        st.warning(f"Aguardando 44 dígitos... (Digitado: {len(chave)})")
 
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
