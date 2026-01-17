@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - AJUSTE DE PROPORÇÃO
+#             TELA DE APOIO (NF) (BLOCO 5) - CENTRALIZAÇÃO TOTAL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,19 +147,28 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # Estilos com proporção ajustada (Fonte 28px no input)
+    # ESTILO REVISADO PARA CENTRALIZAÇÃO E NITIDEZ
     st.markdown("""
         <style>
         @keyframes blinker { 50% { opacity: 0; } }
         .piscante { animation: blinker 1s linear infinite; color: red; font-weight: bold; }
-        .aviso-base { background-color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 25px; margin-bottom: 15px; border: 2px solid #ccc; }
+        .aviso-base { background-color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 25px; margin-bottom: 15px; border: 2px solid #ccc; color: black; }
         .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 25px; font-weight: bold; border-left: 8px solid #2e7d32; }
         
-        /* Ajuste Proporcional: Fonte 28px para não cortar no celular */
+        /* Ajuste de centralização total do input */
+        div[data-baseweb="input"] {
+            background-color: white !important;
+            border-radius: 10px !important;
+        }
         div[data-baseweb="input"] input {
-            font-size: 28px !important;
-            height: 60px !important;
-            padding: 10px !important;
+            font-size: 26px !important;
+            height: 80px !important;
+            text-align: center !important; /* Centraliza horizontalmente */
+            display: flex !important;
+            align-items: center !important; /* Centraliza verticalmente */
+            padding: 0px 10px !important;
+            color: #1f1f1f !important;
+            font-family: monospace !important; /* Deixa os números mais nítidos e iguais */
         }
         </style>
     """, unsafe_allow_html=True)
@@ -177,10 +186,11 @@ elif st.session_state.pagina == "nota_fiscal":
     if 'chave_input' not in st.session_state: st.session_state.chave_input = ""
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
-    chave_raw = st.text_input("Digite os 44 números:", value=st.session_state.chave_input, max_chars=60, key="input_chave_nf")
+    # O campo agora terá o texto centralizado e nítido
+    chave_raw = st.text_input("Campo de Digitação", value=st.session_state.chave_input, max_chars=60, key="input_chave_nf", label_visibility="collapsed")
     chave = "".join(filter(str.isdigit, chave_raw))
 
-    # Monitoramento visual em tempo real
+    # Monitoramento visual
     if 0 < len(chave) < 44:
         st.markdown(f'<div class="aviso-base">Faltam números... (Total: {len(chave)})</div>', unsafe_allow_html=True)
     elif len(chave) > 44:
