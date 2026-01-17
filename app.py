@@ -79,12 +79,17 @@ if st.session_state.usuario_logado:
 # #-------------------------------------------------------------------------#
 #             TELA 1: LOGIN (BLOCO 2)
 # #-------------------------------------------------------------------------#
+# Garantindo que o sistema comece na tela de login
+if 'pagina' not in st.session_state:
+    st.session_state.pagina = "login"
+
 if st.session_state.pagina == "login":
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 50px;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="color:white; text-align:center; font-size: 18px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 60px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="color:white; text-align:center; font-size: 20px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
     
-    # Botão centralizado para entrar no sistema
-    if st.button("🚀 INICIAR SESSÃO", use_container_width=True):
+    st.markdown('<br>', unsafe_allow_html=True)
+
+    if st.button("🚀 INICIAR SESSÃO", key="btn_login", use_container_width=True):
         st.session_state.pagina = "menu_central"
         st.rerun()
 
@@ -138,7 +143,6 @@ elif st.session_state.pagina == "menu_central":
 #             TELA DE APOIO (NF) (BLOCO 5)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
-    # Botão de voltar ao topo
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
         st.session_state.pagina = "menu_central"
         st.rerun()
@@ -146,21 +150,20 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
     
-    # A câmera fica EXCLUSIVAMENTE aqui
+    # O Leitor de QR Code fica EXCLUSIVAMENTE aqui
     st.markdown('### 📷 ESCANEAR QR CODE')
     foto_qr = st.camera_input("Aponte para o QR Code da NF")
     
     if foto_qr:
-        st.success("Foto registrada! Prossiga com o preenchimento.")
+        st.success("Foto registrada com sucesso!")
 
     st.markdown("---")
     
-    # Campos de preenchimento manual
     chave_nf = st.text_input("CONFIRME A CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
     num_nf = st.text_input("NÚMERO DA NOTA FISCAL")
     
     if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
-        st.success("Dados da Nota Fiscal salvos com sucesso!")
+        st.success("Dados da Nota Fiscal salvos!")
 
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
