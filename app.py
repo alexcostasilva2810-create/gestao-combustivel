@@ -5,6 +5,9 @@ from streamlit_drawable_canvas import st_canvas
 import time
 from PIL import Image
 import io
+import cv2
+import numpy as np
+from pyzbar.pyzbar import decode
 
 # #-------------------------------------------------------------------------#
 #                                CONFIGURAÇÕES VISUAIS
@@ -136,7 +139,6 @@ elif st.session_state.pagina == "menu_central":
 #             TELAS DE APOIO (NF E TABELA) (BLOCO 5)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
-    # Botão de retorno
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
         st.session_state.pagina = "menu_central"
         st.rerun()
@@ -146,45 +148,40 @@ elif st.session_state.pagina == "nota_fiscal":
     
     st.markdown("### 📋 Registro da Nota")
     
-    # --- NOVIDADE: LEITURA DE QR CODE ---
-    st.markdown('<p style="color: #FFFF00 !important;">📷 ESCANEAR QR CODE DA NF</p>', unsafe_allow_html=True)
-    foto_qr = st.file_uploader("Clique para abrir a câmera e escanear", type=['jpg', 'png', 'jpeg'], key="qr_scanner")
+    # --- SCANNER DE QR CODE ---
+    st.markdown('<p style="color: #FFFF00 !important; font-weight: bold;">📷 ESCANEAR QR CODE DA NF</p>', unsafe_allow_html=True)
+    foto_qr = st.camera_input("Aponte para o QR Code da Nota", key="qr_scanner_camera")
     
+    chave_detectada = ""
     if foto_qr:
-        st.success("Foto capturada! Processando QR Code...")
-        # Aqui entrará a lógica de decodificação quando estiver no Render
-    
+        # Converter foto para formato que o OpenCV entende
+        file_bytes = np.frombuffer(foto_qr.getvalue(), np.uint8)
+        img = cv2.imdecode(file_bytes, 1)
+        
+        # Tentar decodificar o QR Code
+        objetos_qr = decode(img)
+        
+        if objetos_qr:
+            chave_detectada = objetos_qr[0].data.decode('utf-8')
+            # Geralmente o QR Code da NF-e traz o link, precisamos extrair os 44 números
+            if "chNFe=" in chave_detectada:
+                chave_detectada = chave_detectada.split("chNFe=")[1][:44]
+            st.success(f"✅ QR CODE LIDO: {chave_detectada}")
+        else:
+            st.warning("⚠️ QR Code não detectado. Tente aproximar mais ou limpar a lente.")
+
     st.markdown("---")
     
-    # Campos Manuais
-    chave_nf = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
+    # Se detectou a chave, ela preenche o campo automaticamente
+    chave_final = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", 
+                               value=chave_detectada if chave_detectada else "", 
+                               max_chars=44)
+    
     num_nf = st.text_input("NÚMERO DA NOTA FISCAL")
     data_emissao = st.date_input("DATA DE EMISSÃO", format="DD/MM/YYYY")
     
-    if st.button("SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
-        st.toast("Dados da nota salvos temporariamente!", icon="✅")
-
-elif st.session_state.pagina == "tabela_consumo":
-    # Botão de retorno
-    if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
-        st.session_state.pagina = "menu_central"
-        st.rerun()
-
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<div class="banner-interno-verde">TABELA DE CONSUMO RECEBIDA</div>', unsafe_allow_html=True)
-
-    # Tabela de Referência
-    st.markdown("### 📊 Referência de Consumo")
-    dados_consumo = {
-        "EQUIPAMENTO": ["M.P. BB", "M.P. BE", "GERADOR 1", "GERADOR 2"],
-        "CONSUMO ESTIMADO (L/H)": ["120 L", "120 L", "18 L", "18 L"],
-        "STATUS": ["OPERACIONAL", "OPERACIONAL", "STANDBY", "OPERACIONAL"]
-    }
-    st.table(dados_consumo)
-    
-    st.markdown(f'''<div style="background-color: #f8f9fa; color: #333 !important; padding: 10px; border-radius: 5px; border-left: 5px solid #ffc107;">
-        <b>DICA:</b> Utilize os valores acima para conferir se a QUANTIDADE PEDIDA no Bloco 6 faz sentido com as horas trabalhadas.
-    </div>''', unsafe_allow_html=True)
+    if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
+        st.success("Dados registrados com sucesso!")
 
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
