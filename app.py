@@ -137,44 +137,47 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - LEITOR DE CÓDIGO DE BARRAS
+#             TELA DE APOIO (NF) (BLOCO 5) - REGISTRO E DIGITAÇÃO
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
-    import cv2
-    import numpy as np
-    from PIL import Image
-    import re
-
+    # Botão de voltar ao Menu Central
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
         st.session_state.pagina = "menu_central"
         st.rerun()
 
-    st.markdown('<div class="banner-interno-verde">LEITOR DE CHAVE DE ACESSO (44 DÍGITOS)</div>', unsafe_allow_html=True)
+    st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
+
+    # 1. Registro da Foto (Prova Documental)
+    st.markdown('### 📷 REGISTRAR NOTA FISCAL')
+    foto_nf = st.camera_input("Tire foto da Nota ou do Código de Barras")
     
-    # Captura a foto do código de barras
-    foto_barra = st.camera_input("Tire foto do CÓDIGO DE BARRAS da NF")
-
-    chave_extraida = ""
-
-    if foto_barra:
-        # Converter imagem para processamento
-        img = Image.open(foto_barra)
-        img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        
-        # Como o Render Free não aceita ZBAR, usamos o OpenCV para tentar achar o padrão
-        # Se a leitura automática falhar, o tripulante digita abaixo.
-        st.info("Processando imagem... Caso não identifique, digite os números abaixo.")
+    if foto_nf:
+        st.success("✅ Imagem registrada com sucesso!")
 
     st.markdown("---")
+
+    # 2. Digitação da Chave (44 Números)
+    # Usamos HTML para deixar o rótulo bem visível
+    st.markdown('<p style="color: yellow; font-weight: bold; font-size: 18px;">DIGITE A CHAVE DE ACESSO (44 DÍGITOS)</p>', unsafe_allow_html=True)
     
-    # Campo para os 44 números (onde o resultado deve aparecer)
-    chave_nf = st.text_input("CHAVE DE ACESSO (44 DÍGITOS)", value=chave_extraida, max_chars=44)
-    
-    if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
-        if len(chave_nf) == 44:
-            st.success("Nota Fiscal validada com sucesso!")
+    chave_nf = st.text_input(
+        "Confira os números abaixo do código de barras da nota:", 
+        max_chars=44, 
+        placeholder="1525 1233 3371 2200 ...",
+        help="A chave possui exatamente 44 números."
+    )
+
+    # 3. Validação e Salva
+    if st.button("💾 CONFIRMAR E SALVAR NOTA", use_container_width=True, type="primary"):
+        # Remove espaços caso o tripulante tenha digitado com espaços
+        chave_limpa = chave_nf.replace(" ", "")
+        
+        if len(chave_limpa) == 44 and chave_limpa.isdigit():
+            st.success(f"Nota Fiscal {chave_limpa} salva com sucesso!")
+            # Aqui você pode adicionar a lógica para salvar no seu banco de dados
         else:
-            st.error("A chave de acesso deve conter exatamente 44 números.")
+            st.error("⚠️ Erro: A chave deve conter exatamente 44 números. Verifique a digitação.")
 
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
