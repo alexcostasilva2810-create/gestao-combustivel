@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - BLINDAGEM TOTAL
+#             TELA DE APOIO (NF) (BLOCO 5) - BLINDAGEM E LIMPEZA REAL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,20 +147,16 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # CSS BLINDADO: Ajuste de altura e fonte para não cortar os números
+    # CSS: Ajuste de fonte para 16px para caber os 44 números + espaços sem cortar
     st.markdown("""
         <style>
-        div[data-baseweb="input"] { 
-            background-color: white !important; 
-            border: 3px solid #2e7d32 !important; 
-            border-radius: 10px !important; 
-        }
+        div[data-baseweb="input"] { background-color: white !important; border: 3px solid #2e7d32 !important; border-radius: 10px !important; }
         div[data-baseweb="input"] input {
             background-color: white !important;
             color: #FF0000 !important;
             font-weight: 900 !important;
-            font-size: 16px !important; /* Fonte menor para caber os 44 dígitos + espaços */
-            height: 55px !important;   /* Altura otimizada */
+            font-size: 16px !important;
+            height: 55px !important;
             text-align: center !important;
             font-family: 'Courier New', Courier, monospace !important;
         }
@@ -168,24 +164,26 @@ elif st.session_state.pagina == "nota_fiscal":
         </style>
     """, unsafe_allow_html=True)
 
-    # Inicialização blindada do estado
+    # Inicialização do estado
     if 'chave_limpa' not in st.session_state: st.session_state.chave_limpa = ""
 
-    # Função que limpa tudo após o download
-    def reset_total_consulta():
+    # FUNÇÃO DE LIMPEZA REAL: Apaga os dados e força o recarregamento
+    def limpar_e_reiniciar():
         st.session_state.chave_limpa = ""
         if 'dados_nf_validos' in st.session_state:
             del st.session_state.dados_nf_validos
+        # O rerun aqui garante que o campo de texto volte a ficar vazio
+        st.rerun()
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
     
-    # Máscara 4x4 em tempo real
+    # Máscara 4x4: Gera a visualização com espaços
     exibicao = " ".join([st.session_state.chave_limpa[i:i+4] for i in range(0, len(st.session_state.chave_limpa), 4)])
     
-    # Campo de entrada ajustado
+    # Entrada de dados
     chave_input = st.text_input("CHAVE", value=exibicao, key="campo_nf_blindado", label_visibility="collapsed")
     
-    # Filtro de segurança: apenas números
+    # Filtro: Apenas números
     numeros_puros = "".join(filter(str.isdigit, chave_input))[:44]
     
     if numeros_puros != st.session_state.chave_limpa:
@@ -195,7 +193,6 @@ elif st.session_state.pagina == "nota_fiscal":
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
         if len(st.session_state.chave_limpa) == 44:
             c = st.session_state.chave_limpa
-            # Decomposição oficial da chave
             st.session_state.dados_nf_validos = {
                 "UF": "PARÁ - PA" if c[:2] == "15" else "AMAZONAS - AM",
                 "COMPETÊNCIA": c[2:6], "CNPJ": c[6:20], "MOD": c[20:22],
@@ -203,40 +200,42 @@ elif st.session_state.pagina == "nota_fiscal":
                 "TPEMIS": c[34:35], "CDV": c[43:44]
             }
         else:
-            st.error(f"Digite os 44 números (Faltam {44 - len(st.session_state.chave_limpa)})")
+            st.error(f"Faltam números: {len(st.session_state.chave_limpa)}/44")
 
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # BOTÃO DE PDF COM BLINDAGEM DE BINÁRIO
+        # GERAÇÃO DE PDF E BOTÃO DE DOWNLOAD COM LIMPEZA
+        from fpdf import FPDF
         try:
-            from fpdf import FPDF
             pdf = FPDF()
             pdf.add_page()
             pdf.set_font("Arial", 'B', 14)
-            pdf.cell(0, 10, "RELATORIO DE NOTA FISCAL - ZION", ln=True, align='C')
+            pdf.cell(0, 10, "ZION - DADOS DA NOTA FISCAL", ln=True, align='C')
             pdf.ln(5)
             pdf.set_font("Arial", '', 12)
             for k, v in st.session_state.dados_nf_validos.items():
                 pdf.cell(90, 10, f" {k}:", border=1)
                 pdf.cell(100, 10, f" {v}", border=1, ln=True)
             
-            # Blindagem: convertendo para bytes de forma direta sem .encode()
+            # Blindagem do binário: convertemos o output diretamente para bytes
             pdf_output = pdf.output(dest='S')
-            pdf_bytes = bytes(pdf_output) if isinstance(pdf_output, (bytearray, bytes)) else pdf_output.encode('latin-1')
+            # Verifica se o output é string ou bytes e trata corretamente para evitar o erro de 'encode'
+            pdf_final = pdf_output if isinstance(pdf_output, bytes) else pdf_output.encode('latin-1')
 
+            # O download_button agora limpa a sessão ao ser clicado
             st.download_button(
-                label="📥 BAIXAR RELATÓRIO E LIMPAR TELA",
-                data=pdf_bytes,
-                file_name=f"Relatorio_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
+                label="📥 BAIXAR RELATÓRIO E LIMPAR TUDO",
+                data=pdf_final,
+                file_name=f"Relatorio_NF_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
-                on_click=reset_total_consulta # Força a limpeza após o clique
+                on_click=limpar_e_reiniciar  # Esta função limpa o campo e força o rerun
             )
         except Exception as e:
-            st.error(f"Erro ao preparar arquivo: {e}")
+            st.error(f"Erro técnico no PDF: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
