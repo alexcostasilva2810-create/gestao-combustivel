@@ -77,15 +77,15 @@ if st.session_state.usuario_logado:
     st.markdown(f'<div class="user-header">👤 {st.session_state.usuario_logado}</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#            TELA 1: LOGO ZION E BOTÃO INICIAR (BLOCO 2)
+#             TELA 1: LOGIN (BLOCO 2)
 # #-------------------------------------------------------------------------#
-if st.session_state.pagina == "inicio":
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 100px; font-weight: 900;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align:center; color:white; font-size: 20px; letter-spacing: 5px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
-    st.markdown("<br><br>", unsafe_allow_html=True)
+if st.session_state.pagina == "login":
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 50px;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="color:white; text-align:center; font-size: 18px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
+    
+    # Botão centralizado para entrar no sistema
     if st.button("🚀 INICIAR SESSÃO", use_container_width=True):
-        st.session_state.pagina = "login"
+        st.session_state.pagina = "menu_central"
         st.rerun()
 
 # #-------------------------------------------------------------------------#
@@ -134,21 +134,33 @@ elif st.session_state.pagina == "menu_central":
             st.session_state.pagina = "tabela_consumo"
             st.rerun()
 
-# Bloco 5 - Nota Fiscal (Versão Compatível com Render Free)
-st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
-st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
+# #-------------------------------------------------------------------------#
+#             TELA DE APOIO (NF) (BLOCO 5)
+# #-------------------------------------------------------------------------#
+elif st.session_state.pagina == "nota_fiscal":
+    # Botão de voltar ao topo
+    if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
+        st.session_state.pagina = "menu_central"
+        st.rerun()
 
-st.markdown('### 📷 TIRAR FOTO DO QR CODE')
-# Isso abre a câmera do celular de forma nativa e segura
-foto_qr = st.camera_input("Aponte para o QR Code da NF")
+    st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="banner-interno-verde">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
+    
+    # A câmera fica EXCLUSIVAMENTE aqui
+    st.markdown('### 📷 ESCANEAR QR CODE')
+    foto_qr = st.camera_input("Aponte para o QR Code da NF")
+    
+    if foto_qr:
+        st.success("Foto registrada! Prossiga com o preenchimento.")
 
-if foto_qr:
-    st.success("Foto registrada com sucesso!")
-    st.info("O sistema armazenará a imagem para conferência.")
-
-st.markdown("---")
-# Campo para o tripulante confirmar a chave
-chave_nf = st.text_input("CONFIRME A CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
+    st.markdown("---")
+    
+    # Campos de preenchimento manual
+    chave_nf = st.text_input("CONFIRME A CHAVE DE ACESSO (44 DÍGITOS)", max_chars=44)
+    num_nf = st.text_input("NÚMERO DA NOTA FISCAL")
+    
+    if st.button("💾 SALVAR DADOS DA NOTA", use_container_width=True, type="primary"):
+        st.success("Dados da Nota Fiscal salvos com sucesso!")
 
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
