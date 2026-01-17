@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - MÁSCARA 4x4 E FUNDO BRANCO
+#             TELA DE APOIO (NF) (BLOCO 5) - LIMPEZA PÓS-DOWNLOAD
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,13 +147,9 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # ESTILIZAÇÃO: Fundo Branco, Letra Vermelha em Negrito e Centralizada
+    # ESTILIZAÇÃO MANTIDA
     st.markdown("""
         <style>
-        .aviso-base { background-color: white; padding: 15px; border-radius: 10px; text-align: center; font-size: 25px; margin-bottom: 15px; border: 2px solid #ccc; color: black; }
-        .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 25px; font-weight: bold; border-left: 8px solid #2e7d32; }
-        
-        /* Força fundo branco e texto vermelho negrito no input */
         div[data-baseweb="input"] { background-color: white !important; border: 3px solid #2e7d32 !important; border-radius: 10px !important; }
         div[data-baseweb="input"] input {
             background-color: white !important;
@@ -164,75 +160,79 @@ elif st.session_state.pagina == "nota_fiscal":
             text-align: center !important;
             font-family: 'Courier New', Courier, monospace !important;
         }
+        .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-size: 22px; font-weight: bold; border-left: 8px solid #2e7d32; }
         </style>
     """, unsafe_allow_html=True)
 
-    # Inicia a variável de estado para a chave se não existir
+    # Inicialização das variáveis de controle
     if 'chave_formatada' not in st.session_state:
         st.session_state.chave_formatada = ""
+    
+    # Função para limpar os campos
+    def limpar_para_nova_consulta():
+        st.session_state.chave_formatada = ""
+        if 'dados_nf_validos' in st.session_state:
+            del st.session_state.dados_nf_validos
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
     
-    # ENTRADA DE DADOS
+    # Campo de entrada
     chave_input = st.text_input("CHAVE", value=st.session_state.chave_formatada, key="campo_nf", label_visibility="collapsed")
 
-    # LÓGICA DA MÁSCARA (Executa apenas se o que foi digitado mudou)
-    # Remove espaços para processar os números puros
+    # Lógica da Máscara 4x4
     apenas_numeros = "".join(filter(str.isdigit, chave_input))[:44]
-    
-    # Reconstrói a string com espaços de 4 em 4
     nova_formatacao = " ".join([apenas_numeros[i:i+4] for i in range(0, len(apenas_numeros), 4)])
 
-    # Se a formatação atual for diferente da nova (usuário digitou), atualiza e recarrega
     if st.session_state.chave_formatada != nova_formatacao:
         st.session_state.chave_formatada = nova_formatacao
         st.rerun()
 
-    # Mensagens de Apoio baseadas nos números limpos
-    if 0 < len(apenas_numeros) < 44:
-        st.markdown(f'<div class="aviso-base">Digitando: {len(apenas_numeros)} / 44</div>', unsafe_allow_html=True)
-    elif len(apenas_numeros) == 44:
-        st.markdown('<div class="aviso-base" style="color: green; border: 3px solid green; font-weight: bold;">✅ CHAVE COMPLETA!</div>', unsafe_allow_html=True)
-
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
         if len(apenas_numeros) == 44:
-            # Identificação da UF
-            cod_uf = apenas_numeros[0:2]
-            nome_uf = "PARÁ - PA" if cod_uf == "15" else "AMAZONAS - AM" if cod_uf == "13" else f"UF: {cod_uf}"
-            
             st.session_state.dados_nf_validos = {
-                "UF": nome_uf, "COMPETÊNCIA": apenas_numeros[2:6], "CNPJ": apenas_numeros[6:20], "MOD": apenas_numeros[20:22],
-                "SÉRIE": apenas_numeros[22:25], "NÚMERO DA NOTA FISCAL": apenas_numeros[25:34], "TPEMIS": apenas_numeros[34:35], "CDV": apenas_numeros[43:44]
+                "UF": "PARÁ - PA" if apenas_numeros[:2] == "15" else "AMAZONAS - AM",
+                "COMPETÊNCIA": apenas_numeros[2:6],
+                "CNPJ": apenas_numeros[6:20],
+                "MOD": apenas_numeros[20:22],
+                "SÉRIE": apenas_numeros[22:25],
+                "NÚMERO DA NOTA FISCAL": apenas_numeros[25:34],
+                "TPEMIS": apenas_numeros[34:35],
+                "CDV": apenas_numeros[43:44]
             }
         else:
             st.error("A chave precisa ter 44 dígitos.")
 
-    # Exibição dos resultados e geração de PDF
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        if st.button("📄 GERAR PDF DA NOTA", use_container_width=True, type="primary"):
+        # GERAÇÃO DE PDF COM LIMPEZA AUTOMÁTICA
+        if st.button("📄 PREPARAR PDF", use_container_width=True, type="primary"):
             from fpdf import FPDF
             try:
                 pdf = FPDF()
                 pdf.add_page()
-                pdf.set_font("Helvetica", 'B', 16)
-                pdf.cell(0, 10, "ZION - SISTEMA DE GESTÃO NAVAL", ln=True, align='C')
-                pdf.ln(10)
+                pdf.set_font("Arial", 'B', 14)
+                pdf.cell(0, 10, "RELATORIO DE NOTA FISCAL - ZION", ln=True, align='C')
+                pdf.ln(5)
+                pdf.set_font("Arial", '', 12)
                 for c, v in st.session_state.dados_nf_validos.items():
-                    pdf.set_font("Helvetica", 'B', 11); pdf.cell(80, 10, f" {c}", border=1)
-                    pdf.set_font("Helvetica", ''); pdf.cell(110, 10, f" {v}", border=1, ln=True)
+                    pdf.cell(0, 10, f"{c}: {v}", border=1, ln=True)
                 
-                pdf_output = bytes(pdf.output(dest='S'))
+                pdf_bytes = pdf.output(dest='S').encode('latin-1', errors='ignore')
+                
+                # O segredo está no on_click para resetar a página após o download
                 st.download_button(
-                    label="📥 BAIXAR RELATÓRIO PDF", data=pdf_output, 
-                    file_name=f"Relatorio_NF_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
-                    mime="application/pdf", use_container_width=True,
-                    on_click=lambda: (st.session_state.pop('dados_nf_validos', None), st.session_state.update({"chave_formatada": ""}))
+                    label="📥 CLIQUE AQUI PARA BAIXAR E LIMPAR", 
+                    data=pdf_bytes, 
+                    file_name=f"Nota_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf", 
+                    mime="application/pdf", 
+                    use_container_width=True,
+                    on_click=limpar_para_nova_consulta
                 )
-            except Exception as e: st.error(f"Erro: {e}")
+            except Exception as e:
+                st.error(f"Erro ao gerar PDF: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
