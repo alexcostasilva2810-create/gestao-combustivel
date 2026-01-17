@@ -77,24 +77,26 @@ if st.session_state.usuario_logado:
     st.markdown(f'<div class="user-header">👤 {st.session_state.usuario_logado}</div>', unsafe_allow_html=True)
 
 # #-------------------------------------------------------------------------#
-#             TELA 1: LOGIN (BLOCO 2)
+#            TELA 1: LOGO ZION E BOTÃO INICIAR (BLOCO 2)
 # #-------------------------------------------------------------------------#
 
-# ESSA LINHA É A CHAVE: Se a variável não existe, nós criamos ela aqui
-if 'pagina' not in st.session_state:
-    st.session_state.pagina = "login"
+if st.session_state.pagina == "inicio":
 
-# Se a página for login, mostramos os botões
-if st.session_state.pagina == "login":
-    st.markdown('<h1 style="color:white; text-align:center; font-size: 60px;">ZION</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="color:white; text-align:center; font-size: 20px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
-    
-    st.markdown('<br><br>', unsafe_allow_html=True)
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
 
-    # Botão para entrar
+    st.markdown('<h1 style="color:white; text-align:center; font-size: 100px; font-weight: 900;">ZION</h1>', unsafe_allow_html=True)
+
+    st.markdown('<p style="text-align:center; color:white; font-size: 20px; letter-spacing: 5px;">SISTEMA DE GESTÃO NAVAL</p>', unsafe_allow_html=True)
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
     if st.button("🚀 INICIAR SESSÃO", use_container_width=True):
-        st.session_state.pagina = "menu_central"
+
+        st.session_state.pagina = "login"
+
         st.rerun()
+
+
 
 # #-------------------------------------------------------------------------#
 #            TELA 2: LOGIN COM CAMPOS E ALERTAS (BLOCO 3)
