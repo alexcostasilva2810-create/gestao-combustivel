@@ -268,10 +268,10 @@ if st.session_state.pagina == "abastecimento":
             pdf.ln(10)
             
             pdf.set_font("Arial", "", 12)
-            corpo = (f"Comunico que o empurrador {navio} está apto a receber o consumo de {qtd_pedida:,} lts, "
-                     f"visto que possui um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
+            corpo = (f"Comunico que o empurrador {navio} recebeu o consumo de {qtd_pedida:,} lts, "
+                     f"visto que possuia um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
                      f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
-                     f"Portanto, o saldo total após o abastecimento será de {total_geral:,} lts.\n"
+                     f"Portanto, o saldo total após o abastecimento é de {total_geral:,} lts.\n"
                      f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio]:,} lts.\n\n"
                      f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.\n\n"
                      f"Segue abaixo as fotos do antes e depois do abastecimento:")
