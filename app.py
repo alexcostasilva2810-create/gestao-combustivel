@@ -137,7 +137,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE APOIO (NF) (BLOCO 5) - AJUSTE FINAL DE LAYOUT
+#             TELA DE APOIO (NF) (BLOCO 5) - BLINDAGEM TOTAL
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "nota_fiscal":
     if st.button("⬅️ VOLTAR AO MENU CENTRAL", use_container_width=True): 
@@ -147,55 +147,55 @@ elif st.session_state.pagina == "nota_fiscal":
     st.markdown('<h1 style="color:white; text-align:center;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div style="background-color: #2e7d32; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">DADOS DA NOTA FISCAL</div>', unsafe_allow_html=True)
 
-    # AJUSTE DE LARGURA E ALTURA DO CAMPO
+    # CSS BLINDADO: Ajuste de altura e fonte para não cortar os números
     st.markdown("""
         <style>
         div[data-baseweb="input"] { 
             background-color: white !important; 
             border: 3px solid #2e7d32 !important; 
             border-radius: 10px !important; 
-            width: 100% !important;
         }
         div[data-baseweb="input"] input {
             background-color: white !important;
             color: #FF0000 !important;
             font-weight: 900 !important;
-            font-size: 20px !important; /* Tamanho reduzido para caber os 44 números com espaços */
-            height: 70px !important;   /* Altura ajustada */
+            font-size: 16px !important; /* Fonte menor para caber os 44 dígitos + espaços */
+            height: 55px !important;   /* Altura otimizada */
             text-align: center !important;
             font-family: 'Courier New', Courier, monospace !important;
         }
-        .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 12px; border-radius: 10px; margin-bottom: 8px; font-size: 20px; font-weight: bold; border-left: 8px solid #2e7d32; }
+        .card-info { background-color: #f0f2f6; color: #1f1f1f; padding: 10px; border-radius: 10px; margin-bottom: 5px; font-size: 18px; font-weight: bold; border-left: 8px solid #2e7d32; }
         </style>
     """, unsafe_allow_html=True)
 
-    # Estado da chave
+    # Inicialização blindada do estado
     if 'chave_limpa' not in st.session_state: st.session_state.chave_limpa = ""
 
-    # FUNÇÃO PARA LIMPAR TUDO
-    def limpar_consulta():
+    # Função que limpa tudo após o download
+    def reset_total_consulta():
         st.session_state.chave_limpa = ""
         if 'dados_nf_validos' in st.session_state:
             del st.session_state.dados_nf_validos
 
     st.markdown('### 🔑 INSIRA A CHAVE DE ACESSO')
     
-    # MÁSCARA EM TEMPO REAL (4 em 4)
+    # Máscara 4x4 em tempo real
     exibicao = " ".join([st.session_state.chave_limpa[i:i+4] for i in range(0, len(st.session_state.chave_limpa), 4)])
     
-    # Campo de entrada com o valor formatado
-    chave_digitada = st.text_input("DIGITE", value=exibicao, key="campo_nf_ajustado", label_visibility="collapsed")
+    # Campo de entrada ajustado
+    chave_input = st.text_input("CHAVE", value=exibicao, key="campo_nf_blindado", label_visibility="collapsed")
     
-    # Processa apenas os números para a memória
-    nova_chave_limpa = "".join(filter(str.isdigit, chave_digitada))[:44]
+    # Filtro de segurança: apenas números
+    numeros_puros = "".join(filter(str.isdigit, chave_input))[:44]
     
-    if nova_chave_limpa != st.session_state.chave_limpa:
-        st.session_state.chave_limpa = nova_chave_limpa
+    if numeros_puros != st.session_state.chave_limpa:
+        st.session_state.chave_limpa = numeros_puros
         st.rerun()
 
     if st.button("🔍 VERIFICAÇÃO", use_container_width=True):
         if len(st.session_state.chave_limpa) == 44:
             c = st.session_state.chave_limpa
+            # Decomposição oficial da chave
             st.session_state.dados_nf_validos = {
                 "UF": "PARÁ - PA" if c[:2] == "15" else "AMAZONAS - AM",
                 "COMPETÊNCIA": c[2:6], "CNPJ": c[6:20], "MOD": c[20:22],
@@ -203,43 +203,40 @@ elif st.session_state.pagina == "nota_fiscal":
                 "TPEMIS": c[34:35], "CDV": c[43:44]
             }
         else:
-            st.error(f"Faltam números: {len(st.session_state.chave_limpa)}/44")
+            st.error(f"Digite os 44 números (Faltam {44 - len(st.session_state.chave_limpa)})")
 
-    # Exibe os cards se houver dados
     if 'dados_nf_validos' in st.session_state:
         st.markdown("---")
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div class="card-info">{campo}: {valor}</div>', unsafe_allow_html=True)
 
-        # BOTÃO DE PDF COM CORREÇÃO DE ERRO E LIMPEZA
-        if st.button("📄 GERAR RELATÓRIO PDF", use_container_width=True, type="primary"):
+        # BOTÃO DE PDF COM BLINDAGEM DE BINÁRIO
+        try:
             from fpdf import FPDF
-            try:
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", 'B', 14)
-                pdf.cell(0, 10, "ZION - DADOS DA NOTA FISCAL", ln=True, align='C')
-                pdf.ln(5)
-                pdf.set_font("Arial", '', 12)
-                for k, v in st.session_state.dados_nf_validos.items():
-                    pdf.cell(90, 10, f" {k}:", border=1)
-                    pdf.cell(100, 10, f" {v}", border=1, ln=True)
-                
-                # CORREÇÃO DO ERRO 'BYTEARRAY': pegamos o output e garantimos que é binário puro
-                pdf_output = pdf.output(dest='S')
-                # No Streamlit moderno, bytes ou bytearray funcionam direto sem .encode()
-                pdf_final = bytes(pdf_output)
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", 'B', 14)
+            pdf.cell(0, 10, "RELATORIO DE NOTA FISCAL - ZION", ln=True, align='C')
+            pdf.ln(5)
+            pdf.set_font("Arial", '', 12)
+            for k, v in st.session_state.dados_nf_validos.items():
+                pdf.cell(90, 10, f" {k}:", border=1)
+                pdf.cell(100, 10, f" {v}", border=1, ln=True)
+            
+            # Blindagem: convertendo para bytes de forma direta sem .encode()
+            pdf_output = pdf.output(dest='S')
+            pdf_bytes = bytes(pdf_output) if isinstance(pdf_output, (bytearray, bytes)) else pdf_output.encode('latin-1')
 
-                st.download_button(
-                    label="📥 BAIXAR E LIMPAR CAMPOS",
-                    data=pdf_final,
-                    file_name=f"Relatorio_NF_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    on_click=limpar_consulta # Limpa quando o usuário clica para baixar
-                )
-            except Exception as e:
-                st.error(f"Erro técnico no PDF: {e}")
+            st.download_button(
+                label="📥 BAIXAR RELATÓRIO E LIMPAR TELA",
+                data=pdf_bytes,
+                file_name=f"Relatorio_{st.session_state.dados_nf_validos['NÚMERO DA NOTA FISCAL']}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                on_click=reset_total_consulta # Força a limpeza após o clique
+            )
+        except Exception as e:
+            st.error(f"Erro ao preparar arquivo: {e}")
 # #-------------------------------------------------------------------------#
 #                           TELA DE ABASTECIMENTO (BLOCO 6)
 # #-------------------------------------------------------------------------#
