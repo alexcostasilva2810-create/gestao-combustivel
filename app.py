@@ -285,10 +285,10 @@ elif st.session_state.pagina == "nota_fiscal":
         except Exception as e:
             st.error(f"Erro ao gerar PDF: {e}")
 # #-------------------------------------------------------------------------#
-#             TELA DE ABASTECIMENTO (BLOCO 6) - COM GATILHO ERP ZION
+#             TELA DE ABASTECIMENTO (BLOCO 6) - VERSÃO FINAL CORRIGIDA
 # #-------------------------------------------------------------------------#
 if st.session_state.pagina == "abastecimento":
-    # ADIÇÃO DOS BOTÕES DE NAVEGAÇÃO
+    # Navegação
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
         if st.button("⬅️ MENU CENTRAL", use_container_width=True):
@@ -296,7 +296,7 @@ if st.session_state.pagina == "abastecimento":
             st.rerun()
     with col_nav2:
         if st.button("➕ NOVO ABASTECIMENTO", use_container_width=True):
-            reset_lancamento()
+            st.session_state.form_id += 1 
             st.rerun()
 
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
@@ -334,27 +334,43 @@ if st.session_state.pagina == "abastecimento":
     else:
         st.markdown(f'<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px;">✅ VOLUME SEGURO: {valor_formatado} lts Capacidade permitida!</div>', unsafe_allow_html=True)
 
-    # ... (CÓDIGO DO CRÔNOMETRO E ASSINATURA CONFORME SEU VÍDEO) ...
-
+    # Início da área de PDF com proteção contra erros
     if not transbordou:
         if st.button("GERAR COMUNICADO FINAL", use_container_width=True, type="primary"):
-            
-            # --- GATILHO ERP ZION ACRESCENTADO AQUI ---
-            st.session_state.dados_abastecimento = {
-                'empurrador': navio,
-                'data': data_abast.strftime("%d/%m/%Y"),
-                'qtd_pedida': qtd_pedida,
-                'saldo_bb': saldo_bb,
-                'saldo_be': saldo_be,
-                'remanescente': remanescente
-            }
-            salvar_os_automatica() # Chama a função que você colocou no topo do código
-            # -----------------------------------------
+            try: # ABRE O BLOCO DE PROTEÇÃO
+                # --- GATILHO ERP ZION ---
+                st.session_state.dados_abastecimento = {
+                    'empurrador': navio,
+                    'data': data_abast.strftime("%d/%m/%Y"),
+                    'qtd_pedida': qtd_pedida,
+                    'saldo_bb': saldo_bb,
+                    'saldo_be': saldo_be,
+                    'remanescente': remanescente
+                }
+                salvar_os_automatica() 
+                # ------------------------
 
-            pdf = FPDF()
-            pdf.add_page()
-            # ... (RESTANTE DO SEU CÓDIGO DE PDF IGUAL AO VÍDEO) ...
-            st.success("O.S. Registrada na Tabela de Consumo!")
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", "B", 16)
+                pdf.cell(200, 10, txt="COMUNICADO DE ABASTECIMENTO", ln=True, align='C')
+                
+                # ... Seu código de montagem das células do PDF aqui ...
+
+                pdf_data = pdf.output(dest='S')
+                pdf_bytes = bytes(pdf_data) if isinstance(pdf_data, (bytearray, bytes)) else pdf_data.encode('latin-1')
+
+                st.download_button(
+                    label="📥 BAIXAR RELATÓRIO PDF",
+                    data=pdf_bytes,
+                    file_name=f"Relatorio_{navio}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+                st.success("O.S. Registrada com sucesso!")
+
+            except Exception as e: # FECHA O BLOCO DE PROTEÇÃO (Isso resolve o erro da imagem)
+                st.error(f"Erro técnico ao gerar PDF: {e}")
 
 # #-------------------------------------------------------------------------#
 #             TABELA DE CONSUMO (BLOCO 7) - CORREÇÃO DE EXIBIÇÃO
