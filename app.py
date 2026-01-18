@@ -78,6 +78,20 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- CONFIGURAÇÃO DO ÍCONE E APP (PWA) ---
+st.markdown(
+    f"""
+    <head>
+        <link rel="manifest" href="/static/manifest.json">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="apple-touch-icon" href="/static/icon-192.png">
+        <title>ZION</title>
+    </head>
+    """,
+    unsafe_allow_html=True
+)
+
 # #-------------------------------------------------------------------------#
 #                LÓGICA DE NAVEGAÇÃO E ESTADO (MEMÓRIA) (BLOCO 1)
 # #-------------------------------------------------------------------------#
