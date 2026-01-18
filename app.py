@@ -181,7 +181,7 @@ elif st.session_state.pagina == "menu_central":
 #             TELA DE ABASTECIMENTO INTEGRADA (BLOCO COMPLETO)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
-    # --- ADIÇÃO DOS BOTÕES DE NAVEGAÇÃO E RESET TOTAL ---
+    # --- BOTÕES DE NAVEGAÇÃO E RESET TOTAL ---
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
         if st.button("⬅️ MENU CENTRAL", use_container_width=True):
@@ -189,7 +189,6 @@ elif st.session_state.pagina == "abastecimento":
             st.rerun()
     with col_nav2:
         if st.button("➕ NOVO LANÇAMENTO", use_container_width=True):
-            # Reset de tudo: Abastecimento + NF + Cronômetro
             st.session_state.navio_atual = "ANGELO"
             st.session_state.t_rodando = False
             st.session_state.t_inicio = 0
@@ -231,11 +230,9 @@ elif st.session_state.pagina == "abastecimento":
     valor_formatado = f"{total_geral:,}".replace(",", ".")
 
     if transbordou:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>''', unsafe_allow_html=True)
+        st.markdown(f'<div class="bloqueio-alerta">🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>', unsafe_allow_html=True)
     else:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            ✅ VOLUME SEGURO: {valor_formatado} Lts Capacidade permitida!</div>''', unsafe_allow_html=True)
+        st.markdown(f'<div class="seguro-alerta">✅ VOLUME SEGURO: {valor_formatado} Lts Capacidade permitida!</div>', unsafe_allow_html=True)
 
     # CRONÔMETRO
     col_timer, col_fotos_upload = st.columns([1, 2])
@@ -253,29 +250,29 @@ elif st.session_state.pagina == "abastecimento":
         foto_a = st.file_uploader("CARREGAR FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"up_a_{st.session_state.form_id}")
         foto_d = st.file_uploader("CARREGAR FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"up_d_{st.session_state.form_id}")
 
-    # --- INSERÇÃO DOS CAMPOS DA NF (ABAIXO DOS UPLOADS) ---
+    # --- CAMPOS DA NF ---
     st.markdown("---")
     st.markdown('<div style="background-color: #004d40; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">VERIFICAÇÃO DE NOTA FISCAL (NF-e)</div>', unsafe_allow_html=True)
-    chave_acesso = st.text_input("DIGITE OU COLE A CHAVE DE ACESSO (44 DÍGITOS)", max_chars=54, key=f"nf_input_{st.session_state.form_id}")
+    chave_acesso = st.text_input("DIGITE OU COLE A CHAVE DE ACESSO", max_chars=54, key=f"nf_input_{st.session_state.form_id}")
     chave_limpa = "".join(filter(str.isdigit, chave_acesso))
     
     if st.button("🔍 VERIFICAÇÃO NF", use_container_width=True, key=f"btn_nf_{st.session_state.form_id}"):
         if len(chave_limpa) == 44:
+            # Extração da competência formatada MM/AA
+            comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
             st.session_state.dados_nf_validos = {
-                "UF": "AMAZONAS - AM", "COMPETÊNCIA": chave_limpa[2:6], "CNPJ": chave_limpa[6:20],
+                "UF": "AMAZONAS - AM", "COMPETÊNCIA": comp_br, "CNPJ": chave_limpa[6:20],
                 "MOD": chave_limpa[20:22], "SÉRIE": chave_limpa[22:25], "NÚMERO": chave_limpa[25:34],
                 "CHAVE": chave_limpa
             }
-            st.success("Nota Fiscal validada com sucesso!")
-        else:
-            st.error("Chave de acesso inválida.")
+            st.success("Nota Fiscal validada!")
 
     if st.session_state.dados_nf_validos:
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div style="background-color: #f1f3f4; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 5px solid #2e7d32; color: black; font-weight: bold;">{campo}: {valor}</div>', unsafe_allow_html=True)
 
     st.markdown("ASSINATURA DIGITAL :")
-    canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
+    canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=120, key=f"sig_{st.session_state.form_id}")
 
     st.markdown("---")
     
@@ -292,59 +289,65 @@ elif st.session_state.pagina == "abastecimento":
             pdf = FPDF()
             pdf.add_page()
             
-            # Título do PDF
+            # Título e Texto
             pdf.set_font("Arial", "B", 22); pdf.set_text_color(0, 51, 204)
             pdf.cell(0, 15, "ZION INTEGRADO", ln=True, align="C")
             pdf.set_font("Arial", "B", 14); pdf.set_text_color(0, 0, 0)
             pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align="C")
             pdf.ln(5)
             
-            # Texto Original
             pdf.set_font("Arial", "", 12)
             corpo = (f"Comunico que o empurrador {navio} recebeu o consumo de {qtd_pedida:,} lts, "
                      f"visto que possuia um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
                      f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
                      f"Portanto, o saldo total após o abastecimento é de {total_geral:,} lts.\n"
-                     f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio]:,} lts.\n\n"
-                     f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.")
+                     f"Capacidade total: {CAPACIDADES[navio]:,} lts. Tempo: {st.session_state.tempo_final_str}.")
             pdf.multi_cell(0, 8, corpo)
             
-            # Fotos (tamanho ajustado para caber a NF)
-            y_fotos = pdf.get_y() + 5
+            # Fotos
+            pdf.ln(2)
+            y_fotos = pdf.get_y()
             if foto_a: pdf.image(Image.open(foto_a), x=15, y=y_fotos, w=80)
             if foto_d: pdf.image(Image.open(foto_d), x=110, y=y_fotos, w=80)
             
-            # Tabela da NF (Onde você marcou em vermelho)
+            # TABELA DA NF (COMPETÊNCIA AO LADO DE SÉRIE)
             pdf.set_y(y_fotos + 55)
             pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 10)
-            pdf.cell(0, 8, "DADOS DA NOTA FISCAL", ln=True, fill=True, border=1, align="C")
+            pdf.cell(0, 8, "DADOS DA NOTA FISCAL (NF-e)", ln=True, fill=True, border=1, align="C")
             pdf.set_font("Arial", "", 9)
+            
             if st.session_state.dados_nf_validos:
                 nf = st.session_state.dados_nf_validos
                 pdf.cell(45, 6, " NUMERO DA NF:", border=1); pdf.cell(50, 6, f" {nf['NÚMERO']}", border=1)
-                pdf.cell(45, 6, " SERIE:", border=1); pdf.cell(50, 6, f" {nf['SÉRIE']}", border=1, ln=True)
+                pdf.cell(45, 6, " CNPJ:", border=1); pdf.cell(50, 6, f" {nf['CNPJ']}", border=1, ln=True)
+                
+                # LINHA DA SÉRIE COM COMPETÊNCIA AO LADO
+                pdf.cell(45, 6, " SERIE:", border=1); pdf.cell(50, 6, f" {nf['SÉRIE']}", border=1)
+                pdf.cell(45, 6, " COMPETENCIA:", border=1); pdf.cell(50, 6, f" {nf['COMPETÊNCIA']}", border=1, ln=True)
+                
                 pdf.cell(45, 6, " CHAVE DE ACESSO:", border=1); pdf.cell(145, 6, f" {nf['CHAVE']}", border=1, ln=True)
 
-            # Assinatura
+            # Assinatura e Nome
             if canvas_result.image_data is not None:
+                y_s = pdf.get_y() + 2
                 img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
-                pdf.image(buf, x=75, y=pdf.get_y()+2, w=60)
-            
-            pdf.ln(18)
+                pdf.image(buf, x=75, y=y_s, w=50)
+                pdf.set_y(y_s + 15)
+
+            pdf.ln(8)
             pdf.line(40, pdf.get_y(), 170, pdf.get_y())
             pdf.set_font("Arial", "B", 10)
             pdf.cell(0, 5, f"{st.session_state.usuario_logado}", ln=True, align="C")
             
             fuso_br = timezone(timedelta(hours=-3))
-            agora_br = datetime.now(fuso_br).strftime("%d/%m/%Y às %H:%M:%S")
+            pdf.set_y(275)
             pdf.set_font("Arial", "I", 8)
-            pdf.cell(0, 5, f"Assinado digitalmente em: {agora_br}", ln=True, align="C")
+            pdf.cell(0, 5, f"Gerado em: {datetime.now(fuso_br).strftime('%d/%m/%Y %H:%M')}", align="C", ln=True)
             
-            st.download_button("📥 BAIXAR RELATÓRIO FINAL", data=bytes(pdf.output(dest='S')), file_name=f"Zion_Final_{navio}.pdf", use_container_width=True)
+            st.download_button("📥 BAIXAR RELATÓRIO ZION INTEGRADO", data=bytes(pdf.output(dest='S')), file_name=f"Zion_Integrado_{navio}.pdf", use_container_width=True)
 
-        st.markdown(f'''<div style="color: #008000; background-color: #FFFFFF; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid #008000; margin-top: 20px;">
-            ⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>''', unsafe_allow_html=True)
+        st.markdown(f'<div class="instrucao-final">⚠️ Após gerar o PDF favor enviar o arquivo para o CIOP.</div>', unsafe_allow_html=True)
 # #-------------------------------------------------------------------------#
 #             TABELA DE CONSUMO (BLOCO 7) - CORREÇÃO DE EXIBIÇÃO
 # #-------------------------------------------------------------------------#
