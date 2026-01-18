@@ -1,1 +1,15 @@
-
+{
+  "name": "ZION - SISTEMA DE GESTÃO",
+  "short_name": "ZION",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/static/icone ZION.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
