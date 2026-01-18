@@ -178,7 +178,7 @@ elif st.session_state.pagina == "menu_central":
             st.rerun()
 
 # #-------------------------------------------------------------------------#
-#             TELA DE ABASTECIMENTO INTEGRADA (DOSSIÊ COMPLETO)
+#             TELA DE ABASTECIMENTO INTEGRADA (COM TEXTO ORIGINAL + NF)
 # #-------------------------------------------------------------------------#
 elif st.session_state.pagina == "abastecimento":
     # --- BOTÕES DE NAVEGAÇÃO E LIMPEZA TOTAL ---
@@ -189,7 +189,6 @@ elif st.session_state.pagina == "abastecimento":
             st.rerun()
     with col_nav2:
         if st.button("➕ NOVO LANÇAMENTO", use_container_width=True):
-            # Limpeza Total (Abastecimento + NF + ERP)
             st.session_state.navio_atual = "ANGELO"
             st.session_state.t_rodando = False
             st.session_state.t_inicio = 0
@@ -197,13 +196,12 @@ elif st.session_state.pagina == "abastecimento":
             st.session_state.dados_nf_validos = {}
             st.session_state.chave_limpa = ""
             st.session_state.dados_abastecimento = {}
-            st.session_state.form_id += 1 # Reseta fisicamente os campos da tela
+            st.session_state.form_id += 1 
             st.rerun()
 
     st.markdown('<h1 style="color:white; text-align:center; font-size: 40px;">ZION</h1>', unsafe_allow_html=True)
     st.markdown('<div class="banner-interno-verde">ACOMPANHAMENTO INTEGRADO (NF + CONSUMO)</div>', unsafe_allow_html=True)
 
-    # --- DADOS DO EMPURRADOR E CAPACIDADES ---
     CAPACIDADES = {
         "ANGELO": 17000, "ANGICO": 88000, "AROEIRA": 88000, "BRENO": 34700,
         "CANJERANA": 18000, "CUMARU": 64000, "IPE": 29700, "SAMAUMA": 92000,
@@ -218,7 +216,6 @@ elif st.session_state.pagina == "abastecimento":
     
     st.markdown(f'<div style="color: #FFFF00; font-weight: bold;">Capacidade do Tanque: {CAPACIDADES[navio]:,} lts</div>', unsafe_allow_html=True)
 
-    # --- INPUTS DE QUANTIDADE E SALDO ---
     col_a, col_b = st.columns(2)
     with col_a:
         data_abast = st.date_input("DATA", format="DD/MM/YYYY", key=f"d_{st.session_state.form_id}")
@@ -233,13 +230,10 @@ elif st.session_state.pagina == "abastecimento":
     valor_formatado = f"{total_geral:,}".replace(",", ".")
 
     if transbordou:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #FF0000; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>''', unsafe_allow_html=True)
+        st.markdown(f'<div class="bloqueio-alerta">🚨 BLOQUEIO: {valor_formatado} Lts excede o limite!</div>', unsafe_allow_html=True)
     else:
-        st.markdown(f'''<div style="color: #FFFFFF; background-color: #28a745; padding: 15px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 900; border: 3px solid white; margin-bottom: 20px;">
-            ✅ VOLUME SEGURO: {valor_formatado} Lts</div>''', unsafe_allow_html=True)
+        st.markdown(f'<div class="seguro-alerta">✅ VOLUME SEGURO: {valor_formatado} Lts</div>', unsafe_allow_html=True)
 
-    # --- CRONÔMETRO E UPLOADS DE FOTOS ---
     col_timer, col_fotos = st.columns([1, 2])
     with col_timer:
         if st.session_state.t_rodando:
@@ -255,103 +249,95 @@ elif st.session_state.pagina == "abastecimento":
         foto_a = st.file_uploader("FOTO ANTES (A)", type=['jpg', 'png', 'jpeg'], key=f"ua_{st.session_state.form_id}")
         foto_d = st.file_uploader("FOTO DEPOIS (D)", type=['jpg', 'png', 'jpeg'], key=f"ud_{st.session_state.form_id}")
 
-    # --- INTEGRAÇÃO BLOCO 5: DADOS DA NOTA FISCAL ---
+    # --- VALIDAÇÃO FISCAL (ANTIGO BLOCO 5) ---
     st.markdown("---")
     st.markdown('<div style="background-color: #004d40; color: white; padding: 5px; text-align: center; border-radius: 5px; font-weight: bold;">VALIDAÇÃO FISCAL (NF-e)</div>', unsafe_allow_html=True)
-    
     chave_acesso = st.text_input("COLE A CHAVE DE ACESSO (44 DÍGITOS)", max_chars=54, key=f"nf_{st.session_state.form_id}")
     chave_limpa = "".join(filter(str.isdigit, chave_acesso))
     
-    if st.button("🔍 VALIDAR NOTA", use_container_width=True, key=f"btn_nf_{st.session_state.form_id}"):
+    if st.button("🔍 VALIDAR NOTA", use_container_width=True):
         if len(chave_limpa) == 44:
             st.session_state.dados_nf_validos = {
-                "UF": "AMAZONAS - AM",
-                "COMPETÊNCIA": chave_limpa[2:6],
-                "CNPJ": chave_limpa[6:20],
-                "MOD": chave_limpa[20:22],
-                "SÉRIE": chave_limpa[22:25],
-                "NÚMERO DA NOTA FISCAL": chave_limpa[25:34],
+                "UF": "AMAZONAS - AM", "COMPETÊNCIA": chave_limpa[2:6], "CNPJ": chave_limpa[6:20],
+                "MOD": chave_limpa[20:22], "SÉRIE": chave_limpa[22:25], "NÚMERO": chave_limpa[25:34],
                 "CHAVE": chave_limpa
             }
             st.success("Nota Fiscal Validada!")
-        else:
-            st.error("Chave inválida. Verifique os 44 dígitos.")
 
     if st.session_state.dados_nf_validos:
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div style="background-color: #f1f3f4; padding: 5px; margin: 2px 0; border-radius: 5px; border-left: 5px solid #2e7d32; color: black; font-size: 13px;"><b>{campo}:</b> {valor}</div>', unsafe_allow_html=True)
 
-    # --- ASSINATURA E FINALIZAÇÃO ---
     st.markdown("---")
     st.markdown("ASSINATURA DIGITAL :")
     canvas_result = st_canvas(stroke_width=3, stroke_color="#000", background_color="#FFFFFF", height=150, key=f"sig_{st.session_state.form_id}")
 
     if not transbordou:
-        if st.button("💾 SALVAR REGISTRO E GERAR PDF", use_container_width=True, type="primary"):
-            
-            # 1. GATILHO ERP ZION (SALVA NO BLOCO 7)
+        if st.button("💾 SALVAR E GERAR PDF", use_container_width=True, type="primary"):
+            # GATILHO ERP
             st.session_state.dados_abastecimento = {
-                'empurrador': navio,
-                'data': data_abast.strftime("%d/%m/%Y"),
-                'qtd_pedida': qtd_pedida,
-                'saldo_bb': saldo_bb,
-                'saldo_be': saldo_be,
-                'remanescente': remanescente,
-                'nf_numero': st.session_state.dados_nf_validos.get("NÚMERO DA NOTA FISCAL", "N/A")
+                'empurrador': navio, 'data': data_abast.strftime("%d/%m/%Y"),
+                'qtd_pedida': qtd_pedida, 'saldo_bb': saldo_bb, 'saldo_be': saldo_be, 'remanescente': remanescente,
+                'nf_numero': st.session_state.dados_nf_validos.get("NÚMERO", "N/A")
             }
             salvar_os_automatica()
 
-            # 2. GERAÇÃO DO PDF INTEGRADO
+            # PDF
             pdf = FPDF()
             pdf.add_page()
-            
-            # Cabeçalho
             pdf.set_font("Arial", "B", 22); pdf.set_text_color(0, 51, 204)
             pdf.cell(0, 15, "ZION", ln=True, align="C")
             pdf.set_font("Arial", "B", 14); pdf.set_text_color(0, 0, 0)
-            pdf.cell(0, 10, "Comunicado de Abastecimento Integrado", ln=True, align="C")
+            pdf.cell(0, 10, "Comunicado de Abastecimento", ln=True, align="C")
+            pdf.ln(10)
+            
+            # TEXTO ORIGINAL RESTAURADO
+            pdf.set_font("Arial", "", 12)
+            corpo = (f"Comunico que o empurrador {navio} recebeu o consumo de {qtd_pedida:,} lts, "
+                     f"visto que possuia um saldo de {saldo_bb:,} lts (BB) e {saldo_be:,} lts (BE), "
+                     f"somados ao saldo remanescente de {remanescente:,} lts.\n\n"
+                     f"Portanto, o saldo total após o abastecimento é de {total_geral:,} lts.\n"
+                     f"Ressaltamos que a capacidade total do empurrador é de {CAPACIDADES[navio]:,} lts.\n\n"
+                     f"Informo que o empurrador levou {st.session_state.tempo_final_str} para abastecer.\n\n"
+                     f"Segue abaixo as fotos do antes e depois do abastecimento:")
+            pdf.multi_cell(0, 8, corpo)
             pdf.ln(5)
             
-            # Dados Operacionais
-            pdf.set_font("Arial", "", 11)
-            corpo = (f"Empurrador: {navio}\nData: {data_abast.strftime('%d/%m/%Y')}\n"
-                     f"Quantidade Recebida: {qtd_pedida:,} lts\n"
-                     f"Tempo de Abastecimento: {st.session_state.tempo_final_str}\n"
-                     f"Saldo Final em Tanque: {total_geral:,} lts.")
-            pdf.multi_cell(0, 7, corpo)
-            pdf.ln(5)
-            
-            # Fotos Antes e Depois
             y_fotos = pdf.get_y()
             if foto_a: pdf.image(Image.open(foto_a), x=15, y=y_fotos, w=85)
             if foto_d: pdf.image(Image.open(foto_d), x=110, y=y_fotos, w=85)
             pdf.ln(60)
 
-            # Tabela da NF (Acima da Assinatura)
-            pdf.set_fill_color(230, 230, 230); pdf.set_font("Arial", "B", 10)
-            pdf.cell(0, 8, "INFORMAÇÕES FISCAIS (NF-e)", ln=True, fill=True, align="C")
+            # --- DADOS DA NF (POSIÇÃO MARCADA EM VERMELHO) ---
+            pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", "B", 10)
+            pdf.cell(0, 8, "INFORMAÇÕES FISCAIS ADICIONAIS (NF-e)", ln=True, fill=True, align="C")
             pdf.set_font("Arial", "", 9)
             if st.session_state.dados_nf_validos:
                 for k, v in st.session_state.dados_nf_validos.items():
                     pdf.cell(60, 6, f" {k}", border=1)
                     pdf.cell(130, 6, f" {v}", border=1, ln=True)
-            pdf.ln(5)
+            pdf.ln(10)
 
-            # Assinatura
+            # ASSINATURA + NOME DO USUÁRIO
             if canvas_result.image_data is not None:
                 img_sig = Image.fromarray(canvas_result.image_data.astype('uint8'), 'RGBA')
                 buf = io.BytesIO(); img_sig.save(buf, format="PNG")
                 pdf.image(buf, x=75, y=pdf.get_y(), w=60)
             
-            # Rodapé de Segurança
-            pdf.set_y(265)
-            fuso_br = timezone(timedelta(hours=-3))
-            pdf.set_font("Arial", "I", 8)
-            pdf.cell(0, 5, f"Assinado digitalmente em {datetime.now(fuso_br).strftime('%d/%m/%Y %H:%M:%S')}", align="C", ln=True)
+            pdf.ln(20)
+            pdf.line(40, pdf.get_y(), 170, pdf.get_y()) # Linha da assinatura
+            pdf.set_font("Arial", "B", 10)
+            pdf.cell(0, 6, f"{st.session_state.usuario_logado}", ln=True, align="C") # NOME DO USUÁRIO ABAIXO DA LINHA
             
-            pdf_out = pdf.output(dest='S')
-            st.download_button("📥 BAIXAR RELATÓRIO COMPLETO", data=bytes(pdf_out), file_name=f"Zion_Integrado_{navio}.pdf", use_container_width=True)
-            st.success("✅ Registro Finalizado e enviado para a Tabela de Consumo!")
+            # RODAPÉ COM DATA E HORA MANTIDOS
+            fuso_br = timezone(timedelta(hours=-3))
+            agora_br = datetime.now(fuso_br).strftime("%d/%m/%Y às %H:%M:%S")
+            pdf.set_font("Arial", "I", 8)
+            pdf.cell(0, 5, f"Assinado digitalmente em: {agora_br}", ln=True, align="C")
+            pdf.cell(0, 5, f"Localização: Belém, Pará - Brasil", ln=True, align="C")
+            
+            st.download_button("📥 BAIXAR RELATÓRIO COMPLETO", data=bytes(pdf.output(dest='S')), file_name=f"Zion_Final_{navio}.pdf", use_container_width=True)
+            st.success("✅ Registro Integrado salvo com sucesso!")
 # #-------------------------------------------------------------------------#
 #             TABELA DE CONSUMO (BLOCO 7) - CORREÇÃO DE EXIBIÇÃO
 # #-------------------------------------------------------------------------#
