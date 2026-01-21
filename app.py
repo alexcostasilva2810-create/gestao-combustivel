@@ -6,6 +6,9 @@ import time
 from PIL import Image
 import io
 import numpy as np
+# Inicialização do estado da sessão
+if "dados_nf_validos" not in st.session_state:
+    st.session_state.dados_nf_validos = None
 
 # #-------------------------------------------------------------------------#
 #                          ERP ZION - LÓGICA CENTRAL
