@@ -283,7 +283,7 @@ elif st.session_state.pagina == "abastecimento":
             }
             st.success("Nota Fiscal validada!")
 
-    if st.session_state.dados_nf_validos:
+    if st.session_state.get('dados_nf_validos'):
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div style="background-color: #f1f3f4; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 5px solid #2e7d32; color: black; font-weight: bold;">{campo}: {valor}</div>', unsafe_allow_html=True)
 
