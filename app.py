@@ -272,99 +272,20 @@ elif st.session_state.pagina == "abastecimento":
 
     st.markdown("---")
     st.markdown('<div style="background-color: #004d40; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">VERIFICAÇÃO DE NOTA FISCAL (NF-e)</div>', unsafe_allow_html=True)
-# --- LEITURA AUTOMÁTICA COMPATÍVEL (LINHAS 275 A 305) ---
-from streamlit_quirc import quirc
-
-# 1. Scanner de alta compatibilidade
-barcode_data = quirc(key="scanner_nf")
-
-# 2. Processamento se houver leitura
-if barcode_data:
-    # Captura o texto do código
-    barcode_text = barcode_data[0].data.decode("utf-8")
-    chave_limpa = "".join(filter(str.isdigit, barcode_text))
+    chave_acesso = st.text_input("DIGITE OU COLE A CHAVE DE ACESSO", max_chars=54, key=f"nf_input_{st.session_state.form_id}")
+    chave_limpa = "".join(filter(str.isdigit, chave_acesso))
     
-    if len(chave_limpa) == 44:
-        st.session_state.chave_acesso = chave_limpa
-        comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
-        
-        # Preenche os dados automaticamente
-        st.session_state.dados_nf_validos = {
-            "UF": "AMAZONAS - AM", 
-            "COMPETÊNCIA": comp_br, 
-            "CNPJ": chave_limpa[6:20],
-            "MOD": chave_limpa[20:22], 
-            "SÉRIE": chave_limpa[22:25], 
-            "NÚMERO": chave_limpa[25:34],
-            "CHAVE": chave_limpa
-        }
-        st.success("✅ NOTA FISCAL CAPTURADA!")
+    if st.button("🔍 VERIFICAÇÃO NF", use_container_width=True):
+        if len(chave_limpa) == 44:
+            comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
+            st.session_state.dados_nf_validos = {
+                "UF": "AMAZONAS - AM", "COMPETÊNCIA": comp_br, "CNPJ": chave_limpa[6:20],
+                "MOD": chave_limpa[20:22], "SÉRIE": chave_limpa[22:25], "NÚMERO": chave_limpa[25:34],
+                "CHAVE": chave_limpa
+            }
+            st.success("Nota Fiscal validada!")
 
-# 3. Exibição e Trava
-foi_lido = st.session_state.get('dados_nf_validos') is not None
-st.text_input(
-    "CHAVE DE ACESSO", 
-    value=st.session_state.get('chave_acesso', ""),
-    disabled=foi_lido
-)
-
-# 4. Botão para Resetar
-if foi_lido:
-    if st.button("🔄 NOVA LEITURA"):
-        st.session_state.dados_nf_validos = None
-        st.session_state.chave_acesso = ""
-        st.rerun()
-    "CHAVE DE ACESSO (TRAVADA)", 
-    value=st.session_state.get('chave_acesso', ""),
-    disabled=foi_lido
-)
-
-# 4. Botão de segurança para nova leitura (caso precise ler outra nota)
-if foi_lido:
-    if st.button("🔄 APAGAR E LER NOVA NOTA"):
-        st.session_state.dados_nf_validos = None
-        st.session_state.chave_acesso = ""
-        st.rerun()
-
-# 3. Exibição da Chave (Campo travado/desabilitado se já houver leitura)
-# Se dados_nf_validos existir, o campo fica desabilitado (disabled=True)
-foi_lido = st.session_state.get('dados_nf_validos') is not None
-
-st.text_input(
-    "CHAVE DE ACESSO CAPTURADA", 
-    value=st.session_state.get('chave_acesso', ""),
-    disabled=foi_lido,
-    help="A chave é travada após a leitura automática."
-)
-# 2. Campo de entrada (Recebe o valor da câmera ou manual)
-chave_input = st.text_input(
-    "DIGITE OU COLE A CHAVE DE ACESSO", 
-    value=st.session_state.get('chave_acesso', ""),
-    max_chars=44
-)
-
-# 3. Limpa a chave (remove espaços) para a lógica das linhas abaixo
-chave_limpa = "".join(filter(str.isdigit, chave_input))
-
-# 4. Botão de Verificação (Mantendo sua lógica original de processamento)
-if st.button("🔍 VERIFICAÇÃO NF", use_container_width=True):
-    if len(chave_limpa) == 44:
-        comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
-        
-        # O bloco que você marcou na linha 279
-        st.session_state.dados_nf_validos = {
-            "UF": "AMAZONAS - AM", 
-            "COMPETÊNCIA": comp_br, 
-            "CNPJ": chave_limpa[6:20],
-            "MOD": chave_limpa[20:22], 
-            "SÉRIE": chave_limpa[22:25], 
-            "NÚMERO": chave_limpa[25:34],
-            "CHAVE": chave_limpa
-        }
-        st.success("Nota Fiscal validada!")
-    else:
-        st.error("A chave de acesso deve conter exatamente 44 dígitos.")
-    if st.session_state.get('dados_nf_validos'):
+    if st.session_state.dados_nf_validos:
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div style="background-color: #f1f3f4; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 5px solid #2e7d32; color: black; font-weight: bold;">{campo}: {valor}</div>', unsafe_allow_html=True)
 
