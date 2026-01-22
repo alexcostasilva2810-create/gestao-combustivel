@@ -272,17 +272,45 @@ elif st.session_state.pagina == "abastecimento":
     st.markdown('<div style="background-color: #004d40; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">VERIFICAÇÃO DE NOTA FISCAL (NF-e)</div>', unsafe_allow_html=True)
     chave_acesso = st.text_input("DIGITE OU COLE A CHAVE DE ACESSO", max_chars=54, key=f"nf_input_{st.session_state.form_id}")
     chave_limpa = "".join(filter(str.isdigit, chave_acesso))
-    
-    if st.button("🔍 VERIFICAÇÃO NF", use_container_width=True):
-        if len(chave_limpa) == 44:
-            comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
-            st.session_state.dados_nf_validos = {
-                "UF": "AMAZONAS - AM", "COMPETÊNCIA": comp_br, "CNPJ": chave_limpa[6:20],
-                "MOD": chave_limpa[20:22], "SÉRIE": chave_limpa[22:25], "NÚMERO": chave_limpa[25:34],
-                "CHAVE": chave_limpa
-            }
-            st.success("Nota Fiscal validada!")
+   # --- INÍCIO DO BLOCO DE VERIFICAÇÃO NF COM LEITOR ---
+from streamlit_camera_barcode_reader import camera_barcode_reader
 
+# 1. Abre a câmera para leitura automática do código de barras
+barcode = camera_barcode_reader()
+
+if barcode:
+    # Se a câmera detectar o código, salva no estado da sessão
+    st.session_state.chave_acesso = barcode.replace(" ", "")
+    st.success("Código capturado com sucesso!")
+
+# 2. Campo de entrada (Recebe o valor da câmera ou manual)
+chave_input = st.text_input(
+    "DIGITE OU COLE A CHAVE DE ACESSO", 
+    value=st.session_state.get('chave_acesso', ""),
+    max_chars=44
+)
+
+# 3. Limpa a chave (remove espaços) para a lógica das linhas abaixo
+chave_limpa = "".join(filter(str.isdigit, chave_input))
+
+# 4. Botão de Verificação (Mantendo sua lógica original de processamento)
+if st.button("🔍 VERIFICAÇÃO NF", use_container_width=True):
+    if len(chave_limpa) == 44:
+        comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
+        
+        # O bloco que você marcou na linha 279
+        st.session_state.dados_nf_validos = {
+            "UF": "AMAZONAS - AM", 
+            "COMPETÊNCIA": comp_br, 
+            "CNPJ": chave_limpa[6:20],
+            "MOD": chave_limpa[20:22], 
+            "SÉRIE": chave_limpa[22:25], 
+            "NÚMERO": chave_limpa[25:34],
+            "CHAVE": chave_limpa
+        }
+        st.success("Nota Fiscal validada!")
+    else:
+        st.error("A chave de acesso deve conter exatamente 44 dígitos.")
     if st.session_state.get('dados_nf_validos'):
         for campo, valor in st.session_state.dados_nf_validos.items():
             st.markdown(f'<div style="background-color: #f1f3f4; padding: 8px; margin: 5px 0; border-radius: 5px; border-left: 5px solid #2e7d32; color: black; font-weight: bold;">{campo}: {valor}</div>', unsafe_allow_html=True)
