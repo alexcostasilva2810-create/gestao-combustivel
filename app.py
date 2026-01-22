@@ -272,23 +272,23 @@ elif st.session_state.pagina == "abastecimento":
 
     st.markdown("---")
     st.markdown('<div style="background-color: #004d40; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">VERIFICAÇÃO DE NOTA FISCAL (NF-e)</div>', unsafe_allow_html=True)
- # --- 1. Importação Necessária (Certifique-se de ter no requirements.txt) ---
-from streamlit_camera_barcode_reader import camera_barcode_reader
+# --- LEITURA AUTOMÁTICA COMPATÍVEL (LINHAS 275 A 305) ---
+from streamlit_quirc import quirc
 
-# 2. Abre o scanner automático
-barcode = camera_barcode_reader()
+# 1. Scanner de alta compatibilidade
+barcode_data = quirc(key="scanner_nf")
 
-# 3. Lógica de Captura e Processamento Automático
-if barcode:
-    # Limpa o código capturado
-    chave_limpa = "".join(filter(str.isdigit, barcode))
+# 2. Processamento se houver leitura
+if barcode_data:
+    # Captura o texto do código
+    barcode_text = barcode_data[0].data.decode("utf-8")
+    chave_limpa = "".join(filter(str.isdigit, barcode_text))
     
     if len(chave_limpa) == 44:
-        # Salva na memória para travar
         st.session_state.chave_acesso = chave_limpa
         comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
         
-        # Preenche os campos do Amazonas automaticamente
+        # Preenche os dados automaticamente
         st.session_state.dados_nf_validos = {
             "UF": "AMAZONAS - AM", 
             "COMPETÊNCIA": comp_br, 
@@ -298,9 +298,9 @@ if barcode:
             "NÚMERO": chave_limpa[25:34],
             "CHAVE": chave_limpa
         }
-        st.success("✅ NOTA FISCAL CAPTURADA COM SUCESSO!")
+        st.success("✅ NOTA FISCAL CAPTURADA!")
 
-# 4. Exibição da Chave (Travada após a leitura)
+# 3. Exibição e Trava
 foi_lido = st.session_state.get('dados_nf_validos') is not None
 st.text_input(
     "CHAVE DE ACESSO", 
@@ -308,9 +308,9 @@ st.text_input(
     disabled=foi_lido
 )
 
-# 5. Botão para Resetar (Caso precise ler outra nota)
+# 4. Botão para Resetar
 if foi_lido:
-    if st.button("🔄 APAGAR E LER NOVA NOTA"):
+    if st.button("🔄 NOVA LEITURA"):
         st.session_state.dados_nf_validos = None
         st.session_state.chave_acesso = ""
         st.rerun()
