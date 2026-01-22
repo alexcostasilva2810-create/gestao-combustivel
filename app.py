@@ -272,18 +272,46 @@ elif st.session_state.pagina == "abastecimento":
     st.markdown('<div style="background-color: #004d40; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">VERIFICAÇÃO DE NOTA FISCAL (NF-e)</div>', unsafe_allow_html=True)
     chave_acesso = st.text_input("DIGITE OU COLE A CHAVE DE ACESSO", max_chars=54, key=f"nf_input_{st.session_state.form_id}")
     chave_limpa = "".join(filter(str.isdigit, chave_acesso))
-    
-   # --- INÍCIO DO BLOCO DE VERIFICAÇÃO NF COM LEITOR ---
+# --- LEITURA E PROCESSAMENTO AUTOMÁTICO (SEM BOTÃO) ---
 from streamlit_camera_barcode_reader import camera_barcode_reader
 
-# 1. Abre a câmera para leitura automática do código de barras
+# 1. Abre o scanner automático
 barcode = camera_barcode_reader()
 
+# 2. Lógica de Captura e Trava
 if barcode:
-    # Se a câmera detectar o código, salva no estado da sessão
-    st.session_state.chave_acesso = barcode.replace(" ", "")
-    st.success("Código capturado com sucesso!")
+    # Limpa o código capturado
+    chave_limpa = "".join(filter(str.isdigit, barcode))
+    
+    if len(chave_limpa) == 44:
+        # Salva a chave no estado da sessão para "travar"
+        st.session_state.chave_acesso = chave_limpa
+        
+        # Processa os dados da NF automaticamente (sem precisar de botão)
+        comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
+        st.session_state.dados_nf_validos = {
+            "UF": "AMAZONAS - AM", 
+            "COMPETÊNCIA": comp_br, 
+            "CNPJ": chave_limpa[6:20],
+            "MOD": chave_limpa[20:22], 
+            "SÉRIE": chave_limpa[22:25], 
+            "NÚMERO": chave_limpa[25:34],
+            "CHAVE": chave_limpa
+        }
+        st.success("✅ NOTA CAPTURADA E VALIDADA!")
+    else:
+        st.error("Erro na leitura: A chave deve ter 44 dígitos.")
 
+# 3. Exibição da Chave (Campo travado/desabilitado se já houver leitura)
+# Se dados_nf_validos existir, o campo fica desabilitado (disabled=True)
+foi_lido = st.session_state.get('dados_nf_validos') is not None
+
+st.text_input(
+    "CHAVE DE ACESSO CAPTURADA", 
+    value=st.session_state.get('chave_acesso', ""),
+    disabled=foi_lido,
+    help="A chave é travada após a leitura automática."
+)
 # 2. Campo de entrada (Recebe o valor da câmera ou manual)
 chave_input = st.text_input(
     "DIGITE OU COLE A CHAVE DE ACESSO", 
