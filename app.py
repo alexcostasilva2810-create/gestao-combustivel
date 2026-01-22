@@ -272,19 +272,19 @@ elif st.session_state.pagina == "abastecimento":
 
     st.markdown("---")
     st.markdown('<div style="background-color: #004d40; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">VERIFICAÇÃO DE NOTA FISCAL (NF-e)</div>', unsafe_allow_html=True)
-   # --- LEITURA E PROCESSAMENTO AUTOMÁTICO (SUBSTITUIR LINHAS 275 A 305) ---
+ # --- 1. Importação Necessária (Certifique-se de ter no requirements.txt) ---
 from streamlit_camera_barcode_reader import camera_barcode_reader
 
-# 1. Abre o scanner automático
+# 2. Abre o scanner automático
 barcode = camera_barcode_reader()
 
-# 2. Lógica de Captura, Processamento e Trava Automática
+# 3. Lógica de Captura e Processamento Automático
 if barcode:
-    # Limpa o código capturado (remove espaços e caracteres estranhos)
+    # Limpa o código capturado
     chave_limpa = "".join(filter(str.isdigit, barcode))
     
     if len(chave_limpa) == 44:
-        # Salva na memória para travar o sistema
+        # Salva na memória para travar
         st.session_state.chave_acesso = chave_limpa
         comp_br = f"{chave_limpa[4:6]}/{chave_limpa[2:4]}"
         
@@ -300,9 +300,20 @@ if barcode:
         }
         st.success("✅ NOTA FISCAL CAPTURADA COM SUCESSO!")
 
-# 3. Exibição da Chave (Bloqueada após a leitura para não alterar)
+# 4. Exibição da Chave (Travada após a leitura)
 foi_lido = st.session_state.get('dados_nf_validos') is not None
 st.text_input(
+    "CHAVE DE ACESSO", 
+    value=st.session_state.get('chave_acesso', ""),
+    disabled=foi_lido
+)
+
+# 5. Botão para Resetar (Caso precise ler outra nota)
+if foi_lido:
+    if st.button("🔄 APAGAR E LER NOVA NOTA"):
+        st.session_state.dados_nf_validos = None
+        st.session_state.chave_acesso = ""
+        st.rerun()
     "CHAVE DE ACESSO (TRAVADA)", 
     value=st.session_state.get('chave_acesso', ""),
     disabled=foi_lido
