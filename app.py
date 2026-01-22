@@ -272,6 +272,7 @@ elif st.session_state.pagina == "abastecimento":
     st.markdown('<div style="background-color: #004d40; color: white; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold;">VERIFICAÇÃO DE NOTA FISCAL (NF-e)</div>', unsafe_allow_html=True)
     chave_acesso = st.text_input("DIGITE OU COLE A CHAVE DE ACESSO", max_chars=54, key=f"nf_input_{st.session_state.form_id}")
     chave_limpa = "".join(filter(str.isdigit, chave_acesso))
+    
    # --- INÍCIO DO BLOCO DE VERIFICAÇÃO NF COM LEITOR ---
 from streamlit_camera_barcode_reader import camera_barcode_reader
 
