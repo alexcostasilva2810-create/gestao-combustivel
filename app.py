@@ -1,9 +1,18 @@
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from nicegui import ui, app
+import pandas as pd
 
-# --- BANCO DE DADOS COMPLETO ---
+# =========================================================
+# 1. CONFIGURAÇÃO DE SEGURANÇA (OBRIGATÓRIO NO TOPO)
+# =========================================================
+# Definindo o segredo antes de qualquer outra operação
+ui.run_with(app, storage_secret='ZION_SISTEMA_2026_FINAL')
+
+# =========================================================
+# 2. BANCO DE DATOS E ESTADO DO SISTEMA
+# =========================================================
 LOGINS_VALIDOS = {
     "ANGELO": {"user": "ALEX", "pass": "2463"},
     "ANGICO": {"user": "MANOEL BARATA", "pass": "12345"},
@@ -32,133 +41,98 @@ CAPACIDADES = {
     "FREIJO": 18000, "SUCUPIRA": 30000
 }
 
-# --- INICIALIZAÇÃO DE ESTADO ---
 if 'dados' not in app.storage.user:
     app.storage.user['dados'] = {
         'pagina': 'inicio',
         'usuario': None,
         'navio': 'ANGELO',
-        'historico_os': [],
-        'nf_validada': {},
         't_inicio': 0,
         't_rodando': False,
         'tempo_str': '00:00:00'
     }
 
-# --- ESTILIZAÇÃO ---
+# =========================================================
+# 3. ESTILIZAÇÃO (CSS)
+# =========================================================
 ui.query('body').style('background-color: #0d1117; color: white;')
-ui.add_head_html('''
-    <style>
-        .zion-card { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 20px; border: 1px solid #30363d; }
-        .banner-verde { background-color: #28a745; color: white; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; }
-    </style>
-''')
+ui.add_head_html('<style>.zion-card { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 20px; border: 1px solid #30363d; }</style>')
 
-# --- FUNÇÕES DE APOIO ---
+# =========================================================
+# 4. LÓGICA DE NAVEGAÇÃO E FUNÇÕES
+# =========================================================
 def ir_para(pagina):
     app.storage.user['dados']['pagina'] = pagina
     layout_principal.refresh()
 
-def atualizar_cronometro():
+def timer_tick():
     d = app.storage.user['dados']
     if d['t_rodando']:
-        segundos = int(time.time() - d['t_inicio'])
-        d['tempo_str'] = time.strftime('%H:%M:%S', time.gmtime(segundos))
+        seg = int(time.time() - d['t_inicio'])
+        d['tempo_str'] = time.strftime('%H:%M:%S', time.gmtime(seg))
 
-# --- TELAS ---
+# =========================================================
+# 5. TELAS DO SISTEMA
+# =========================================================
 @ui.refreshable
 def layout_principal():
     dados = app.storage.user['dados']
-    
-    # Timer que roda a cada 1 segundo para o cronômetro
-    ui.timer(1.0, atualizar_cronometro)
+    ui.timer(1.0, timer_tick)
 
-    # TELA 1: INÍCIO
+    # --- TELA INICIAL ---
     if dados['pagina'] == 'inicio':
-        with ui.column().classes('w-full items-center justify-center mt-20'):
+        with ui.column().classes('w-full items-center mt-20'):
             ui.label('ZION').style('font-size: 80px; font-weight: 900;')
-            ui.label('SISTEMA DE GESTÃO NAVAL').classes('mb-10')
-            ui.button('🚀 INICIAR SESSÃO', on_click=lambda: ir_para('login')).classes('w-64 h-16')
+            ui.button('🚀 ENTRAR', on_click=lambda: ir_para('login')).classes('w-64 h-16 bg-blue-600')
 
-    # TELA 2: LOGIN
+    # --- TELA DE LOGIN ---
     elif dados['pagina'] == 'login':
         with ui.column().classes('w-full max-w-md mx-auto items-center mt-10'):
-            ui.label('ACESSO AO SISTEMA').classes('banner-verde w-full mb-6')
-            navio_sel = ui.select(list(LOGINS_VALIDOS.keys()), label='EMPURRADOR').classes('w-full bg-white rounded p-1')
-            user_in = ui.input('USUÁRIO').classes('w-full bg-white rounded p-1')
-            pass_in = ui.input('SENHA', password=True).classes('w-full bg-white rounded p-1')
-
-            def validar():
-                cred = LOGINS_VALIDOS.get(navio_sel.value)
+            ui.label('ACESSO RESTRITO').classes('text-2xl mb-6')
+            navio = ui.select(list(LOGINS_VALIDOS.keys()), label='NAVIO').classes('w-full bg-white p-1')
+            user_in = ui.input('USUÁRIO').classes('w-full bg-white p-1')
+            pass_in = ui.input('SENHA', password=True).classes('w-full bg-white p-1')
+            
+            def autenticar():
+                cred = LOGINS_VALIDOS.get(navio.value)
                 if cred and user_in.value == cred['user'] and pass_in.value == cred['pass']:
-                    dados.update({'usuario': user_in.value, 'navio': navio_sel.value})
+                    dados.update({'usuario': user_in.value, 'navio': navio.value})
                     ir_para('menu')
                 else:
-                    ui.notify('Dados Incorretos!', type='negative')
+                    ui.notify('Erro de Login', type='negative')
+            
+            ui.button('CONFIRMAR', on_click=autenticar).classes('w-full mt-4 bg-green-700')
 
-            ui.button('ENTRAR', on_click=validar).classes('w-full mt-4 bg-blue-600')
-
-    # TELA 3: MENU
+    # --- MENU PRINCIPAL ---
     elif dados['pagina'] == 'menu':
         with ui.column().classes('w-full items-center mt-10'):
-            ui.label(f"👤 {dados['usuario']} | {dados['navio']}").classes('text-green-400 mb-10')
-            with ui.grid(columns=2).classes('w-full max-w-xl gap-4'):
+            ui.label(f"NAVIO: {dados['navio']}").classes('text-green-400 text-xl')
+            with ui.grid(columns=2).classes('w-full max-w-lg gap-4 mt-10'):
                 ui.button('⛽ ABASTECIMENTO', on_click=lambda: ir_para('abastecimento')).classes('h-20 bg-blue-900')
-                ui.button('📄 NOTA FISCAL', on_click=lambda: ir_para('nf')).classes('h-20 bg-blue-900')
-                ui.button('📊 TABELA', on_click=lambda: ir_para('tabela')).classes('h-20 bg-green-900')
                 ui.button('🏠 SAIR', on_click=lambda: (dados.update({'usuario': None}), ir_para('inicio'))).classes('h-20')
 
-    # TELA 4: ABASTECIMENTO
+    # --- ABASTECIMENTO ---
     elif dados['pagina'] == 'abastecimento':
         ui.button('⬅️ VOLTAR', on_click=lambda: ir_para('menu')).props('flat color=white')
         with ui.column().classes('w-full max-w-lg mx-auto zion-card'):
-            cap = CAPACIDADES[dados['navio']]
-            ui.label(f'Capacidade: {cap:,} lts').classes('text-yellow-400 font-bold')
+            ui.label('CÁLCULO DE ABASTECIMENTO').classes('text-center font-bold mb-4')
+            s_bb = ui.number('SALDO BB').classes('w-full bg-white p-1')
+            s_be = ui.number('SALDO BE').classes('w-full bg-white p-1')
             
-            s_bb = ui.number('SALDO BB', value=0).classes('w-full bg-white p-1')
-            s_be = ui.number('SALDO BE', value=0).classes('w-full bg-white p-1')
-            q_ped = ui.number('QTD PEDIDA', value=0).classes('w-full bg-white p-1')
-            rem = ui.number('REMANESCENTE', value=0).classes('w-full bg-white p-1')
-            
-            res_label = ui.label().classes('w-full p-4 rounded text-center mt-4')
-
-            def calcular():
-                total = (s_bb.value or 0) + (s_be.value or 0) + (q_ped.value or 0) + (rem.value or 0)
-                if total > cap:
-                    res_label.text = f"🚨 BLOQUEIO: {total:,.0f} Lts excede o limite!"
-                    res_label.style('background-color: red;')
-                else:
-                    res_label.text = f"✅ VOLUME SEGURO: {total:,.0f} Lts"
-                    res_label.style('background-color: green;')
-
-            ui.button('VERIFICAR VOLUME', on_click=calcular).classes('w-full bg-blue-600')
-
-            # CRONÔMETRO FUNCIONAL
+            # Cronômetro
             with ui.row().classes('w-full justify-center items-center mt-4 border p-2'):
                 ui.label().bind_text_from(dados, 'tempo_str').classes('text-2xl text-red-500 font-mono')
                 ui.button(icon='play_arrow', on_click=lambda: (dados.update({'t_inicio': time.time(), 't_rodando': True}))).props('round color=green')
                 ui.button(icon='stop', on_click=lambda: (dados.update({'t_rodando': False}))).props('round color=red')
 
-    # TELA 6: TABELA DE CONSUMO (O.S.)
-    elif dados['pagina'] == 'tabela':
-        ui.button('⬅️ VOLTAR', on_click=lambda: ir_para('menu')).props('flat color=white')
-        ui.label('REGISTROS DE CONSUMO (O.S.)').classes('text-2xl mb-4')
-        
-        # Cria a tabela com os dados do histórico
-        colunas = [
-            {'name': 'ID', 'label': 'ID', 'field': 'ID'},
-            {'name': 'NAVIO', 'label': 'NAVIO', 'field': 'NAVIO'},
-            {'name': 'DATA', 'label': 'DATA', 'field': 'DATA'},
-        ]
-        ui.table(columns=colunas, rows=dados['historico_os']).classes('w-full bg-white text-black')
-
-# --- EXECUÇÃO ---
+# =========================================================
+# 6. INICIALIZAÇÃO DO APP
+# =========================================================
 with ui.column().classes('w-full'):
     layout_principal()
 
 ui.run(
     host='0.0.0.0', 
     port=int(os.environ.get("PORT", 8080)), 
-    storage_secret='ZION_SISTEMA_2026_FINAL', # Resolvido o erro do Render
-    title="ZION Gestão"
+    title="ZION Naval",
+    reload=False
 )
