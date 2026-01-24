@@ -1,5 +1,3 @@
-streamlit
+nicegui
 pandas
-fpdf2
-Pillow
-streamlit-drawable-canvas
+fpdf
