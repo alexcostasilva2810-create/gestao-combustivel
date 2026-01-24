@@ -1,6 +1,7 @@
 from nicegui import ui, app
 import pandas as pd
 from datetime import datetime
+import os
 
 # --- CONFIGURAÇÕES E ESTADO ---
 # Simulando o st.session_state com um dicionário global ou app.storage
@@ -141,4 +142,9 @@ with ui.column().classes('w-full'):
 
 # --- EXECUÇÃO ---
 # storage_secret é necessário para usar app.storage.user (como session_state)
-ui.run(host='0.0.0.0', port=8080, storage_secret='ZION_NAVAL_2024')
+ui.run(
+    host='0.0.0.0', 
+    port=porta, 
+    storage_secret='ZION_NAVAL_2026',
+    reconnect_timeout=30
+)
