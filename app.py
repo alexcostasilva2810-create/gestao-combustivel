@@ -1,150 +1,119 @@
-from nicegui import ui, app
+import os
 import pandas as pd
 from datetime import datetime
-import os
+from nicegui import ui, app
 
-# --- CONFIGURAÇÕES E ESTADO ---
-# Simulando o st.session_state com um dicionário global ou app.storage
-if 'db_comb' not in app.storage.user:
-    app.storage.user['db_comb'] = []
+# 1. CONFIGURAÇÃO DE SEGURANÇA (Obrigatório para o Render)
+# Isso deve vir antes de qualquer lógica de interface
+app.add_static_files('/static', 'static')
 
+# Inicialização do banco de dados na sessão do usuário
+@app.get('/')
+def check_storage():
+    if 'db_comb' not in app.storage.user:
+        app.storage.user['db_comb'] = []
+
+# --- DADOS INICIAIS ---
 empurradores_lista = ["ANGELO", "ANGICO", "AROEIRA", "BRENO", "CANJERANA", "CUMARU", "IPE", "SAMAUMA", "JACARANDA", "LUIZ FELIPE", "QUARUBA", "TIMBORANA", "JATOBA"]
 
-# --- FUNÇÕES DE APOIO ---
-def salvar_memoria(dados_form):
-    app.storage.user['db_comb'].append(dados_form)
-    ui.notify('Salvo com sucesso no padrão BR!', type='positive')
-    aba_abastecimento.refresh() # Atualiza a tabela automaticamente
+# --- INTERFACE E ESTILO ---
+ui.query('body').classes('bg-slate-50')
 
-# --- INTERFACE: BLOCO 1 - ABASTECIMENTO ---
+# Menu Lateral
+with ui.left_drawer().classes('bg-blue-900 text-white') as side_menu:
+    ui.label('🚢 GESTÃO ZION').classes('text-xl font-bold mb-4')
+    menu = ui.radio(['Abastecimento', 'Cálculo de Memória'], value='Abastecimento').classes('text-white')
+
+# --- BLOCO 1: ABASTECIMENTO ---
 @ui.refreshable
 def aba_abastecimento():
-    ui.label('⛽ Controle de Abastecimento').classes('text-h4')
-    ui.label("Os campos 'Data Entrega', 'Local Abast.' e 'Ciclo' são editáveis direto na tabela.").classes('text-caption')
+    ui.label('⛽ Controle de Abastecimento').classes('text-h4 text-blue-900')
     
     db = app.storage.user.get('db_comb', [])
-    
     if not db:
-        ui.info("Aguardando lançamentos no Cálculo de Memória...")
+        ui.info("Nenhum dado encontrado. Faça o lançamento no Cálculo de Memória.")
         return
 
-    # Processamento dos dados para a Grid
-    rows = []
-    for i, row in enumerate(db):
-        trecho = str(row.get('Local', '')).upper()
-        origem, destino = (trecho.split('X', 1) + [""])[:2] if 'X' in trecho else (trecho, "")
-        
-        h_total = row.get('Plano_H_Ida', 0) + row.get('Plano_H_Volta', 0)
-        lh_rpm = (row['Plano_H_Ida'] * row['Queima_Ida'] + row['Plano_H_Volta'] * row['Queima_Volta']) / h_total if h_total > 0 else row.get('Queima_Ida', 0)
-
-        rows.append({
-            'id_ref': i,
-            'ID': 1001 + i,
-            'DATA': row.get('Data'),
-            'EMPURRADOR': row.get('Empurrador'),
-            'ORIGEM': origem.strip(),
-            'DESTINO': destino.strip(),
-            'DATA_ENTREGA': row.get('Data_Entrega', ''),
-            'LOCAL_ABAST': row.get('Local_Abast', ''),
-            'CICLO': row.get('Ciclo', ''),
-            'L_H_RPM': round(lh_rpm, 2),
-            'ODM_FIM': round(row.get('ODM_Fim_Final', 0), 2)
-        })
-
-    # Tabela Editável (AgGrid)
+    # Tabela de Dados
     grid = ui.aggrid({
         'columnDefs': [
-            {'headerName': 'ID', 'field': 'ID', 'width': 80},
-            {'headerName': 'EMPURRADOR', 'field': 'EMPURRADOR'},
-            {'headerName': 'DATA ENTREGA', 'field': 'DATA_ENTREGA', 'editable': True},
-            {'headerName': 'LOCAL ABAST.', 'field': 'LOCAL_ABAST', 'editable': True},
-            {'headerName': 'CICLO', 'field': 'CICLO', 'editable': True},
-            {'headerName': 'L/H RPM', 'field': 'L_H_RPM'},
-            {'headerName': 'ODM FIM', 'field': 'ODM_FIM'},
+            {'headerName': 'DATA', 'field': 'Data', 'width': 100},
+            {'headerName': 'EMPURRADOR', 'field': 'Empurrador', 'width': 150},
+            {'headerName': 'LOCAL', 'field': 'Local', 'width': 200},
+            {'headerName': 'DATA ENTREGA', 'field': 'Data_Entrega', 'editable': True},
+            {'headerName': 'CICLO', 'field': 'Ciclo', 'editable': True},
         ],
-        'rowData': rows,
+        'rowData': db,
     }).classes('w-full h-80')
 
-    async def gravar():
-        # No NiceGUI, pegamos os dados editados da grid
-        updated_rows = await grid.get_client_data()
-        for r in updated_rows:
-            idx = r['id_ref']
-            app.storage.user['db_comb'][idx]['Data_Entrega'] = r['DATA_ENTREGA']
-            app.storage.user['db_comb'][idx]['Local_Abast'] = r['LOCAL_ABAST']
-            app.storage.user['db_comb'][idx]['Ciclo'] = r['CICLO']
-        ui.notify('Alterações gravadas com sucesso!')
+    async def salvar_tabela():
+        dados_atualizados = await grid.get_client_data()
+        app.storage.user['db_comb'] = dados_atualizados
+        ui.notify('Dados atualizados com sucesso!', type='positive')
 
-    ui.button('💾 Gravar Alterações', on_click=gravar).props('color=primary')
+    ui.button('💾 Salvar Alterações', on_click=salvar_tabela).props('color=primary')
 
-# --- INTERFACE: BLOCO 2 - CÁLCULO DE MEMÓRIA ---
+# --- BLOCO 2: CÁLCULO DE MEMÓRIA ---
 def aba_calculo():
-    ui.label('📝 Cálculo de Memória (Ida e Volta)').classes('text-h4')
+    ui.label('📝 Cálculo de Memória').classes('text-h4 text-blue-900')
     
-    with ui.row().classes('w-full'):
-        emp = ui.select(empurradores_lista, label='EMPURRADOR').classes('w-1/4')
-        data_v = ui.date(value=datetime.now().strftime('%Y-%m-%d')).classes('w-1/4')
-        trecho = ui.input('TRECHO (Ex: MANAUS X BELEM)').classes('w-1/3')
+    with ui.card().classes('w-full q-pa-md shadow-2'):
+        with ui.row().classes('w-full items-center'):
+            emp = ui.select(empurradores_lista, label='Empurrador').classes('w-1/3')
+            data_v = ui.date(value=datetime.now().strftime('%Y-%m-%d')).classes('w-1/3')
+            trecho = ui.input('Trecho (Ex: MANAUS X BELEM)').classes('w-1/3')
 
-    ui.separator()
+        ui.separator().classes('my-4')
 
-    def coluna_entrada(label):
-        with ui.column().classes('w-full p-4 border rounded'):
-            ui.label(f'📍 {label}').classes('text-bold text-lg')
-            s_odm = ui.number('SALDO ODM', value=0)
-            o_comp = ui.number('ODM COMPRA', value=0)
-            t_hor = ui.number('PLANO HORAS', value=0)
-            queima = ui.number('QUEIMA L/H', value=0)
-            h_mca = ui.number('HORAS MCA', value=0)
-            return {'s_odm': s_odm, 'o_comp': o_comp, 't_hor': t_hor, 'queima': queima, 'h_mca': h_mca}
+        with ui.row().classes('w-full'):
+            with ui.column().classes('w-1/2 p-2'):
+                ui.label('📍 IDA').classes('font-bold text-blue-700')
+                h_ida = ui.number('Horas Ida', value=0)
+                q_ida = ui.number('Queima Ida', value=0)
+            
+            with ui.column().classes('w-1/2 p-2'):
+                ui.label('📍 VOLTA').classes('font-bold text-blue-700')
+                h_volta = ui.number('Horas Volta', value=0)
+                q_volta = ui.number('Queima Volta', value=0)
 
-    with ui.row().classes('w-full'):
-        res_i = coluna_entrada('IDA')
-        res_v = coluna_entrada('VOLTA')
+        def finalizar():
+            nova_viagem = {
+                'Empurrador': emp.value,
+                'Data': data_v.value,
+                'Local': trecho.value,
+                'Plano_H_Ida': h_ida.value,
+                'Queima_Ida': q_ida.value,
+                'Plano_H_Volta': h_volta.value,
+                'Queima_Volta': q_volta.value,
+                'Data_Entrega': '',
+                'Ciclo': ''
+            }
+            app.storage.user['db_comb'].append(nova_viagem)
+            ui.notify('Viagem salva com sucesso!', type='positive')
+            aba_abastecimento.refresh()
 
-    def finalizar():
-        # Lógica de cálculo simplificada para o exemplo
-        nova_linha = {
-            "Empurrador": emp.value,
-            "Data": data_v.value,
-            "Local": trecho.value,
-            "Plano_H_Ida": res_i['t_hor'].value,
-            "Queima_Ida": res_i['queima'].value,
-            "Plano_H_Volta": res_v['t_hor'].value,
-            "Queima_Volta": res_v['queima'].value,
-            "ODM_Fim_Final": 0 # Adicione sua fórmula aqui
-        }
-        salvar_memoria(nova_linha)
+        ui.button('💾 FINALIZAR E ENVIAR PARA ABASTECIMENTO', on_click=finalizar).classes('w-full mt-4 bg-green-700 text-white')
 
-    ui.button('💾 FINALIZAR E SALVAR', on_click=finalizar).classes('w-full h-12').props('color=green')
-
-# --- MENU LATERAL E NAVEGAÇÃO ---
-with ui.left_drawer().classes('bg-blue-50') as side_menu:
-    ui.label('🚢 Menu de Gestão').classes('text-xl mb-4')
-    nav = ui.radio(['Abastecimento', 'Cálculo de Memória', 'Rancho', 'Dashboard'], value='Abastecimento')
-
-# Área Principal Dinâmica
+# --- RENDERIZAÇÃO PRINCIPAL ---
 @ui.refreshable
-def container_principal():
-    if nav.value == 'Abastecimento':
+def carregar_conteudo():
+    if menu.value == 'Abastecimento':
         aba_abastecimento()
-    elif nav.value == 'Cálculo de Memória':
-        aba_calculo()
     else:
-        ui.label(f'Página {nav.value} em construção...')
+        aba_calculo()
 
-# Re-renderiza a tela quando o rádio do menu lateral muda
-nav.on_change(container_principal.refresh)
+menu.on_change(carregar_conteudo.refresh)
 
-# Inicializa o container
-with ui.column().classes('w-full'):
-    container_principal()
+with ui.column().classes('w-full max-w-5xl mx-auto q-pa-lg'):
+    carregar_conteudo()
 
-# --- EXECUÇÃO ---
-# storage_secret é necessário para usar app.storage.user (como session_state)
+# --- MOTOR DO RENDER (CUIDADO AQUI) ---
+# Pega a porta automática do Render
+porta = int(os.environ.get("PORT", 8080))
+
 ui.run(
     host='0.0.0.0', 
     port=porta, 
-    storage_secret='ZION_NAVAL_2026',
-    reconnect_timeout=30
+    storage_secret='ZION_NAVAL_SECRET_KEY_2026', # A SENHA ESTÁ AQUI
+    title="ZION Gestão Naval"
 )
