@@ -141,4 +141,4 @@ with ui.column().classes('w-full'):
 
 # --- EXECUÇÃO ---
 # storage_secret é necessário para usar app.storage.user (como session_state)
-ui.run(port=8080, storage_secret='chave_secreta_zion', title="ZION Naval")
+ui.run(host='0.0.0.0', port=8080, storage_secret='ZION_SENHA_SEGURA_123')
