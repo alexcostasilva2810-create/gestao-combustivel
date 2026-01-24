@@ -1,98 +1,144 @@
 from nicegui import ui, app
 import pandas as pd
 from datetime import datetime
-from fpdf import FPDF
-import io
 
-# --- Lógica de Dados ---
-dados = {
-    'empurrador': '',
-    'operacao': '',
-    'chave_nfe': '',
-    'tabela': [
-        {"Nº TANQUE": "1", "PRODUTO": "DIESEL", "REMAN": 0, "CARGA": 0},
-        {"Nº TANQUE": "2", "PRODUTO": "DIESEL", "REMAN": 0, "CARGA": 0}
-    ]
-}
+# --- CONFIGURAÇÕES E ESTADO ---
+# Simulando o st.session_state com um dicionário global ou app.storage
+if 'db_comb' not in app.storage.user:
+    app.storage.user['db_comb'] = []
 
-# --- Funções de Ação ---
-def processar_leitura(e):
-    codigo = e.args
-    input_chave.value = codigo
-    ui.notify(f'Código da NF-e capturado!', type='positive')
+empurradores_lista = ["ANGELO", "ANGICO", "AROEIRA", "BRENO", "CANJERANA", "CUMARU", "IPE", "SAMAUMA", "JACARANDA", "LUIZ FELIPE", "QUARUBA", "TIMBORANA", "JATOBA"]
 
-def gerar_pdf():
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(190, 10, "ZION - GESTÃO NAVAL", ln=True, align='C')
-    pdf.set_font("Arial", size=12)
-    pdf.cell(190, 10, f"Empurrador: {input_empurrador.value}", ln=True)
-    pdf.cell(190, 10, f"Chave NF-e: {input_chave.value}", ln=True)
+# --- FUNÇÕES DE APOIO ---
+def salvar_memoria(dados_form):
+    app.storage.user['db_comb'].append(dados_form)
+    ui.notify('Salvo com sucesso no padrão BR!', type='positive')
+    aba_abastecimento.refresh() # Atualiza a tabela automaticamente
+
+# --- INTERFACE: BLOCO 1 - ABASTECIMENTO ---
+@ui.refreshable
+def aba_abastecimento():
+    ui.label('⛽ Controle de Abastecimento').classes('text-h4')
+    ui.label("Os campos 'Data Entrega', 'Local Abast.' e 'Ciclo' são editáveis direto na tabela.").classes('text-caption')
     
-    # Salva em memória para download
-    output = pdf.output(dest='S').encode('latin-1')
-    ui.download(output, f"Checklist_{input_empurrador.value}.pdf")
+    db = app.storage.user.get('db_comb', [])
+    
+    if not db:
+        ui.info("Aguardando lançamentos no Cálculo de Memória...")
+        return
 
-# --- Interface ---
-ui.query('body').classes('bg-blue-50')
-
-with ui.column().classes('w-full items-center q-pa-md max-w-2xl mx-auto'):
-    # Cabeçalho
-    ui.label('ZION - GESTÃO NAVAL').classes('text-h4 text-blue-900 font-bold text-center')
-    ui.label('CHECK LIST DE ABASTECIMENTO').classes('text-h6 text-grey-7')
-
-    # Bloco Identificação e Câmera
-    with ui.card().classes('w-full q-pa-md'):
-        ui.label('Identificação').classes('text-bold border-b w-full')
-        input_empurrador = ui.input('Empurrador / Comandante').classes('w-full')
+    # Processamento dos dados para a Grid
+    rows = []
+    for i, row in enumerate(db):
+        trecho = str(row.get('Local', '')).upper()
+        origem, destino = (trecho.split('X', 1) + [""])[:2] if 'X' in trecho else (trecho, "")
         
-        # O Leitor de QR Code / Barra
-        ui.label('Scanner de Nota Fiscal').classes('mt-4 text-sm text-grey-6')
-        # Container do vídeo da câmera
-        ui.html('<div id="reader" style="width:100%; min-height: 250px; border: 1px solid #ccc; border-radius: 8px"></div>', sanitize=False)
-        
-        with ui.row().classes('w-full justify-center mt-2'):
-            ui.button('ATIVAR SCANNER', on_click=lambda: ui.run_javascript('startScan()'))\
-                .props('icon=qr_code_scanner color=primary')
-        
-        input_chave = ui.input('Chave de Acesso (44 dígitos)').classes('w-full mt-4').bind_value(dados, 'chave_nfe')
+        h_total = row.get('Plano_H_Ida', 0) + row.get('Plano_H_Volta', 0)
+        lh_rpm = (row['Plano_H_Ida'] * row['Queima_Ida'] + row['Plano_H_Volta'] * row['Queima_Volta']) / h_total if h_total > 0 else row.get('Queima_Ida', 0)
 
-    # Tabela de Volumes (Usando AgGrid para ser similar ao data_editor)
-    ui.label('Volumes (Tanques)').classes('text-bold mt-4')
+        rows.append({
+            'id_ref': i,
+            'ID': 1001 + i,
+            'DATA': row.get('Data'),
+            'EMPURRADOR': row.get('Empurrador'),
+            'ORIGEM': origem.strip(),
+            'DESTINO': destino.strip(),
+            'DATA_ENTREGA': row.get('Data_Entrega', ''),
+            'LOCAL_ABAST': row.get('Local_Abast', ''),
+            'CICLO': row.get('Ciclo', ''),
+            'L_H_RPM': round(lh_rpm, 2),
+            'ODM_FIM': round(row.get('ODM_Fim_Final', 0), 2)
+        })
+
+    # Tabela Editável (AgGrid)
     grid = ui.aggrid({
         'columnDefs': [
-            {'headerName': 'Tanque', 'field': 'Nº TANQUE', 'editable': True},
-            {'headerName': 'Produto', 'field': 'PRODUTO', 'editable': True},
-            {'headerName': 'Carga', 'field': 'CARGA', 'editable': True},
+            {'headerName': 'ID', 'field': 'ID', 'width': 80},
+            {'headerName': 'EMPURRADOR', 'field': 'EMPURRADOR'},
+            {'headerName': 'DATA ENTREGA', 'field': 'DATA_ENTREGA', 'editable': True},
+            {'headerName': 'LOCAL ABAST.', 'field': 'LOCAL_ABAST', 'editable': True},
+            {'headerName': 'CICLO', 'field': 'CICLO', 'editable': True},
+            {'headerName': 'L/H RPM', 'field': 'L_H_RPM'},
+            {'headerName': 'ODM FIM', 'field': 'ODM_FIM'},
         ],
-        'rowData': dados['tabela'],
-    }).classes('w-full h-40')
+        'rowData': rows,
+    }).classes('w-full h-80')
 
-    # Botão Finalizar
-    ui.button('FINALIZAR E GERAR PDF', on_click=gerar_pdf).classes('w-full h-12 mt-6').props('color=green text-white')
+    async def gravar():
+        # No NiceGUI, pegamos os dados editados da grid
+        updated_rows = await grid.get_client_data()
+        for r in updated_rows:
+            idx = r['id_ref']
+            app.storage.user['db_comb'][idx]['Data_Entrega'] = r['DATA_ENTREGA']
+            app.storage.user['db_comb'][idx]['Local_Abast'] = r['LOCAL_ABAST']
+            app.storage.user['db_comb'][idx]['Ciclo'] = r['CICLO']
+        ui.notify('Alterações gravadas com sucesso!')
 
-# --- Scripts de Scanner (Html5-QRCode) ---
-ui.add_head_html('<script src="https://unpkg.com/html5-qrcode"></script>')
-ui.on('barcode_detected', processar_leitura)
+    ui.button('💾 Gravar Alterações', on_click=gravar).props('color=primary')
 
-ui.add_body_html('''
-<script>
-    let html5QrCode;
-    function startScan() {
-        html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: { width: 280, height: 150 } };
-        
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            config,
-            (decodedText) => {
-                emitEvent('barcode_detected', decodedText);
-                html5QrCode.stop();
-            }
-        ).catch(err => alert("Erro na câmera: " + err));
-    }
-</script>
-''')
+# --- INTERFACE: BLOCO 2 - CÁLCULO DE MEMÓRIA ---
+def aba_calculo():
+    ui.label('📝 Cálculo de Memória (Ida e Volta)').classes('text-h4')
+    
+    with ui.row().classes('w-full'):
+        emp = ui.select(empurradores_lista, label='EMPURRADOR').classes('w-1/4')
+        data_v = ui.date(value=datetime.now().strftime('%Y-%m-%d')).classes('w-1/4')
+        trecho = ui.input('TRECHO (Ex: MANAUS X BELEM)').classes('w-1/3')
 
-ui.run(port=8080, title="ZION Gestão")
+    ui.separator()
+
+    def coluna_entrada(label):
+        with ui.column().classes('w-full p-4 border rounded'):
+            ui.label(f'📍 {label}').classes('text-bold text-lg')
+            s_odm = ui.number('SALDO ODM', value=0)
+            o_comp = ui.number('ODM COMPRA', value=0)
+            t_hor = ui.number('PLANO HORAS', value=0)
+            queima = ui.number('QUEIMA L/H', value=0)
+            h_mca = ui.number('HORAS MCA', value=0)
+            return {'s_odm': s_odm, 'o_comp': o_comp, 't_hor': t_hor, 'queima': queima, 'h_mca': h_mca}
+
+    with ui.row().classes('w-full'):
+        res_i = coluna_entrada('IDA')
+        res_v = coluna_entrada('VOLTA')
+
+    def finalizar():
+        # Lógica de cálculo simplificada para o exemplo
+        nova_linha = {
+            "Empurrador": emp.value,
+            "Data": data_v.value,
+            "Local": trecho.value,
+            "Plano_H_Ida": res_i['t_hor'].value,
+            "Queima_Ida": res_i['queima'].value,
+            "Plano_H_Volta": res_v['t_hor'].value,
+            "Queima_Volta": res_v['queima'].value,
+            "ODM_Fim_Final": 0 # Adicione sua fórmula aqui
+        }
+        salvar_memoria(nova_linha)
+
+    ui.button('💾 FINALIZAR E SALVAR', on_click=finalizar).classes('w-full h-12').props('color=green')
+
+# --- MENU LATERAL E NAVEGAÇÃO ---
+with ui.left_drawer().classes('bg-blue-50') as side_menu:
+    ui.label('🚢 Menu de Gestão').classes('text-xl mb-4')
+    nav = ui.radio(['Abastecimento', 'Cálculo de Memória', 'Rancho', 'Dashboard'], value='Abastecimento')
+
+# Área Principal Dinâmica
+@ui.refreshable
+def container_principal():
+    if nav.value == 'Abastecimento':
+        aba_abastecimento()
+    elif nav.value == 'Cálculo de Memória':
+        aba_calculo()
+    else:
+        ui.label(f'Página {nav.value} em construção...')
+
+# Re-renderiza a tela quando o rádio do menu lateral muda
+nav.on_change(container_principal.refresh)
+
+# Inicializa o container
+with ui.column().classes('w-full'):
+    container_principal()
+
+# --- EXECUÇÃO ---
+# storage_secret é necessário para usar app.storage.user (como session_state)
+ui.run(port=8080, storage_secret='chave_secreta_zion', title="ZION Naval")
