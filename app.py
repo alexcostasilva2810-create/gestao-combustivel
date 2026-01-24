@@ -50,7 +50,7 @@ with ui.column().classes('w-full items-center q-pa-md max-w-2xl mx-auto'):
         # O Leitor de QR Code / Barra
         ui.label('Scanner de Nota Fiscal').classes('mt-4 text-sm text-grey-6')
         # Container do vídeo da câmera
-        ui.html('<div id="reader" style="width:100%; min-height: 250px; border: 1px solid #ccc; border-radius: 8px"></div>')
+       ui.html('<div id="reader" style="width:100%; min-height: 250px; border: 1px solid #ccc; border-radius: 8px"></div>', sanitize=False)
         
         with ui.row().classes('w-full justify-center mt-2'):
             ui.button('ATIVAR SCANNER', on_click=lambda: ui.run_javascript('startScan()'))\
