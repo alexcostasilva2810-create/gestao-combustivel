@@ -1,17 +1,16 @@
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from nicegui import ui, app
-import pandas as pd
 
 # =========================================================
-# 1. CONFIGURAÇÃO DE SEGURANÇA (OBRIGATÓRIO NO TOPO)
+# 1. SEGURANÇA IMEDIATA (RESOLVE O ERRO DA LINHA 36/11)
 # =========================================================
-# Definindo o segredo antes de qualquer outra operação
+# Este comando PRECISA vir antes de qualquer 'app.storage'
 ui.run_with(app, storage_secret='ZION_SISTEMA_2026_FINAL')
 
 # =========================================================
-# 2. BANCO DE DATOS E ESTADO DO SISTEMA
+# 2. CONFIGURAÇÕES DE ACESSO E CAPACIDADES
 # =========================================================
 LOGINS_VALIDOS = {
     "ANGELO": {"user": "ALEX", "pass": "2463"},
@@ -41,6 +40,7 @@ CAPACIDADES = {
     "FREIJO": 18000, "SUCUPIRA": 30000
 }
 
+# Inicialização segura dos dados
 if 'dados' not in app.storage.user:
     app.storage.user['dados'] = {
         'pagina': 'inicio',
@@ -52,14 +52,10 @@ if 'dados' not in app.storage.user:
     }
 
 # =========================================================
-# 3. ESTILIZAÇÃO (CSS)
+# 3. INTERFACE E ESTILO
 # =========================================================
 ui.query('body').style('background-color: #0d1117; color: white;')
-ui.add_head_html('<style>.zion-card { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 20px; border: 1px solid #30363d; }</style>')
 
-# =========================================================
-# 4. LÓGICA DE NAVEGAÇÃO E FUNÇÕES
-# =========================================================
 def ir_para(pagina):
     app.storage.user['dados']['pagina'] = pagina
     layout_principal.refresh()
@@ -70,25 +66,20 @@ def timer_tick():
         seg = int(time.time() - d['t_inicio'])
         d['tempo_str'] = time.strftime('%H:%M:%S', time.gmtime(seg))
 
-# =========================================================
-# 5. TELAS DO SISTEMA
-# =========================================================
 @ui.refreshable
 def layout_principal():
     dados = app.storage.user['dados']
     ui.timer(1.0, timer_tick)
 
-    # --- TELA INICIAL ---
     if dados['pagina'] == 'inicio':
         with ui.column().classes('w-full items-center mt-20'):
             ui.label('ZION').style('font-size: 80px; font-weight: 900;')
-            ui.button('🚀 ENTRAR', on_click=lambda: ir_para('login')).classes('w-64 h-16 bg-blue-600')
+            ui.button('🚀 ENTRAR NO SISTEMA', on_click=lambda: ir_para('login')).classes('w-64 h-16 bg-blue-600')
 
-    # --- TELA DE LOGIN ---
     elif dados['pagina'] == 'login':
         with ui.column().classes('w-full max-w-md mx-auto items-center mt-10'):
             ui.label('ACESSO RESTRITO').classes('text-2xl mb-6')
-            navio = ui.select(list(LOGINS_VALIDOS.keys()), label='NAVIO').classes('w-full bg-white p-1')
+            navio = ui.select(list(LOGINS_VALIDOS.keys()), label='SELECIONE O EMPURRADOR').classes('w-full bg-white p-1')
             user_in = ui.input('USUÁRIO').classes('w-full bg-white p-1')
             pass_in = ui.input('SENHA', password=True).classes('w-full bg-white p-1')
             
@@ -98,41 +89,33 @@ def layout_principal():
                     dados.update({'usuario': user_in.value, 'navio': navio.value})
                     ir_para('menu')
                 else:
-                    ui.notify('Erro de Login', type='negative')
+                    ui.notify('Dados incorretos!', type='negative')
             
             ui.button('CONFIRMAR', on_click=autenticar).classes('w-full mt-4 bg-green-700')
 
-    # --- MENU PRINCIPAL ---
     elif dados['pagina'] == 'menu':
         with ui.column().classes('w-full items-center mt-10'):
-            ui.label(f"NAVIO: {dados['navio']}").classes('text-green-400 text-xl')
-            with ui.grid(columns=2).classes('w-full max-w-lg gap-4 mt-10'):
-                ui.button('⛽ ABASTECIMENTO', on_click=lambda: ir_para('abastecimento')).classes('h-20 bg-blue-900')
-                ui.button('🏠 SAIR', on_click=lambda: (dados.update({'usuario': None}), ir_para('inicio'))).classes('h-20')
+            ui.label(f"BEM-VINDO: {dados['usuario']}").classes('text-xl')
+            ui.label(f"EMPURRADOR: {dados['navio']}").classes('text-green-400')
+            ui.button('⛽ ABASTECIMENTO', on_click=lambda: ir_para('abastecimento')).classes('w-64 h-16 bg-blue-900 mt-4')
+            ui.button('🏠 SAIR', on_click=lambda: (dados.update({'usuario': None}), ir_para('inicio'))).classes('w-64 mt-4')
 
-    # --- ABASTECIMENTO ---
     elif dados['pagina'] == 'abastecimento':
         ui.button('⬅️ VOLTAR', on_click=lambda: ir_para('menu')).props('flat color=white')
-        with ui.column().classes('w-full max-w-lg mx-auto zion-card'):
-            ui.label('CÁLCULO DE ABASTECIMENTO').classes('text-center font-bold mb-4')
-            s_bb = ui.number('SALDO BB').classes('w-full bg-white p-1')
-            s_be = ui.number('SALDO BE').classes('w-full bg-white p-1')
-            
-            # Cronômetro
-            with ui.row().classes('w-full justify-center items-center mt-4 border p-2'):
-                ui.label().bind_text_from(dados, 'tempo_str').classes('text-2xl text-red-500 font-mono')
+        with ui.column().classes('w-full max-w-lg mx-auto p-4 border rounded'):
+            ui.label(f"CRONÔMETRO:").classes('text-center w-full')
+            ui.label().bind_text_from(dados, 'tempo_str').classes('text-4xl text-red-500 font-mono text-center w-full')
+            with ui.row().classes('w-full justify-center'):
                 ui.button(icon='play_arrow', on_click=lambda: (dados.update({'t_inicio': time.time(), 't_rodando': True}))).props('round color=green')
                 ui.button(icon='stop', on_click=lambda: (dados.update({'t_rodando': False}))).props('round color=red')
 
 # =========================================================
-# 6. INICIALIZAÇÃO DO APP
+# 4. EXECUÇÃO DO SERVIDOR
 # =========================================================
-with ui.column().classes('w-full'):
-    layout_principal()
+layout_principal()
 
 ui.run(
     host='0.0.0.0', 
     port=int(os.environ.get("PORT", 8080)), 
-    title="ZION Naval",
-    reload=False
+    title="ZION Naval"
 )
