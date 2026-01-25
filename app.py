@@ -92,11 +92,12 @@ def layout_principal():
 def main():
     layout_principal()
 
-# MUDANÇA AQUI: Remova o 'if __name__ == ...' e deixe o ui.run direto
+# Configuração minimalista para não estourar os 512MB do Render
 ui.run(
     host='0.0.0.0', 
     port=int(os.environ.get("PORT", 8080)), 
-    title="ZION Naval - Gestão",
-    reload=False,
-    dark=True # Já deixa o tema escuro por padrão
+    title="ZION Naval",
+    reload=False,  # OBRIGATÓRIO: evita duplicar o uso de memória
+    dark=True,
+    show=False     # Evita abrir abas extras no servidor
 )
