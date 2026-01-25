@@ -92,10 +92,11 @@ def layout_principal():
 def main():
     layout_principal()
 
-if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(
-        host='0.0.0.0', 
-        port=int(os.environ.get("PORT", 8080)), 
-        title="ZION Naval - Gestão",
-        reload=False
-    )
+# MUDANÇA AQUI: Remova o 'if __name__ == ...' e deixe o ui.run direto
+ui.run(
+    host='0.0.0.0', 
+    port=int(os.environ.get("PORT", 8080)), 
+    title="ZION Naval - Gestão",
+    reload=False,
+    dark=True # Já deixa o tema escuro por padrão
+)
