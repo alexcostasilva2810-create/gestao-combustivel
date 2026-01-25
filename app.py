@@ -92,12 +92,11 @@ def layout_principal():
 def main():
     layout_principal()
 
-# Configuração minimalista para não estourar os 512MB do Render
 ui.run(
     host='0.0.0.0', 
     port=int(os.environ.get("PORT", 8080)), 
     title="ZION Naval",
-    reload=False,  # OBRIGATÓRIO: evita duplicar o uso de memória
+    reload=False,   # OBRIGATÓRIO: O reload dobra o uso de memória
     dark=True,
-    show=False     # Evita abrir abas extras no servidor
+    show=False      # Não tenta abrir janelas no servidor
 )
