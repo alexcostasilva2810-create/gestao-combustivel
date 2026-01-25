@@ -1,30 +1,12 @@
 import os
 import time
-from datetime import datetime, timedelta
 from nicegui import ui, app
-import pandas as pd
 
 # =========================================================
-# 1. SEGURANÇA NO TOPO (ISSO VAI MATAR O ERRO DA LINHA 36)
+# 1. CONFIGURAÇÃO DE SEGURANÇA (OBRIGATÓRIO PARA O RENDER)
 # =========================================================
-# Ao usar ui.run_with, o segredo é ativado ANTES de qualquer código rodar
-ui.run_with(app, storage_secret='ZION_SISTEMA_2026_FINAL')
-
-# =========================================================
-# 2. CONFIGURAÇÕES DE ESTADO
-# =========================================================
-# Agora o app.storage vai funcionar porque o segredo já foi lido acima
-if 'dados' not in app.storage.user:
-    app.storage.user['dados'] = {
-        'pagina': 'inicio',
-        'usuario': None,
-        'navio': 'ANGELO',
-        'historico_os': [],
-        'nf_validada': {},
-        't_inicio': 0,
-        't_rodando': False,
-        'tempo_str': '00:00:00'
-    }
+# O storage_secret precisa ser definido ANTES de qualquer acesso ao storage
+ui.run_with(app, storage_secret='ZION_SISTEMA_2026_FINAL_PROD')
 
 LOGINS_VALIDOS = {
     "ANGELO": {"user": "ALEX", "pass": "2463"},
@@ -47,24 +29,37 @@ LOGINS_VALIDOS = {
 }
 
 # =========================================================
-# 3. INTERFACE E ESTILO
+# 2. LÓGICA DE INTERFACE
 # =========================================================
-ui.query('body').style('background-color: #0d1117; color: white;')
 
 def ir_para(pagina):
     app.storage.user['dados']['pagina'] = pagina
     layout_principal.refresh()
 
 def timer_tick():
-    d = app.storage.user['dados']
-    if d['t_rodando']:
-        seg = int(time.time() - d['t_inicio'])
-        d['tempo_str'] = time.strftime('%H:%M:%S', time.gmtime(seg))
+    # Verifica se 'dados' existe antes de tentar acessar
+    if 'dados' in app.storage.user:
+        d = app.storage.user['dados']
+        if d.get('t_rodando'):
+            seg = int(time.time() - d.get('t_inicio', 0))
+            d['tempo_str'] = time.strftime('%H:%M:%S', time.gmtime(seg))
 
 @ui.refreshable
 def layout_principal():
+    # Inicialização segura dentro do layout para evitar erro de inicialização do NiceGUI
+    if 'dados' not in app.storage.user:
+        app.storage.user['dados'] = {
+            'pagina': 'inicio',
+            'usuario': None,
+            'navio': 'ANGELO',
+            't_inicio': 0,
+            't_rodando': False,
+            'tempo_str': '00:00:00'
+        }
+    
     dados = app.storage.user['dados']
     ui.timer(1.0, timer_tick)
+    ui.query('body').style('background-color: #0d1117; color: white;')
 
     if dados['pagina'] == 'inicio':
         with ui.column().classes('w-full items-center mt-20'):
@@ -73,7 +68,7 @@ def layout_principal():
 
     elif dados['pagina'] == 'login':
         with ui.column().classes('w-full max-w-md mx-auto items-center mt-10'):
-            ui.label('ACESSO').classes('text-2xl mb-6')
+            ui.label('ACESSO RESTRITO').classes('text-2xl mb-6')
             navio = ui.select(list(LOGINS_VALIDOS.keys()), label='NAVIO').classes('w-full bg-white p-1')
             user_in = ui.input('USUÁRIO').classes('w-full bg-white p-1')
             pass_in = ui.input('SENHA', password=True).classes('w-full bg-white p-1')
@@ -91,24 +86,31 @@ def layout_principal():
     elif dados['pagina'] == 'menu':
         with ui.column().classes('w-full items-center mt-10'):
             ui.label(f"BEM-VINDO: {dados['usuario']}").classes('text-xl')
+            ui.label(f"NAVIO: {dados['navio']}").classes('text-green-400')
             ui.button('⛽ ABASTECIMENTO', on_click=lambda: ir_para('abastecimento')).classes('w-64 h-16 bg-blue-900 mt-4')
             ui.button('🏠 SAIR', on_click=lambda: (dados.update({'usuario': None}), ir_para('inicio'))).classes('w-64 mt-4')
 
     elif dados['pagina'] == 'abastecimento':
         ui.button('⬅️ VOLTAR', on_click=lambda: ir_para('menu')).props('flat color=white')
-        with ui.column().classes('w-full items-center'):
-            ui.label().bind_text_from(dados, 'tempo_str').classes('text-4xl text-red-500 font-mono')
-            with ui.row():
-                ui.button(icon='play_arrow', on_click=lambda: (dados.update({'t_inicio': time.time(), 't_rodando': True}))).props('round color=green')
-                ui.button(icon='stop', on_click=lambda: (dados.update({'t_rodando': False}))).props('round color=red')
+        with ui.column().classes('w-full items-center p-4'):
+            ui.label('CRONÔMETRO DE OPERAÇÃO').classes('text-sm text-gray-400')
+            ui.label().bind_text_from(dados, 'tempo_str').classes('text-6xl text-red-500 font-mono')
+            with ui.row().classes('mt-4'):
+                ui.button(icon='play_arrow', on_click=lambda: (dados.update({'t_inicio': time.time(), 't_rodando': True}))).props('round color=green size=lg')
+                ui.button(icon='stop', on_click=lambda: (dados.update({'t_rodando': False}))).props('round color=red size=lg')
 
 # =========================================================
-# 4. EXECUÇÃO FINAL
+# 3. PONTO DE ENTRADA
 # =========================================================
-layout_principal()
 
-ui.run(
-    host='0.0.0.0', 
-    port=int(os.environ.get("PORT", 8080)), 
-    title="ZION Naval"
-)
+@ui.page('/')
+def index():
+    layout_principal()
+
+if __name__ in {"__main__", "__mp_main__"}:
+    ui.run(
+        host='0.0.0.0',
+        port=int(os.environ.get("PORT", 8080)),
+        title="ZION Naval",
+        storage_secret='ZION_SISTEMA_2026_FINAL_PROD' # Reforço aqui
+    )
